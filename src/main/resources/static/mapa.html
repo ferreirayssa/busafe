@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Busafe — Rotas Transcol (KML)</title>
+
+  <!-- OpenLayers bundle (global "ol") -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@8.2.0/ol.css">
+  <script src="https://cdn.jsdelivr.net/npm/ol@8.2.0/dist/ol.js"></script>
+
+  <style>
+    html, body { margin:0; height:100%; }
+    #map { width:100%; height:100vh; } /* garante altura */
+    #toolbar {
+      position: fixed; z-index: 1000; top: 12px; left: 12px;
+      background: rgba(255,255,255,.9); backdrop-filter: blur(4px);
+      border-radius: 14px; padding: 8px 12px; box-shadow: 0 8px 30px rgba(0,0,0,.12);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      display: flex; gap: 8px; align-items: center;
+    }
+    .legend {
+      position: fixed; right: 12px; bottom: 12px; z-index: 1000;
+      background: rgba(255,255,255,.9); padding: 10px 12px; border-radius: 12px;
+      font: 13px system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      box-shadow: 0 8px 30px rgba(0,0,0,.12);
+    }
+    .key { display:flex; align-items:center; gap:8px; margin:4px 0; }
+    .swatch { width:14px; height:4px; border-radius: 2px; background:#999; }
+    .swatch.v { background:#d32f2f; }  /* vermelho */
+    .swatch.g { background:#2e7d32; }  /* verde   */
+    #status {
+      position: fixed; left: 50%; transform: translateX(-50%);
+      top: 12px; z-index: 1100;
+      background: #222; color: #fff; padding: 6px 10px; border-radius: 10px;
+      font: 13px/1 system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="status"></div>
+
+  <div id="toolbar">
+    <select id="colorMode">
+      <option value="sentido">Cor por sentido (Ida/Volta)</option>
+      <option value="risco">Cor por risco (API)</option>
+    </select>
+    <button id="fit">Enquadrar</button>
+  </div>
+
+  <div id="map"></div>
+
+  <div class="legend">
+    <div class="key"><span class="swatch g"></span> Verde: Ida / Seguro</div>
+    <div class="key"><span class="swatch v"></span> Vermelho: Volta / Risco</div>
+  </div>
+
+  <script>
+    const KML_URL = "/rotas/rotas-transcol.kml"; // confirme que esta URL abre 200
+    const statusEl = document.getElementById('status');
+    const showStatus = (msg, ms=2500) => {
+      statusEl.textContent = msg; statusEl.style.display = 'block';
+      if (ms) setTimeout(()=> statusEl.style.display='none', ms);
+    };
+
+    // Base OSM
+    const base = new ol.layer.Tile({ source: new ol.source.OSM() });
+
+    // Fonte KML
+    const kmlSource = new ol.source.Vector({
+      url: KML_URL + "?v=" + Date.now(),
+      format: new ol.format.KML({ extractStyles: false })
+    });
+
+    // Estilo por sentido (Ida/Volta) usando name/description do KML
+    const styleBySentido = (feature) => {
+      const name = String(feature.get('name') || '');
+      const desc = String(feature.get('description') || '');
+      const isVolta = /volta/i.test(name) || /volta/i.test(desc);
+      return new ol.style.Style({
+        stroke: new ol.style.Stroke({
+          color: isVolta ? '#d32f2f' : '#2e7d32',
+          width: 3
+        })
+      });
+    };
+
+    const rotasLayer = new ol.layer.Vector({
+      source: kmlSource,
+      style: styleBySentido
+    });
+
+    // Mapa
+    const map = new ol.Map({
+      target: 'map',
+      layers: [base, rotasLayer],
+      view: new ol.View({
+        center: ol.proj.fromLonLat([-40.307, -20.318]), // ES
+        zoom: 12
+      })
+    });
+
+    // Enquadrar quando carregar
+    kmlSource.on('change', () => {
+      if (kmlSource.getState() === 'loading') {
+        showStatus('Carregando rotas…', 0);
+      } else if (kmlSource.getState() === 'ready') {
+        statusEl.style.display = 'none';
+        if (kmlSource.getFeatures().length) {
+          map.getView().fit(kmlSource.getExtent(), { padding: [40,40,40,40], maxZoom: 14 });
+        } else {
+          showStatus('KML carregado, mas sem features.', 3000);
+        }
+      }
+    });
+    kmlSource.on('error', () => {
+      showStatus('Falha ao carregar KML. Verifique ' + KML_URL, 5000);
+      console.error('Erro KML em', KML_URL);
+    });
+
+    document.getElementById('fit').addEventListener('click', () => {
+      if (kmlSource.getFeatures().length) {
+        map.getView().fit(kmlSource.getExtent(), { padding: [40,40,40,40], maxZoom: 14 });
+      }
+    });
+
+    // Alternância de cor (mock de risco opcional)
+    document.getElementById('colorMode').addEventListener('change', async (e) => {
+      const mode = e.target.value;
+      if (mode === 'sentido') {
+        rotasLayer.setStyle(styleBySentido);
+      } else {
+        // mock simples: usa nome da linha para gerar cor (troque por chamada /risco)
+        rotasLayer.setStyle((feature) => {
+          const name = String(feature.get('name') || '');
+          const hash = [...name].reduce((a,c)=>a+c.charCodeAt(0),0);
+          const t = (hash % 100)/100; // 0..1
+          const r = Math.round(46 + (211-46)*t);
+          const g = Math.round(125 + (47-125)*t);
+          const b = Math.round(50 + (47-50)*t);
+          return new ol.style.Style({ stroke: new ol.style.Stroke({ color: `rgb(${r},${g},${b})`, width: 3 }) });
+        });
+      }
+    });
+  </script>
+</body>
+</html>
