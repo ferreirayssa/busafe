@@ -1,23 +1,35 @@
 package com.transcol.busafe.controller;
 
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.http.*;
+import com.transcol.busafe.model.Rota;
+import com.transcol.busafe.repository.RotaRepository;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
-import java.nio.file.Files;
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/rotas")
 public class KmlController {
 
-  @GetMapping(value="/rotas-transcol.kml", produces="application/vnd.google-earth.kml+xml")
-  public ResponseEntity<byte[]> kml() throws IOException {
-    var res = new ClassPathResource("static/rotas/rotas-transcol.kml");
-    byte[] bytes = res.getContentAsByteArray();
-    return ResponseEntity.ok()
-        .cacheControl(CacheControl.noCache())
-        .contentType(MediaType.parseMediaType("application/vnd.google-earth.kml+xml"))
-        .body(bytes);
-  }
+    private final RotaRepository rotaRepo;
+
+    public KmlController(RotaRepository rotaRepo) {
+        this.rotaRepo = rotaRepo;
+    }
+
+    @GetMapping
+    public List<Rota> getAllRotas() {
+        return rotaRepo.findAll();
+    }
+
+    @GetMapping("/{codigo}")
+    public Rota getRotaByCodigo(@PathVariable String codigo) {
+        return rotaRepo.findFirstByLinhaTranscolOrderByIdAsc(codigo);
+    }
+
+    @GetMapping("/geojson")
+    public Map<String, Object> getAllRotasGeoJson() {
+        List<Rota> rotas = rotaRepo.findAll();
+        return Map.of("type", "FeatureCollection", "features", rotas);
+    }
 }

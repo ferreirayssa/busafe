@@ -6,8 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class BusafeApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(BusafeApplication.class, args);
-	}
-
+    public static void main(String[] args) {
+        SpringApplication.run(BusafeApplication.class, args);
+    }
 }

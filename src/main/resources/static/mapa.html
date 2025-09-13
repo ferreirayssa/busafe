@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Busafe — Rotas Transcol (KML)</title>
+  <title>Busafe — Rotas por Linha</title>
 
   <!-- OpenLayers bundle (global "ol") -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@8.2.0/ol.css">
@@ -11,13 +11,13 @@
 
   <style>
     html, body { margin:0; height:100%; }
-    #map { width:100%; height:100vh; } /* garante altura */
+    #map { width:100%; height:100vh; }
     #toolbar {
       position: fixed; z-index: 1000; top: 12px; left: 12px;
       background: rgba(255,255,255,.9); backdrop-filter: blur(4px);
       border-radius: 14px; padding: 8px 12px; box-shadow: 0 8px 30px rgba(0,0,0,.12);
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      display: flex; gap: 8px; align-items: center;
+      display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
     }
     .legend {
       position: fixed; right: 12px; bottom: 12px; z-index: 1000;
@@ -27,8 +27,7 @@
     }
     .key { display:flex; align-items:center; gap:8px; margin:4px 0; }
     .swatch { width:14px; height:4px; border-radius: 2px; background:#999; }
-    .swatch.v { background:#d32f2f; }  /* vermelho */
-    .swatch.g { background:#2e7d32; }  /* verde   */
+    .swatch.p { background:#7300ff; }
     #status {
       position: fixed; left: 50%; transform: translateX(-50%);
       top: 12px; z-index: 1100;
@@ -36,113 +35,151 @@
       font: 13px/1 system-ui, -apple-system, Segoe UI, Roboto, Arial;
       display: none;
     }
+    label { display: inline-flex; align-items: center; gap: 4px; }
   </style>
 </head>
 <body>
   <div id="status"></div>
 
   <div id="toolbar">
-    <select id="colorMode">
-      <option value="sentido">Cor por sentido (Ida/Volta)</option>
-      <option value="risco">Cor por risco (API)</option>
+    <input id="linha" placeholder="Ex: 500I (Transcol) ou 518 (Municipal)" style="width:240px">
+    <select id="sent">
+      <option value="">Qualquer sentido</option>
+      <option value="Ida">Ida</option>
+      <option value="Volta">Volta</option>
     </select>
+
+    <label><input type="radio" name="tipo" value="auto" checked> Auto</label>
+
+    <button id="go">Buscar</button>
+    <button id="clear">Limpar</button>
     <button id="fit">Enquadrar</button>
+
+    <label style="margin-left:8px">
+      <input type="checkbox" id="toggleKml" checked> Exibir rotas
+    </label>
   </div>
 
   <div id="map"></div>
 
   <div class="legend">
-    <div class="key"><span class="swatch g"></span> Verde: Ida / Seguro</div>
-    <div class="key"><span class="swatch v"></span> Vermelho: Volta / Risco</div>
+    <div class="key"><span class="swatch p"></span> Roxo: Rota</div>
   </div>
 
   <script>
-    const KML_URL = "/rotas/rotas-transcol.kml"; // confirme que esta URL abre 200
+    const KML_URL = "/rotas/rotas-transcol.kml"; // garanta que responde 200
     const statusEl = document.getElementById('status');
     const showStatus = (msg, ms=2500) => {
       statusEl.textContent = msg; statusEl.style.display = 'block';
       if (ms) setTimeout(()=> statusEl.style.display='none', ms);
     };
 
-    // Base OSM
+    // === Base OSM ===
     const base = new ol.layer.Tile({ source: new ol.source.OSM() });
 
-    // Fonte KML
+    // === Camada KML (todas as rotas) — opcional ===
     const kmlSource = new ol.source.Vector({
       url: KML_URL + "?v=" + Date.now(),
       format: new ol.format.KML({ extractStyles: false })
     });
-
-    // Estilo por sentido (Ida/Volta) usando name/description do KML
     const styleBySentido = (feature) => {
       const name = String(feature.get('name') || '');
       const desc = String(feature.get('description') || '');
       const isVolta = /volta/i.test(name) || /volta/i.test(desc);
       return new ol.style.Style({
-        stroke: new ol.style.Stroke({
-          color: isVolta ? '#d32f2f' : '#2e7d32',
-          width: 3
-        })
+        stroke: new ol.style.Stroke({ color: isVolta ? '#d32f2f' : '#2e7d32', width: 3 })
       });
     };
+    const rotasKmlLayer = new ol.layer.Vector({ source: kmlSource, style: styleBySentido });
 
-    const rotasLayer = new ol.layer.Vector({
-      source: kmlSource,
-      style: styleBySentido
+    // Eventos do KML (status)
+    kmlSource.on('change', () => {
+      if (kmlSource.getState() === 'loading') {
+        showStatus('Carregando KML…', 0);
+      } else if (kmlSource.getState() === 'ready') {
+        statusEl.style.display = 'none';
+      }
     });
+    kmlSource.on('error', () => showStatus('Falha ao carregar KML. Verifique ' + KML_URL, 5000));
 
-    // Mapa
-    const map = new ol.Map({
-      target: 'map',
-      layers: [base, rotasLayer],
-      view: new ol.View({
-        center: ol.proj.fromLonLat([-40.307, -20.318]), // ES
-        zoom: 12
+    // === Camada GeoJSON dinâmica (resultado da busca por linha) ===
+    const resultadoSource = new ol.source.Vector({ features: [] });
+    const resultadoLayer  = new ol.layer.Vector({
+      source: resultadoSource,
+      style: new ol.style.Style({
+        stroke: new ol.style.Stroke({ color: '#7300ff', width: 4 })
       })
     });
 
-    // Enquadrar quando carregar
-    kmlSource.on('change', () => {
-      if (kmlSource.getState() === 'loading') {
-        showStatus('Carregando rotas…', 0);
-      } else if (kmlSource.getState() === 'ready') {
-        statusEl.style.display = 'none';
-        if (kmlSource.getFeatures().length) {
-          map.getView().fit(kmlSource.getExtent(), { padding: [40,40,40,40], maxZoom: 14 });
-        } else {
-          showStatus('KML carregado, mas sem features.', 3000);
-        }
-      }
-    });
-    kmlSource.on('error', () => {
-      showStatus('Falha ao carregar KML. Verifique ' + KML_URL, 5000);
-      console.error('Erro KML em', KML_URL);
+    // === Mapa ===
+    const map = new ol.Map({
+      target: 'map',
+      layers: [base, rotasKmlLayer, resultadoLayer],
+      view: new ol.View({ center: ol.proj.fromLonLat([-40.307, -20.318]), zoom: 12 })
     });
 
-    document.getElementById('fit').addEventListener('click', () => {
-      if (kmlSource.getFeatures().length) {
-        map.getView().fit(kmlSource.getExtent(), { padding: [40,40,40,40], maxZoom: 14 });
-      }
-    });
+    // === UI handlers ===
+    document.getElementById('toggleKml').onchange = (e) => {
+      rotasKmlLayer.setVisible(e.target.checked);
+    };
 
-    // Alternância de cor (mock de risco opcional)
-    document.getElementById('colorMode').addEventListener('change', async (e) => {
-      const mode = e.target.value;
-      if (mode === 'sentido') {
-        rotasLayer.setStyle(styleBySentido);
+    document.getElementById('fit').onclick = () => {
+      const src = resultadoSource.getFeatures().length ? resultadoSource : kmlSource;
+      if (src.getFeatures().length) {
+        map.getView().fit(src.getExtent(), { padding: [40,40,40,40], maxZoom: 15 });
+      }
+    };
+
+    document.getElementById('clear').onclick = () => {
+      resultadoSource.clear();
+      showStatus('Resultado limpo.');
+    };
+
+document.getElementById('go').onclick = async () => {
+  const codigo = document.getElementById('linha').value.trim();
+  const sentido = document.getElementById('sent').value;
+  if (!codigo) { showStatus('Informe o código da linha.'); return; }
+
+  let url = `/api/rotas/buscar/${encodeURIComponent(codigo)}`;
+  if (sentido) url += `?sentido=${encodeURIComponent(sentido)}`;
+
+  try {
+    showStatus('Buscando linha ' + codigo + '…', 0);
+
+    // Fazendo o fetch da API
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+
+    // Obtendo o GeoJSON da resposta
+    const json = await resp.json();
+    console.log(json);  // Para depuração
+
+    // Verificando se a resposta tem a estrutura correta
+    if (json.features && json.features.length > 0) {
+      const format = new ol.format.GeoJSON();
+      const feats = format.readFeatures(json, { featureProjection: 'EPSG:3857' });
+
+      // Limpando a camada de resultados anteriores
+      resultadoSource.clear();
+      resultadoSource.addFeatures(feats);
+
+      statusEl.style.display = 'none';
+      if (feats.length) {
+        map.getView().fit(resultadoSource.getExtent(), { padding: [40, 40, 40, 40], maxZoom: 15 });
+        showStatus('Linha exibida no mapa!');
       } else {
-        // mock simples: usa nome da linha para gerar cor (troque por chamada /risco)
-        rotasLayer.setStyle((feature) => {
-          const name = String(feature.get('name') || '');
-          const hash = [...name].reduce((a,c)=>a+c.charCodeAt(0),0);
-          const t = (hash % 100)/100; // 0..1
-          const r = Math.round(46 + (211-46)*t);
-          const g = Math.round(125 + (47-125)*t);
-          const b = Math.round(50 + (47-50)*t);
-          return new ol.style.Style({ stroke: new ol.style.Stroke({ color: `rgb(${r},${g},${b})`, width: 3 }) });
-        });
+        showStatus('Nenhuma geometria retornada para ' + codigo, 3000);
       }
-    });
+    } else {
+      resultadoSource.clear();
+      showStatus('Nenhuma rota encontrada para o código informado.', 3000);
+    }
+  } catch (err) {
+    console.error(err);
+    showStatus('Erro ao buscar linha. Verifique a API: ' + url, 5000);
+  }
+};
+
   </script>
 </body>
 </html>
