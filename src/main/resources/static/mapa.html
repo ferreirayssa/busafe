@@ -27,7 +27,7 @@
     }
     .key { display:flex; align-items:center; gap:8px; margin:4px 0; }
     .swatch { width:14px; height:4px; border-radius: 2px; background:#999; }
-    .swatch.p { background:#7300ff; }
+    .swatch.p { background:#812f9a; }
     #status {
       position: fixed; left: 50%; transform: translateX(-50%);
       top: 12px; z-index: 1100;
@@ -42,22 +42,15 @@
   <div id="status"></div>
 
   <div id="toolbar">
-    <input id="linha" placeholder="Ex: 500I (Transcol) ou 518 (Municipal)" style="width:240px">
-    <select id="sent">
-      <option value="">Qualquer sentido</option>
-      <option value="Ida">Ida</option>
-      <option value="Volta">Volta</option>
-    </select>
-
-    <label><input type="radio" name="tipo" value="auto" checked> Auto</label>
+    <input id="linha" placeholder="Ex: 500 (Transcol) ou 010 (Municipal)" style="width:240px">
 
     <button id="go">Buscar</button>
     <button id="clear">Limpar</button>
     <button id="fit">Enquadrar</button>
 
-    <label style="margin-left:8px">
-      <input type="checkbox" id="toggleKml" checked> Exibir rotas
-    </label>
+    <!-- <label style="margin-left:8px">
+    <input type="checkbox" id="toggleKml" checked> Exibir rotas
+    </label> -->
   </div>
 
   <div id="map"></div>
@@ -107,7 +100,7 @@
     const resultadoLayer  = new ol.layer.Vector({
       source: resultadoSource,
       style: new ol.style.Style({
-        stroke: new ol.style.Stroke({ color: '#7300ff', width: 4 })
+        stroke: new ol.style.Stroke({ color: '#812f9a', width: 4 }) // roxo
       })
     });
 
@@ -119,9 +112,9 @@
     });
 
     // === UI handlers ===
-    document.getElementById('toggleKml').onchange = (e) => {
-      rotasKmlLayer.setVisible(e.target.checked);
-    };
+    // document.getElementById('toggleKml').onchange = (e) => {
+    //  rotasKmlLayer.setVisible(e.target.checked);
+    //};
 
     document.getElementById('fit').onclick = () => {
       const src = resultadoSource.getFeatures().length ? resultadoSource : kmlSource;
@@ -137,11 +130,9 @@
 
 document.getElementById('go').onclick = async () => {
   const codigo = document.getElementById('linha').value.trim();
-  const sentido = document.getElementById('sent').value;
   if (!codigo) { showStatus('Informe o código da linha.'); return; }
 
   let url = `/api/rotas/buscar/${encodeURIComponent(codigo)}`;
-  if (sentido) url += `?sentido=${encodeURIComponent(sentido)}`;
 
   try {
     showStatus('Buscando linha ' + codigo + '…', 0);
