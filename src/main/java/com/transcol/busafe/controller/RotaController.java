@@ -9,7 +9,8 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/rotas")  // Mapeamento correto do Controller
+@RequestMapping("/api/rotas")
+
 public class RotaController {
 
     private final RotaRepository rotaRepo;
