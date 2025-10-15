@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Home</title>
+  <title>BuSafe - Ônibus seguro</title>
   <link rel="stylesheet" href="css/Style.css">
   <script type="text/javascript" src="js/scripts.js" defer></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@8.2.0/ol.css">
@@ -26,16 +26,24 @@
 </li>
       
       <li class="search-item">
-        <form action="#" method="get" class="search-form">
+        <form action="#" method="get" class="search-form" onsubmit="return false;">
           <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e8eaed"><path d="M750-120 506-364q-30 24-69 38t-83 14q-109 0-184.5-75.5T100-600q0-109 75.5-184.5T360-860q109 0 184.5 75.5T620-600q0 44-14 83t-38 69l244 244q11 11 11 28t-11 28q-11 11-28 11t-28-11ZM360-280q75 0 127.5-52.5T540-460q0-75-52.5-127.5T360-640q-75 0-127.5 52.5T180-460q0 75 52.5 127.5T360-280Z"/></svg>
-          <input type="search" placeholder="Search..." name="q">
+          <input type="search" placeholder="Buscar linha..." name="q" id="linha">
         </form>
       </li>
+      <li class="search-controls">
+        <button id="go">Buscar</button>
+        <button id="clear">Limpar</button>
+      </li>
+      <li>
+        <div id="status"></div>
+      </li>
+
       <li>
         <li class="active">
           <a href="index.html">
             <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e8eaed"><path d="M240-200h120v-200q0-17 11.5-28.5T400-440h160q17 0 28.5 11.5T600-400v200h120v-360L480-740 240-560v360Zm-80 0v-360q0-19 8.5-36t23.5-28l240-180q21-16 48-16t48 16l240 180q15 11 23.5 28t8.5 36v360q0 33-23.5 56.5T720-120H560q-17 0-28.5-11.5T520-160v-200h-80v200q0 17-11.5 28.5T400-120H240q-33 0-56.5-23.5T160-200Zm320-270Z"/></svg>
-            <span>Home</span>
+            <span>Mapa</span>
           </a>
         </li>
       </li>
@@ -44,16 +52,15 @@
           <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e8eaed">
           <path d="M240-120q-17 0-28.5-11.5T200-160v-82q-18-20-29-44.5T160-340v-380q0-83 77-121.5T480-880q172 0 246 37t74 123v380q0 29-11 53.5T760-242v82q0 17-11.5 28.5T720-120h-40q-17 0-28.5-11.5T640-160v-40H320v40q0 17-11.5 28.5T280-120h-40Zm242-640h224-448 224Zm158 280H240h480-80Zm-400-80h480v-120H240v120Zm100 240q25 0 42.5-17.5T400-380q0-25-17.5-42.5T340-440q-25 0-42.5 17.5T280-380q0 25 17.5 42.5T340-
           320Zm200 0q25 0 42.5-17.5T600-380q0-25-17.5-42.5T540-440q-25 0-42.5 17.5T480-380q0 25 17.5 42.5T540-320Z"/></svg>
-          <span>Rota de Ônibus</span>
+          <span>Linhas frequentes</span>
           <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e8eaed"><path d="M480-361q-8 0-15-2.5t-13-8.5L268-556q-11-11-11-28t11-28q11-11 28-11t28 11l156 156 156-156q11-11 28-11t28 11q11 11 11 28t-11 28L508-372q-6 6-13 8.5t-15 2.5Z"/></svg>
         </button>
         <ul class="sub-menu">
           <div>
-            <li><a href="#">Linha 1</a></li>
-            <li><a href="#">Linha 2</a></li>
-            <li><a href="#">Linha 3</a></li>
-            <li><a href="#">Linha 4</a></li>
-            <li><a href="#">Linha 5</a></li>
+            <li><a href="#">505</a></li>
+            <li><a href="#">591</a></li>
+            <li><a href="#">506</a></li>
+            <li><a href="#">515</a></li>
           </div>
         </ul>
       </li>
@@ -74,10 +81,10 @@
   </main>
 
     <script>
-    const KML_URL = "/rotas/rotas-transcol.kml"; // garanta que responde 200
+    const GEOJSON_URL = "/rotas/geojson"; // Endpoint que retorna todas as rotas em GeoJSON
     const statusEl = document.getElementById('status');
     const showStatus = (msg, ms=2500) => {
-      statusEl.textContent = msg; statusEl.style.display = 'block';
+      statusEl.textContent = msg; statusEl.classList.add('show');
       if (ms) setTimeout(()=> statusEl.style.display='none', ms);
     };
 
@@ -85,29 +92,29 @@
     const base = new ol.layer.Tile({ source: new ol.source.OSM() });
 
     // === Camada KML (todas as rotas) — opcional ===
-    const kmlSource = new ol.source.Vector({
-      url: KML_URL + "?v=" + Date.now(),
-      format: new ol.format.KML({ extractStyles: false })
+    const todasRotasSource = new ol.source.Vector({
+      url: GEOJSON_URL + "?v=" + Date.now(),
+      format: new ol.format.GeoJSON()
     });
     const styleBySentido = (feature) => {
-      const name = String(feature.get('name') || '');
-      const desc = String(feature.get('description') || '');
-      const isVolta = /volta/i.test(name) || /volta/i.test(desc);
+      const sentido = String(feature.get('sentido') || '');
+      const isVolta = /volta/i.test(sentido);
       return new ol.style.Style({
         stroke: new ol.style.Stroke({ color: isVolta ? '#d32f2f' : '#2e7d32', width: 3 })
       });
     };
-    const rotasKmlLayer = new ol.layer.Vector({ source: kmlSource, style: styleBySentido });
+    const rotasLayer = new ol.layer.Vector({ source: todasRotasSource, style: styleBySentido });
 
     // Eventos do KML (status)
-    kmlSource.on('change', () => {
-      if (kmlSource.getState() === 'loading') {
-        showStatus('Carregando KML…', 0);
-      } else if (kmlSource.getState() === 'ready') {
+    todasRotasSource.on('change', () => {
+      if (todasRotasSource.getState() === 'loading') {
+        showStatus('Carregando rotas…', 0);
+      } else if (todasRotasSource.getState() === 'ready') {
         statusEl.style.display = 'none';
+        map.getView().fit(todasRotasSource.getExtent(), { padding: [40,40,40,40], maxZoom: 15 });
       }
     });
-    kmlSource.on('error', () => showStatus('Falha ao carregar KML. Verifique ' + KML_URL, 5000));
+    todasRotasSource.on('error', () => showStatus('Falha ao carregar rotas. Verifique ' + GEOJSON_URL, 5000));
 
     // === Camada GeoJSON dinâmica (resultado da busca por linha) ===
     const resultadoSource = new ol.source.Vector({ features: [] });
@@ -121,7 +128,7 @@
     // === Mapa ===
     const map = new ol.Map({
       target: 'map',
-      layers: [base, rotasKmlLayer, resultadoLayer],
+      layers: [base, rotasLayer, resultadoLayer],
       view: new ol.View({ center: ol.proj.fromLonLat([-40.307, -20.318]), zoom: 12 })
     });
 
@@ -130,22 +137,16 @@
     //  rotasKmlLayer.setVisible(e.target.checked);
     //};
 
-    document.getElementById('fit').onclick = () => {
-      const src = resultadoSource.getFeatures().length ? resultadoSource : kmlSource;
-      if (src.getFeatures().length) {
-        map.getView().fit(src.getExtent(), { padding: [40,40,40,40], maxZoom: 15 });
-      }
-    };
-
     document.getElementById('clear').onclick = () => {
       resultadoSource.clear();
+      document.getElementById('linha').value = '';
       showStatus('Resultado limpo.');
     };
 
 document.getElementById('go').onclick = async () => {
   const codigo = document.getElementById('linha').value.trim();
   if (!codigo) { showStatus('Informe o código da linha.'); return; }
-
+  
   let url = `/api/rotas/buscar/${encodeURIComponent(codigo)}`;
 
   try {
@@ -157,7 +158,6 @@ document.getElementById('go').onclick = async () => {
 
     // Obtendo o GeoJSON da resposta
     const json = await resp.json();
-    console.log(json);  // Para depuração
 
     // Verificando se a resposta tem a estrutura correta
     if (json.features && json.features.length > 0) {
@@ -167,6 +167,7 @@ document.getElementById('go').onclick = async () => {
       // Limpando a camada de resultados anteriores
       resultadoSource.clear();
       resultadoSource.addFeatures(feats);
+      rotasLayer.setVisible(false); // Esconde as rotas gerais
 
       statusEl.style.display = 'none';
       if (feats.length) {
@@ -177,6 +178,7 @@ document.getElementById('go').onclick = async () => {
       }
     } else {
       resultadoSource.clear();
+      rotasLayer.setVisible(true);
       showStatus('Nenhuma rota encontrada para o código informado.', 3000);
     }
   } catch (err) {
@@ -184,6 +186,11 @@ document.getElementById('go').onclick = async () => {
     showStatus('Erro ao buscar linha. Verifique a API: ' + url, 5000);
   }
 };
+
+document.getElementById('linha').addEventListener('keyup', (e) => {
+    if (e.key === 'Enter') document.getElementById('go').click();
+});
+
 
 // === Localização do usuário ===
 if (navigator.geolocation) {

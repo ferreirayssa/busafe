@@ -8,6 +8,7 @@ WORKDIR /app
 COPY pom.xml .
 COPY .mvn .mvn
 COPY mvnw .
+COPY mvnw.cmd .
 RUN ./mvnw dependency:go-offline -B
 
 # Copia o código-fonte e empacota

@@ -570,6 +570,47 @@ body{
   margin: 0;
 }
 
+.search-controls {
+  display: flex;
+  gap: 8px;
+  padding: 0 16px;
+  margin-bottom: 16px;
+}
+
+.search-controls button {
+  flex-grow: 1;
+  padding: 8px;
+  background-color: var(--hover-clr);
+  border: 1px solid var(--line-clr);
+  color: var(--text-clr);
+  border-radius: .5em;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.search-controls button:hover {
+  background-color: #33374a;
+}
+
+#sidebar.close .search-controls {
+  display: none;
+}
+
+#status {
+  background-color: rgba(239, 83, 80, 0.8);
+  color: white;
+  padding: 10px 16px;
+  margin: 0 16px 16px;
+  border-radius: .5em;
+  display: none;
+  text-align: center;
+  font-size: 0.9em;
+}
+
+#status.show {
+  display: block;
+}
+
 /* Estilos do mapa para Index.html */
 #map {
   width: 100%;
@@ -583,9 +624,3 @@ body{
   margin-left: 0px; /* A largura da sua sidebar */
   height: 100vh;
 }
-
-
-
-
-
-
