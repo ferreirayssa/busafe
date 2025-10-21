@@ -14,6 +14,9 @@
   <title>Reportar Incidente</title>
   <link rel="stylesheet" href="../css/Style.css">
   <script type="text/javascript" src="../js/scripts.js" defer></script>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@8.2.0/ol.css">
+  <script src="https://cdn.jsdelivr.net/npm/ol@8.2.0/dist/ol.js"></script>
 </head>
 <body>
   <nav id="sidebar">
@@ -31,7 +34,7 @@
 </li>
 
       <li class="active">
-        <a href="../Index.html">
+        <a href="/Index.html">
           <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e8eaed"><path d="M240-200h120v-200q0-17 11.5-28.5T400-440h160q17 0 28.5 11.5T600-400v200h120v-360L480-740 240-560v360Zm-80 0v-360q0-19 8.5-36t23.5-28l240-180q21-16 48-16t48 16l240 180q15 11 23.5 28t8.5 36v360q0 33-23.5 56.5T720-120H560q-17 0-28.5-11.5T520-160v-200h-80v200q0 17-11.5 28.5T400-120H240q-33 0-56.5-23.5T160-200Zm320-270Z"/></svg>
           <span>Mapa</span>
         </a>
@@ -121,15 +124,17 @@
         <div class="section-title">Descrição do Incidente</div>
         <textarea placeholder="Descreva o que aconteceu..."></textarea>
 
+        <div class="section-title">Ponto do Incidente</div>
+        <div id="alert-map" style="height: 300px; width: 100%; border-radius: 8px; margin-bottom: 1rem; background: #333;"></div>
+        <input type="hidden" id="latitude" name="latitude">
+        <input type="hidden" id="longitude" name="longitude">
+
         <div class="section-title">Localização</div>
         <div class="location-wrapper">
-            <select>
-                <option>Selecione a linha</option>
-                <option>Linha 1 - Azul</option>
-                <option>Linha 2 - Verde</option>
-                <option>Linha 3 - Vermelha</option>
-                <option>Linha 4 - Amarela</option>
-            </select>
+            
+            <input type="text" id="incidente-linha-busca" placeholder="Buscar linha...">
+            <input type="hidden" id="incidente-linha-id" name="linha_id">
+
             <button class="location-btn">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="20" height="20" fill="white">
             <path d="M352 348.4C416.1 333.9 464 276.5 464 208C464 128.5 399.5 64 320 64C240.5 64 176 128.5 176 208C176 276.5 223.9 333.9 288 348.4L288 544C288 561.7 302.3 576 320 576C337.7 576 352 561.7 352 544L352 348.4zM328 160C297.1 160 272 185.1 272 216C272 229.3 261.3 240 248 240C234.7 240 224 229.3 224 216C224 158.6 270.6 112 328 112C341.3 112 352 122.7 352 136C352 149.3 341.3 160 328 160z"/>
@@ -139,6 +144,90 @@
         </div>
         <button class="submit-btn">Enviar Denúncia</button>
     </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const latInput = document.getElementById('latitude');
+    const lonInput = document.getElementById('longitude');
+
+    // --- 1. Inicializar o "Pin" (Marcador) ---
+    const pinFeature = new ol.Feature({
+        geometry: new ol.geom.Point(ol.proj.fromLonLat([-40.307, -20.318]))
+    });
+    pinFeature.setStyle(new ol.style.Style({
+        image: new ol.style.Circle({
+            radius: 8,
+            fill: new ol.style.Fill({ color: '#ef5350' }),
+            stroke: new ol.style.Stroke({ color: '#fff', width: 2 })
+        })
+    }));
+    const pinLayer = new ol.layer.Vector({
+        source: new ol.source.Vector({ features: [pinFeature] })
+    });
+
+    // --- 2. Inicializar o Mapa ---
+    const map = new ol.Map({
+        target: 'alert-map',
+        layers: [
+            new ol.layer.Tile({ source: new ol.source.OSM() }),
+            pinLayer
+        ],
+        view: new ol.View({ center: ol.proj.fromLonLat([-40.307, -20.318]), zoom: 12 })
+    });
+
+    // --- 3. Função para atualizar o Pin e os Inputs ---
+    function updatePinLocation(coords_3857) { // Coordenadas no formato do mapa
+        // Move o pin
+        pinFeature.getGeometry().setCoordinates(coords_3857);
+        
+        // Converte para Lat/Lon (formato GPS)
+        const coords_4326 = ol.proj.toLonLat(coords_3857);
+        
+        // Salva nos inputs ocultos
+        lonInput.value = coords_4326[0];
+        latInput.value = coords_4326[1];
+        
+        console.log('Localização salva:', latInput.value, lonInput.value);
+    }
+
+    // --- 4. Clicar no Mapa para mover o Pin ---
+    map.on('click', (e) => {
+        updatePinLocation(e.coordinate);
+    });
+
+    // --- 5. Lógica do Botão "Usar minha Localização" ---
+    const locationBtn = document.querySelector('.location-btn');
+    locationBtn.addEventListener('click', () => {
+        if (!navigator.geolocation) {
+            alert('Geolocalização não é suportada pelo seu navegador.');
+            return;
+        }
+
+        locationBtn.disabled = true; // Desativa o botão enquanto busca
+        locationBtn.textContent = 'Buscando...';
+
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                const coords_4326 = [pos.coords.longitude, pos.coords.latitude];
+                const coords_3857 = ol.proj.fromLonLat(coords_4326);
+
+                // Centraliza o mapa e atualiza o pin
+                map.getView().animate({ center: coords_3857, zoom: 16, duration: 1000 });
+                updatePinLocation(coords_3857);
+                
+                locationBtn.disabled = false;
+                locationBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="20" height="20" fill="white"><path d="M352 348.4C416.1 333.9 464 276.5 464 208C464 128.5 399.5 64 320 64C240.5 64 176 128.5 176 208C176 276.5 223.9 333.9 288 348.4L288 544C288 561.7 302.3 576 320 576C337.7 576 352 561.7 352 544L352 348.4zM328 160C297.1 160 272 185.1 272 216C272 229.3 261.3 240 248 240C234.7 240 224 229.3 224 216C224 158.6 270.6 112 328 112C341.3 112 352 122.7 352 136C352 149.3 341.3 160 328 160z"/></svg>';
+            },
+            (err) => {
+                alert('Não foi possível obter sua localização.');
+                console.error(err);
+                locationBtn.disabled = false;
+                locationBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="20" height="20" fill="white"><path d="M352 348.4C416.1 333.9 464 276.5 464 208C464 128.5 399.5 64 320 64C240.5 64 176 128.5 176 208C176 276.5 223.9 333.9 288 348.4L288 544C288 561.7 302.3 576 320 576C337.7 576 352 561.7 352 544L352 348.4zM328 160C297.1 160 272 185.1 272 216C272 229.3 261.3 240 248 240C234.7 240 224 229.3 224 216C224 158.6 270.6 112 328 112C341.3 112 352 122.7 352 136C352 149.3 341.3 160 328 160z"/></svg>';
+            }
+        );
+    });
+});
+</script>
 
 </body>
 </html>

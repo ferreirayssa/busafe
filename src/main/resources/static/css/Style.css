@@ -302,7 +302,6 @@ body{
 }
 #sidebar > ul > li:first-child {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
   padding: 0 16px;
@@ -330,6 +329,13 @@ body{
       opacity: 0.8;
     }
   }
+
+#sidebar > ul > li:first-child .logo {
+  flex-grow: 1; /* Faz o container da logo crescer */
+  display: flex;
+  justify-content: center; /* Centraliza a imagem */
+}
+
 }
 
 
@@ -623,4 +629,61 @@ body{
      mas um começo seria: */
   margin-left: 0px; /* A largura da sua sidebar */
   height: 100vh;
+}
+
+/* Responsividade na tela Alert */
+/* Estilo para o novo campo de busca na tela Alert */
+#incidente-linha-busca {
+  padding: 0.6rem;
+  border-radius: 0.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--text-clr);
+  flex: 1 1 0%;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  font-family: Poppins, sans-serif;
+}
+
+#incidente-linha-busca:hover {
+  background: rgba(0, 0, 0, 0.35);
+  border-color: #e53935; 
+}
+
+/* --- Media Query para Responsividade --- */
+@media (max-width: 700px) {
+
+  /* Ajusta o layout para 1 coluna */
+  body {
+    grid-template-columns: 1fr;
+  }
+
+  /* Faz a sidebar sumir em vez de ficar espremida */
+  #sidebar {
+    display: none; 
+    /* Outra opção seria fazer ela sobrepor o conteúdo,
+       mas por enquanto 'none' é mais simples */
+  }
+
+  /* Ajusta o container principal da tela Alert */
+  .container {
+    padding: 1rem;
+    margin: 1rem;
+  }
+
+  /* Empilha os botões de localização na tela Alert */
+  .location-wrapper {
+    flex-direction: column;
+    align-items: stretch; /* Faz os itens ocuparem 100% da largura */
+  }
+
+  .location-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Melhora o grid dos tipos de incidente em telas pequenas */
+  .incident-types {
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  }
 }
