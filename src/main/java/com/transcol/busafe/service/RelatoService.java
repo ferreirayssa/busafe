@@ -13,8 +13,4 @@ public class RelatoService {
 
     public Relato salvar(Relato r) { return repo.save(r); }
     public List<Relato> listar() { return repo.findAll(); }
-
-    public List<Relato> listarTodos() {
-        return repo.findAll();
-    }
 }

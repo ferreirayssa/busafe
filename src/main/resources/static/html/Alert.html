@@ -14,10 +14,10 @@
   <title>Reportar Incidente</title>
   <link rel="stylesheet" href="../css/Style.css">
   <script type="text/javascript" src="../js/scripts.js" defer></script>
-
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@8.2.0/ol.css">
   <script src="https://cdn.jsdelivr.net/npm/ol@8.2.0/dist/ol.js"></script>
 </head>
+
 <body>
   <nav id="sidebar">
     <ul>
@@ -129,28 +129,52 @@
         <input type="hidden" id="latitude" name="latitude">
         <input type="hidden" id="longitude" name="longitude">
 
-        <div class="section-title">Localização</div>
         <div class="location-wrapper">
-            
-            <input type="text" id="incidente-linha-busca" placeholder="Buscar linha...">
-            <input type="hidden" id="incidente-linha-id" name="linha_id">
-
-            <button class="location-btn">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="20" height="20" fill="white">
-            <path d="M352 348.4C416.1 333.9 464 276.5 464 208C464 128.5 399.5 64 320 64C240.5 64 176 128.5 176 208C176 276.5 223.9 333.9 288 348.4L288 544C288 561.7 302.3 576 320 576C337.7 576 352 561.7 352 544L352 348.4zM328 160C297.1 160 272 185.1 272 216C272 229.3 261.3 240 248 240C234.7 240 224 229.3 224 216C224 158.6 270.6 112 328 112C341.3 112 352 122.7 352 136C352 149.3 341.3 160 328 160z"/>
-        </svg>
-</button>
-
+        <input type="text" id="bairro" name="bairro" placeholder="Bairro (automático)" readonly style="width: 50%; margin-bottom: 1rem;">
+        <input type="text" id="municipio" name="municipio" placeholder="Município (automático)" readonly style="width: 50%; margin-bottom: 1rem;">
         </div>
+
+        <div class="section-title" style="margin-top: 1rem;">Linha</div>
+        <div class="location-wrapper">
+            <input type="text" 
+                   id="incidente-linha-busca" 
+                   placeholder="Digite o número da linha (Ex: 506)..." 
+                   autocomplete="off">
+            
+            <div id="linha-resultados" class="search-results"></div>
+            
+            <input type="hidden" id="linha-numero-selecionada">
+            <input type="hidden" id="linha-tipo-selecionada">
+
+        <button class="location-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="20" height="20" fill="white">
+                <path d="M352 348.4C416.1 333.9 464 276.5 464 208C464 128.5 399.5 64 320 64C240.5 64 176 128.5 176 208C176 276.5 223.9 333.9 288 348.4L288 544C288 561.7 302.3 576 320 576C337.7 576 352 561.7 352 544L352 348.4zM328 160C297.1 160 272 185.1 272 216C272 229.3 261.3 240 248 240C234.7 240 224 229.3 224 216C224 158.6 270.6 112 328 112C341.3 112 352 122.7 352 136C352 149.3 341.3 160 328 160z"/>
+            </svg>
+        </button>
+        </div>
+        
         <button class="submit-btn">Enviar Denúncia</button>
     </div>
 
-<script>
+    
+    <script>
 document.addEventListener('DOMContentLoaded', () => {
+
+    // --- 1. Referências aos Elementos do DOM ---
     const latInput = document.getElementById('latitude');
     const lonInput = document.getElementById('longitude');
+    const submitBtn = document.querySelector('.submit-btn');
+    const locationBtn = document.querySelector('.location-btn');
+    
+    // Elementos do Autocomplete (NOVOS)
+    const buscaInput = document.getElementById('incidente-linha-busca');
+    const resultadosDiv = document.getElementById('linha-resultados');
+    const numeroSelecionadoInput = document.getElementById('linha-numero-selecionada');
+    const tipoSelecionadoInput = document.getElementById('linha-tipo-selecionada');
+    let debounceTimer;
 
-    // --- 1. Inicializar o "Pin" (Marcador) ---
+
+    // --- 2. Lógica do Mapa (OpenLayers) ---
     const pinFeature = new ol.Feature({
         geometry: new ol.geom.Point(ol.proj.fromLonLat([-40.307, -20.318]))
     });
@@ -164,8 +188,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const pinLayer = new ol.layer.Vector({
         source: new ol.source.Vector({ features: [pinFeature] })
     });
-
-    // --- 2. Inicializar o Mapa ---
     const map = new ol.Map({
         target: 'alert-map',
         layers: [
@@ -175,59 +197,230 @@ document.addEventListener('DOMContentLoaded', () => {
         view: new ol.View({ center: ol.proj.fromLonLat([-40.307, -20.318]), zoom: 12 })
     });
 
-    // --- 3. Função para atualizar o Pin e os Inputs ---
-    function updatePinLocation(coords_3857) { // Coordenadas no formato do mapa
-        // Move o pin
+    // --- 3. Funções de Suporte do Mapa ---
+    function updatePinLocation(coords_3857) {
         pinFeature.getGeometry().setCoordinates(coords_3857);
-        
-        // Converte para Lat/Lon (formato GPS)
         const coords_4326 = ol.proj.toLonLat(coords_3857);
         
-        // Salva nos inputs ocultos
         lonInput.value = coords_4326[0];
         latInput.value = coords_4326[1];
         
         console.log('Localização salva:', latInput.value, lonInput.value);
+        obterEndereco(coords_4326[1], coords_4326[0]); // Chama o reverse geocoding
     }
 
-    // --- 4. Clicar no Mapa para mover o Pin ---
+    async function obterEndereco(lat, lon) {
+        const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&addressdetails=1`;
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            const bairro = data.address.suburb || 'Bairro não encontrado';
+            const municipio = data.address.city || data.address.town || 'Município não encontrado';
+
+            document.getElementById('municipio').value = municipio;
+            document.getElementById('bairro').value = bairro;
+        } catch (error) {
+            console.error('Erro ao fazer o reverse geocoding:', error);
+        }
+    }
+
+
+    // --- 4. Lógica do Autocomplete (NOVA) ---
+    async function buscarLinhasNaAPI(termo) {
+        try {
+            // Chama a API de sugestões que você criou no RotaController
+            const response = await fetch(`/api/rotas/sugestoes?termo=${termo}`);
+            const linhas = await response.json();
+            exibirResultados(linhas);
+        } catch (error) {
+            console.error('Erro ao buscar linhas:', error);
+            resultadosDiv.style.display = 'none';
+        }
+    }
+
+    function exibirResultados(linhas) {
+        resultadosDiv.innerHTML = ''; 
+        if (linhas.length === 0) {
+            resultadosDiv.style.display = 'none';
+            return;
+        }
+
+        linhas.forEach(linha => {
+            const item = document.createElement('div');
+            item.className = 'result-item';
+
+            // Assume que sua Rota.java tem 'linhaTranscol', 'linhaMunicipal' e 'nome'
+            let numero, tipo;
+            if (linha.linhaTranscol) {
+                numero = linha.linhaTranscol;
+                tipo = 'TRANSCOL';
+            } else {
+                numero = linha.linhaMunicipal;
+                tipo = 'MUNICIPAL';
+            }
+
+            item.textContent = `${numero} (${linha.nome})`; 
+            item.dataset.numero = numero;
+            item.dataset.tipo = tipo; 
+            
+            resultadosDiv.appendChild(item);
+        });
+        resultadosDiv.style.display = 'block';
+    }
+
+
+    // --- 5. Função de Envio do Formulário (ATUALIZADA) ---
+    async function enviarDenuncia() {
+        
+        // Coleta dados do formulário
+        const descricao = document.querySelector('textarea').value;
+        const tipoIncidente = document.querySelector('input[name="incident"]:checked').value;
+        const lat = latInput.value;
+        const lon = lonInput.value;
+        const bairro = document.getElementById('bairro').value;
+        const municipio = document.getElementById('municipio').value;
+
+        // Coleta dados do autocomplete
+        const numeroLinha = numeroSelecionadoInput.value;
+        const tipoLinha = tipoSelecionadoInput.value;
+
+        // Validação
+        if (!lat || !lon || !descricao || !tipoIncidente || !bairro || !municipio) {
+            alert("Todos os campos (Descrição, Tipo e Local no Mapa) são obrigatórios!");
+            return;
+        }
+
+        // Lógica para enviar a linha correta
+        let linhaTranscol = null;
+        let linhaMunicipal = null;
+
+        if (numeroLinha && tipoLinha) {
+             const numeroInt = parseInt(numeroLinha);
+             if (tipoLinha === 'TRANSCOL') {
+                linhaTranscol = numeroInt;
+             } else if (tipoLinha === 'MUNICIPAL') {
+                linhaMunicipal = numeroInt;
+             }
+        }
+        
+        // Monta o objeto JSON final (payload)
+        const dados = {
+            descricao: descricao,
+            tipo: tipoIncidente,
+            latitude: parseFloat(lat),
+            longitude: parseFloat(lon),
+            bairro: bairro,
+            municipio: municipio,
+            linhaTranscol: linhaTranscol,   // Envia o número ou null
+            linhaMunicipal: linhaMunicipal  // Envia o número ou null
+        };
+
+        console.log("Enviando dados:", JSON.stringify(dados, null, 2));
+
+        // Envia para o backend (Controller de Relato)
+        try {
+            const response = await fetch('/relatos', { // Confirme se o path é /api/relatos
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dados),
+            });
+
+            if (response.ok) {
+                alert('Incidente reportado com sucesso!');
+                // Limpa o formulário
+                document.querySelector('textarea').value = '';
+                buscaInput.value = '';
+                numeroSelecionadoInput.value = '';
+                tipoSelecionadoInput.value = '';
+                document.getElementById('bairro').value = '';
+                document.getElementById('municipio').value = '';
+            } else {
+                alert('Erro ao reportar o incidente. Verifique os dados.');
+            }
+        } catch (error) {
+            alert('Erro ao se comunicar com o servidor.');
+            console.error(error);
+        }
+    }
+
+
+    // --- 6. Event Listeners ---
+
+    // Clicar no botão "Enviar Denúncia"
+    submitBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        enviarDenuncia();
+    });
+
+    // Clicar no mapa
     map.on('click', (e) => {
         updatePinLocation(e.coordinate);
     });
 
-    // --- 5. Lógica do Botão "Usar minha Localização" ---
-    const locationBtn = document.querySelector('.location-btn');
+    // Clicar no botão "Usar Localização Atual"
     locationBtn.addEventListener('click', () => {
         if (!navigator.geolocation) {
-            alert('Geolocalização não é suportada pelo seu navegador.');
-            return;
+            return alert('Geolocalização não é suportada.');
         }
-
-        locationBtn.disabled = true; // Desativa o botão enquanto busca
-        locationBtn.textContent = 'Buscando...';
+        
+        locationBtn.disabled = true;
+        locationBtn.innerHTML = 'Buscando...'; // Feedback para o usuário
 
         navigator.geolocation.getCurrentPosition(
             (pos) => {
                 const coords_4326 = [pos.coords.longitude, pos.coords.latitude];
                 const coords_3857 = ol.proj.fromLonLat(coords_4326);
-
-                // Centraliza o mapa e atualiza o pin
+                
                 map.getView().animate({ center: coords_3857, zoom: 16, duration: 1000 });
                 updatePinLocation(coords_3857);
                 
                 locationBtn.disabled = false;
-                locationBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="20" height="20" fill="white"><path d="M352 348.4C416.1 333.9 464 276.5 464 208C464 128.5 399.5 64 320 64C240.5 64 176 128.5 176 208C176 276.5 223.9 333.9 288 348.4L288 544C288 561.7 302.3 576 320 576C337.7 576 352 561.7 352 544L352 348.4zM328 160C297.1 160 272 185.1 272 216C272 229.3 261.3 240 248 240C234.7 240 224 229.3 224 216C224 158.6 270.6 112 328 112C341.3 112 352 122.7 352 136C352 149.3 341.3 160 328 160z"/></svg>';
+                // Restaura o conteúdo original do botão
+                locationBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="20" height="20" fill="white"><path d="M352 348.4C416.1 333.9 464 276.5 464 208C464 128.5 399.5 64 320 64C240.5 64 176 128.5 176 208C176 276.5 223.9 333.9 288 348.4L288 544C288 561.7 302.3 576 320 576C337.7 576 352 561.7 352 544L352 348.4zM328 160C297.1 160 272 185.1 272 216C272 229.3 261.3 240 248 240C234.7 240 224 229.3 224 216C224 158.6 270.6 112 328 112C341.3 112 352 122.7 352 136C352 149.3 341.3 160 328 160z"/></svg> Usar Localização Atual`;
             },
             (err) => {
                 alert('Não foi possível obter sua localização.');
                 console.error(err);
                 locationBtn.disabled = false;
-                locationBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="20" height="20" fill="white"><path d="M352 348.4C416.1 333.9 464 276.5 464 208C464 128.5 399.5 64 320 64C240.5 64 176 128.5 176 208C176 276.5 223.9 333.9 288 348.4L288 544C288 561.7 302.3 576 320 576C337.7 576 352 561.7 352 544L352 348.4zM328 160C297.1 160 272 185.1 272 216C272 229.3 261.3 240 248 240C234.7 240 224 229.3 224 216C224 158.6 270.6 112 328 112C341.3 112 352 122.7 352 136C352 149.3 341.3 160 328 160z"/></svg>';
+                locationBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="20" height="20" fill="white"><path d="M352 348.4C416.1 333.9 464 276.5 464 208C464 128.5 399.5 64 320 64C240.5 64 176 128.5 176 208C176 276.5 223.9 333.9 288 348.4L288 544C288 561.7 302.3 576 320 576C337.7 576 352 561.7 352 544L352 348.4zM328 160C297.1 160 272 185.1 272 216C272 229.3 261.3 240 248 240C234.7 240 224 229.3 224 216C224 158.6 270.6 112 328 112C341.3 112 352 122.7 352 136C352 149.3 341.3 160 328 160z"/></svg> Usar Localização Atual`;
             }
         );
     });
-});
-</script>
 
+    // Event Listeners do Autocomplete (NOVOS)
+    buscaInput.addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        numeroSelecionadoInput.value = '';
+        tipoSelecionadoInput.value = '';
+        const termo = buscaInput.value.trim();
+
+        if (termo.length < 1) {
+            resultadosDiv.style.display = 'none';
+            return;
+        }
+        debounceTimer = setTimeout(() => {
+            buscarLinhasNaAPI(termo);
+        }, 300);
+    });
+
+    resultadosDiv.addEventListener('click', (e) => {
+        if (e.target && e.target.classList.contains('result-item')) {
+            const itemClicado = e.target;
+            buscaInput.value = itemClicado.textContent;
+            numeroSelecionadoInput.value = itemClicado.dataset.numero;
+            tipoSelecionadoInput.value = itemClicado.dataset.tipo;
+            resultadosDiv.style.display = 'none';
+        }
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!buscaInput.contains(e.target) && !resultadosDiv.contains(e.target)) {
+            resultadosDiv.style.display = 'none';
+        }
+    });
+
+});
+    </script>
 </body>
 </html>

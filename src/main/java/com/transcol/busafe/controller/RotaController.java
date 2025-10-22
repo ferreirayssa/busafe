@@ -1,3 +1,5 @@
+//api que exibe coordenadas das rotas em formato GeoJSON
+
 package com.transcol.busafe.controller;
 
 import com.transcol.busafe.model.Rota;
@@ -60,6 +62,15 @@ public class RotaController {
         } catch (Exception e) {
             return emptyFC();
         }
+    }
+
+    @GetMapping("/sugestoes")
+    public List<Rota> getRotaSugestoes(@RequestParam String termo) {
+        if (termo == null || termo.length() < 1) {
+            return List.of(); // Retorna lista vazia
+        }
+        // Usa o novo método do repositório
+        return rotaRepo.findTop10DistinctByLinhaTranscolContainingIgnoreCaseOrLinhaMunicipalContainingIgnoreCase(termo, termo);
     }
 
     // Função de fallback, retorna uma FeatureCollection vazia (200 OK, não erro)

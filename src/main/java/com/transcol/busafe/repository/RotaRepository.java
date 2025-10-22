@@ -15,4 +15,6 @@ public interface RotaRepository extends JpaRepository<Rota, Long> {
     boolean existsByLinhaMunicipal(String codigo);
 
     List<Rota> findAllByLinhaTranscolOrLinhaMunicipal(String transcol, String municipal);
+
+    List<Rota> findTop10DistinctByLinhaTranscolContainingIgnoreCaseOrLinhaMunicipalContainingIgnoreCase(String termoTranscol, String termoMunicipal);
 }

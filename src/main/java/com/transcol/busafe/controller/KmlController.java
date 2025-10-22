@@ -1,3 +1,5 @@
+//api que exibe todas as linhas
+
 package com.transcol.busafe.controller;
 
 import com.transcol.busafe.model.Rota;
