@@ -16,33 +16,41 @@ import java.util.Objects;
 @Entity
 @Table(name = "relato")
 public class Relato {
+        @Id
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
+        private Long id;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+        @Column(columnDefinition = "text")
+        private String descricao;
 
-    @Column(columnDefinition = "double precision", nullable = false)
-    private Double latitude;
+        @Column(length = 10, nullable = false)
+        private String tipo;
 
-    @Column(columnDefinition = "double precision", nullable = false)
-    private Double longitude;
+        @Column(columnDefinition = "double precision", nullable = false)
+        private Double latitude;
 
-    @Column(name = "data_relato", nullable = false, updatable = false)
-    private LocalDateTime dataRelato;
+        @Column(columnDefinition = "double precision", nullable = false)
+        private Double longitude;
 
-    @Column(columnDefinition = "TEXT")
-    private String descricao;
+        @Column(name = "data_relato", nullable = false, updatable = false)
+        private LocalDateTime dataRelato;
 
-    @Column(name = "linha_transcol")
-    private Integer linhaTranscol;
+        @Column(length = 50)
+        private String bairro;
 
-    @Column(name = "linha_municipal")
-    private Integer linhaMunicipal;
+        @Column(length = 50)
+        private String municipio;
 
-    @PrePersist
-    protected void onCreate() {
-        this.dataRelato = LocalDateTime.now();
-    }
+        @Column(name = "linha_municipal")
+        private Integer linhaMunicipal;
+
+        @Column(name = "linha_transcol")
+        private Integer linhaTranscol;
+
+        @PrePersist
+        protected void onCreate() {
+            this.dataRelato = LocalDateTime.now();
+        }
 
     @Override
     public boolean equals(Object o) {
