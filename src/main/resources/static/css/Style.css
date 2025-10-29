@@ -8,6 +8,35 @@
   --secondary-text-clr: #b0b3c1;
 }
 
+/* --- Tema Claro --- */
+body.light-mode {
+  --base-clr: #f0f2f5;    /* Fundo claro */
+  --line-clr: #d9dde3;    /* Linhas divisórias claras */
+  --hover-clr: #e4e6eb;   /* Cor de hover clara */
+  --text-clr: #050505;    /* Texto principal escuro */
+  --accent-clr: #d93b38;  /* Cor de destaque (vermelho um pouco mais escuro) */
+  --secondary-text-clr: #555e70; /* Texto secundário */
+}
+
+/* --- Estilos do Botão de Tema --- */
+.theme-toggle a {
+  position: relative;
+}
+
+/* Esconde o ícone de sol por padrão (no modo escuro) */
+.theme-toggle #sun-icon {
+  display: none;
+}
+/* Esconde a lua no modo claro */
+body.light-mode .theme-toggle #moon-icon {
+  display: none;
+}
+/* Mostra o sol no modo claro */
+body.light-mode .theme-toggle #sun-icon {
+  display: block;
+}
+
+
 
 .container{
   padding: 2.5rem;
@@ -301,35 +330,13 @@ body{
 #sidebar ul{
   list-style: none;
 }
+
 #sidebar > ul > li:first-child {
   display: flex;
   align-items: center;
   margin-bottom: 16px;
   padding: 0 16px;
-  
-  .logo {
-    img {
-      width: 60px;
-      height: auto;
-      object-fit: contain;
-      transition: opacity 0.3s ease;
-    }
-  }
-  
-  #toggle-btn {
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    padding: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    
-    &:hover {
-      opacity: 0.8;
-    }
-  }
+}
 
 #sidebar > ul > li:first-child .logo {
   flex-grow: 1; /* Faz o container da logo crescer */
@@ -337,6 +344,26 @@ body{
   justify-content: center; /* Centraliza a imagem */
 }
 
+#sidebar > ul > li:first-child .logo img {
+  width: 120px;
+  height: auto;
+  object-fit: contain;
+  transition: opacity 0.3s ease;
+}
+
+#sidebar > ul > li:first-child #toggle-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+#sidebar > ul > li:first-child #toggle-btn:hover {
+  opacity: 0.8;
 }
 
 
@@ -622,6 +649,7 @@ body{
 #map {
   width: 100%;
   height: 100vh; /* 100% da altura da tela */
+  background-color: var(--base-clr); /* <-- LINHA CORRIGIDA! */
 }
 
 /* estilos para o contêiner principal no Index.html */
@@ -687,4 +715,101 @@ body{
   .incident-types {
     grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
   }
+}
+
+/* --- Estilos para os campos Bairro/Município (Alert.html) --- */
+#bairro,
+#municipio {
+  padding: 0.6rem;
+  border-radius: 0.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--secondary-text-clr); /* Cor de texto mais suave, pois é readonly */
+  flex: 1 1 0%;
+  font-weight: 500;
+  font-family: Poppins, sans-serif;
+  margin-bottom: 1rem; /* Mantendo o espaçamento que você tinha */
+}
+
+/* --- Estilos para a caixa de resultados da busca de linha --- */
+.search-results {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--hover-clr);
+  border: 1px solid var(--line-clr);
+  border-radius: 0 0 8px 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 10;
+}
+.location-wrapper {
+  position: relative; /* Necessário para os resultados flutuarem abaixo */
+}
+.result-item {
+  padding: 12px;
+  color: var(--text-clr);
+  cursor: pointer;
+}
+.result-item:hover {
+  background: var(--base-clr);
+}
+
+/* --- ESTILOS DAS NOTIFICAÇÕES (TOAST) --- */
+
+#toast-container {
+  position: fixed; /* Fica fixo na tela */
+  top: 20px;
+  right: 20px;
+  z-index: 9999; /* Garante que fique acima de tudo */
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 300px;
+}
+
+.toast {
+  padding: 16px;
+  border-radius: 8px;
+  background: var(--hover-clr); /* Reutiliza sua cor de hover */
+  color: var(--text-clr);
+  border: 1px solid var(--line-clr);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  font-weight: 500;
+  opacity: 0;
+  transform: translateX(100%);
+  /* Animação de entrada */
+  animation: slideIn 0.5s forwards;
+}
+
+/* Animações */
+@keyframes slideIn {
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOut {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+/* Variações de cor */
+.toast.success {
+  border-left: 5px solid #4CAF50; /* Verde */
+}
+.toast.error {
+  border-left: 5px solid var(--accent-clr); /* Seu vermelho */
+}
+.toast.warning {
+  border-left: 5px solid #ff9800; /* Laranja */
 }

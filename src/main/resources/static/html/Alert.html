@@ -1,37 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ocorrências</title>
-</head>
-<body>
-    <!DOCTYPE html>
-<html lang="en">
-<head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Reportar Incidente</title>
+  
   <link rel="stylesheet" href="../css/Style.css">
   <script type="text/javascript" src="../js/scripts.js" defer></script>
+  
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@8.2.0/ol.css">
   <script src="https://cdn.jsdelivr.net/npm/ol@8.2.0/dist/ol.js"></script>
 </head>
 
 <body>
+    <div id="toast-container"></div>
   <nav id="sidebar">
     <ul>
       <li>
-  <div class="logo">
-    <img src="../Logos/Logo_3.png" alt="BuSafe" />
-  </div>
-
-  <button onclick="toggleSidebar()" id="toggle-btn">
-    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e8eaed">
-      <path d="m313-480 155 156q11 11 11.5 27.5T468-268q-11 11-28 11t-28-11L228-452q-6-6-8.5-13t-2.5-15q0-8 2.5-15t8.5-13l184-184q11-11 27.5-11.5T468-692q11 11 11 28t-11 28L313-480Zm264 0 155 156q11 11 11.5 27.5T732-268q-11 11-28 11t-28-11L492-452q-6-6-8.5-13t-2.5-15q0-8 2.5-15t8.5-13l184-184q11-11 27.5-11.5T732-692q11 11 11 28t-11 28L577-480Z"/>
-    </svg>
-  </button>
-</li>
+        <div class="logo">
+          <img src="../Logos/Logo_3.png" alt="BuSafe" />
+        </div>
+        <button onclick="toggleSidebar()" id="toggle-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e8eaed">
+            <path d="m313-480 155 156q11 11 11.5 27.5T468-268q-11 11-28 11t-28-11L228-452q-6-6-8.5-13t-2.5-15q0-8 2.5-15t8.5-13l184-184q11-11 27.5-11.5T468-692q11 11 11 28t-11 28L313-480Zm264 0 155 156q11 11 11.5 27.5T732-268q-11 11-28 11t-28-11L492-452q-6-6-8.5-13t-2.5-15q0-8 2.5-15t8.5-13l184-184q11-11 27.5-11.5T732-692q11 11 11 28t-11 28L577-480Z"/>
+          </svg>
+        </button>
+      </li>
 
       <li class="active">
         <a href="/Index.html">
@@ -56,15 +50,20 @@
         </ul>
       </li>
 
-      <li>
-        <li class="Alert">
-          <a href="Alert.html">
-            <svg xmlns="http://www.w3.org/2000/svg" height="24px" width="24px" viewBox="0 -960 960 960" fill="#f44336">
-              <path d="M80-160 480-880l400 720H80Zm400-80q17 0 28.5-11.5T520-280q0-17-11.5-28.5T480-320q-17 0-28.5 11.5T440-280q0 17 11.5 28.5T480-240Zm-40-160h80v-240h-80v240Z"/>
-            </svg>
-            <span>Reportar Incidente</span>
-          </a>
-        </li>
+      <li class="theme-toggle">
+        <a href="#" id="theme-btn">
+          <svg id="moon-icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e8eaed"><path d="M480-120q-150 0-255-105T120-480q0-150 105-255t255-105q14 0 27.5 1t26.5 3q-41 29-65.5 75.5T400-660q0 116 82 198t198 82q49 0 95.5-24.5T840-466q2 13 3 26.5t1 27.5q0 150-105 255T480-120Zm0-80q88 0 158-48.5T740-375q-20 5-40 8t-40 3q-125 0-212.5-87.5T360-660q0-20 3-40t8-40q-78 35-126.5 105T200-480q0 117 81.5 198.5T480-200Z"/></svg>
+          <svg id="sun-icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e8eaed"><path d="M480-360q-50 0-85-35t-35-85q0-50 35-85t85-35q50 0 85 35t35 85q0 50-35 85t-85 35Zm0 80q83 0 141.5-58.5T680-480q0-83-58.5-141.5T480-680q-83 0-141.5 58.5T280-480q0 83 58.5 141.5T480-280ZM80-440q-17 0-28.5-11.5T40-480q0-17 11.5-28.5T80-520h80q17 0 28.5 11.5T200-480q0 17-11.5 28.5T160-440H80Zm720 0q-17 0-28.5-11.5T760-480q0-17 11.5-28.5T800-520h80q17 0 28.5 11.5T920-480q0 17-11.5 28.5T880-440h-80ZM480-760q-17 0-28.5-11.5T440-800v-80q0-17 11.5-28.5T480-920q17 0 28.5 11.5T520-880v80q0 17-11.5 28.5T480-760Zm0 720q-17 0-28.5-11.5T440-80v-80q0-17 11.5-28.5T480-200q17 0 28.5 11.5T520-160v80q0 17-11.5 28.5T480-40ZM226-695q-12-12-11.5-28t12.5-28l56-56q11-11 28-11t28 11q12 12 12 28.5T338-751l-56 56q-11 11-28 11.5T226-695Zm494 494q-12-12-11.5-28t12.5-28l56-56q11-11 28-11t28 11q12 12 12 28.5T822-221l-56 56q-11 11-28 11.5T720-171Zm-56-494q-11-11-11-28.5T665-721l56-56q12-12 28.5-12t28.5 12q11 11 11 28t-11 28l-56 56q-11 11-28 11.5T664-205Zm-494 494q-11-11-11-28.5T171-221l56-56q12-12 28.5-12t28.5 12q11 11 11 28t-11 28l-56 56q-11 11-28 11.5T226-171Z"/></svg>
+          <span>Alterar Tema</span>
+        </a>
+      </li>
+      
+      <li class="Alert">
+        <a href="/html/Alert.html"> <svg xmlns="http://www.w3.org/2000/svg" height="24px" width="24px" viewBox="0 -960 960 960" fill="#f44336">
+            <path d="M80-160 480-880l400 720H80Zm400-80q17 0 28.5-11.5T520-280q0-17-11.5-28.5T480-320q-17 0-28.5 11.5T440-280q0 17 11.5 28.5T480-240Zm-40-160h80v-240h-80v240Z"/>
+          </svg>
+          <span>Reportar Incidente</span>
+        </a>
       </li>
     </ul>
   </nav>
@@ -130,8 +129,8 @@
         <input type="hidden" id="longitude" name="longitude">
 
         <div class="location-wrapper">
-        <input type="text" id="bairro" name="bairro" placeholder="Bairro (automático)" readonly style="width: 50%; margin-bottom: 1rem;">
-        <input type="text" id="municipio" name="municipio" placeholder="Município (automático)" readonly style="width: 50%; margin-bottom: 1rem;">
+          <input type="text" id="bairro" name="bairro" placeholder="Bairro (automático)" readonly>
+          <input type="text" id="municipio" name="municipio" placeholder="Município (automático)" readonly>
         </div>
 
         <div class="section-title" style="margin-top: 1rem;">Linha</div>
@@ -146,20 +145,38 @@
             <input type="hidden" id="linha-numero-selecionada">
             <input type="hidden" id="linha-tipo-selecionada">
 
-        <button class="location-btn">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="20" height="20" fill="white">
-                <path d="M352 348.4C416.1 333.9 464 276.5 464 208C464 128.5 399.5 64 320 64C240.5 64 176 128.5 176 208C176 276.5 223.9 333.9 288 348.4L288 544C288 561.7 302.3 576 320 576C337.7 576 352 561.7 352 544L352 348.4zM328 160C297.1 160 272 185.1 272 216C272 229.3 261.3 240 248 240C234.7 240 224 229.3 224 216C224 158.6 270.6 112 328 112C341.3 112 352 122.7 352 136C352 149.3 341.3 160 328 160z"/>
-            </svg>
-        </button>
+            <button class="location-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="20" height="20" fill="white">
+                    <path d="M352 348.4C416.1 333.9 464 276.5 464 208C464 128.5 399.5 64 320 64C240.5 64 176 128.5 176 208C176 276.5 223.9 333.9 288 348.4L288 544C288 561.7 302.3 576 320 576C337.7 576 352 561.7 352 544L352 348.4zM328 160C297.1 160 272 185.1 272 216C272 229.3 261.3 240 248 240C234.7 240 224 229.3 224 216C224 158.6 270.6 112 328 112C341.3 112 352 122.7 352 136C352 149.3 341.3 160 328 160z"/>
+                </svg>
+            </button>
         </div>
         
         <button class="submit-btn">Enviar Denúncia</button>
-    </div>
-
-    
-    <script>
+  </div>
+  
+  <script>
 document.addEventListener('DOMContentLoaded', () => {
 
+    // --- Função de Notificações Toast ---
+    function showToast(message, type = 'info') { // types: success, error, warning
+      const container = document.getElementById('toast-container');
+      if (!container) return; // Segurança
+
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`; // Usa as classes do CSS
+      toast.textContent = message;
+
+      container.appendChild(toast);
+
+      // Define um tempo para a notificação sumir
+      setTimeout(() => {
+        toast.style.animation = 'slideOut 0.5s forwards';
+        // Remove o elemento depois da animação
+        setTimeout(() => toast.remove(), 500);
+      }, 3000); // 3 segundos
+    }
+    
     // --- 1. Referências aos Elementos do DOM ---
     const latInput = document.getElementById('latitude');
     const lonInput = document.getElementById('longitude');
@@ -287,7 +304,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Validação
         if (!lat || !lon || !descricao || !tipoIncidente || !bairro || !municipio) {
-            alert("Todos os campos (Descrição, Tipo e Local no Mapa) são obrigatórios!");
+            showToast("Preencha todos os campos obrigatórios!", 'warning');
             return;
         }
 
@@ -327,7 +344,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (response.ok) {
-                alert('Incidente reportado com sucesso!');
+                showToast('Incidente reportado com sucesso!', 'success');
                 // Limpa o formulário
                 document.querySelector('textarea').value = '';
                 buscaInput.value = '';
@@ -336,10 +353,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('bairro').value = '';
                 document.getElementById('municipio').value = '';
             } else {
-                alert('Erro ao reportar o incidente. Verifique os dados.');
+                showToast('Erro ao reportar o incidente. Verifique os dados.', 'error');
             }
         } catch (error) {
-            alert('Erro ao se comunicar com o servidor.');
+            showToast('Erro ao se comunicar com o servidor.', 'error');
             console.error(error);
         }
     }
@@ -361,7 +378,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Clicar no botão "Usar Localização Atual"
     locationBtn.addEventListener('click', () => {
         if (!navigator.geolocation) {
-            return alert('Geolocalização não é suportada.');
+            showToast('Geolocalização não é suportada.', 'warning'); return;
         }
         
         locationBtn.disabled = true;
@@ -380,7 +397,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 locationBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="20" height="20" fill="white"><path d="M352 348.4C416.1 333.9 464 276.5 464 208C464 128.5 399.5 64 320 64C240.5 64 176 128.5 176 208C176 276.5 223.9 333.9 288 348.4L288 544C288 561.7 302.3 576 320 576C337.7 576 352 561.7 352 544L352 348.4zM328 160C297.1 160 272 185.1 272 216C272 229.3 261.3 240 248 240C234.7 240 224 229.3 224 216C224 158.6 270.6 112 328 112C341.3 112 352 122.7 352 136C352 149.3 341.3 160 328 160z"/></svg> Usar Localização Atual`;
             },
             (err) => {
-                alert('Não foi possível obter sua localização.');
+                showToast('Não foi possível obter sua localização.', 'error');
                 console.error(err);
                 locationBtn.disabled = false;
                 locationBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="20" height="20" fill="white"><path d="M352 348.4C416.1 333.9 464 276.5 464 208C464 128.5 399.5 64 320 64C240.5 64 176 128.5 176 208C176 276.5 223.9 333.9 288 348.4L288 544C288 561.7 302.3 576 320 576C337.7 576 352 561.7 352 544L352 348.4zM328 160C297.1 160 272 185.1 272 216C272 229.3 261.3 240 248 240C234.7 240 224 229.3 224 216C224 158.6 270.6 112 328 112C341.3 112 352 122.7 352 136C352 149.3 341.3 160 328 160z"/></svg> Usar Localização Atual`;

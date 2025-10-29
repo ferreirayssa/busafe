@@ -52,6 +52,38 @@ if (searchForm) {
       searchInput && searchInput.focus()
     }
   })
+}
 
-  
+// --- LÓGICA DO TEMA CLARO / ESCURO ---
+
+const themeBtn = document.getElementById('theme-btn');
+
+// Função para aplicar o tema (claro ou escuro)
+function setAppTheme(theme) {
+  if (theme === 'light') {
+    document.body.classList.add('light-mode');
+  } else {
+    document.body.classList.remove('light-mode');
+  }
+}
+
+// Verifica se já existe um tema salvo no navegador
+const savedTheme = localStorage.getItem('theme') || 'dark'; // Padrão é escuro
+setAppTheme(savedTheme);
+
+
+// O que acontece ao clicar no botão
+if (themeBtn) {
+  themeBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    
+    // Verifica qual é o tema atual e inverte
+    let newTheme = document.body.classList.contains('light-mode') ? 'dark' : 'light';
+    
+    // Aplica o novo tema
+    setAppTheme(newTheme);
+    
+    // Salva a escolha no navegador
+    localStorage.setItem('theme', newTheme);
+  });
 }
