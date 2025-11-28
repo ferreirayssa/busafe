@@ -860,6 +860,11 @@ body{
     left: 0;
   }
 
+  /* Oculta o botão toggle (setas duplas) em mobile */
+  #sidebar #toggle-btn {
+    display: none !important;
+  }
+
   /* Ajusta o container principal da tela Alert */
   .container {
     padding: 1rem;
