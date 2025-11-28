@@ -305,6 +305,56 @@ body{
   display: grid;
   grid-template-columns: auto 1fr;
 }
+
+/* --- BOTÃO HAMBÚRGUER --- */
+#hamburger-btn {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 1001;
+  background: var(--accent-clr);
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
+  cursor: pointer;
+  display: none;
+  box-shadow: 0 4px 12px rgba(239, 83, 80, 0.4);
+  transition: all 0.3s ease;
+}
+
+#hamburger-btn:hover {
+  background: #f0625f;
+  transform: scale(1.05);
+  box-shadow: 0 6px 18px rgba(239, 83, 80, 0.6);
+}
+
+#hamburger-btn svg {
+  display: block;
+  width: 24px;
+  height: 24px;
+  fill: white;
+}
+
+/* --- OVERLAY --- */
+#sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 999;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+#sidebar-overlay.show {
+  display: block;
+  opacity: 1;
+}
+
+/* --- SIDEBAR --- */
 #sidebar{
   box-sizing: border-box;
   height: 100vh;
@@ -649,18 +699,15 @@ body{
 #map {
   width: 100%;
   height: 100vh; /* 100% da altura da tela */
-  background-color: var(--base-clr); /* <-- LINHA CORRIGIDA! */
+  background-color: var(--base-clr);
 }
 
 /* estilos para o contêiner principal no Index.html */
 #content {
-  /* Isso depende de como sua sidebar funciona,
-     mas um começo seria: */
-  margin-left: 0px; /* A largura da sua sidebar */
+  margin-left: 0px;
   height: 100vh;
 }
 
-/* Responsividade na tela Alert */
 /* Estilo para o novo campo de busca na tela Alert */
 #incidente-linha-busca {
   padding: 0.6rem;
@@ -679,44 +726,6 @@ body{
   border-color: #e53935; 
 }
 
-/* --- Media Query para Responsividade --- */
-@media (max-width: 700px) {
-
-  /* Ajusta o layout para 1 coluna */
-  body {
-    grid-template-columns: 1fr;
-  }
-
-  /* Faz a sidebar sumir em vez de ficar espremida */
-  #sidebar {
-    display: none; 
-    /* Outra opção seria fazer ela sobrepor o conteúdo,
-       mas por enquanto 'none' é mais simples */
-  }
-
-  /* Ajusta o container principal da tela Alert */
-  .container {
-    padding: 1rem;
-    margin: 1rem;
-  }
-
-  /* Empilha os botões de localização na tela Alert */
-  .location-wrapper {
-    flex-direction: column;
-    align-items: stretch; /* Faz os itens ocuparem 100% da largura */
-  }
-
-  .location-btn {
-    width: 100%;
-    justify-content: center;
-  }
-
-  /* Melhora o grid dos tipos de incidente em telas pequenas */
-  .incident-types {
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-  }
-}
-
 /* --- Estilos para os campos Bairro/Município (Alert.html) --- */
 #bairro,
 #municipio {
@@ -724,11 +733,11 @@ body{
   border-radius: 0.6rem;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(0, 0, 0, 0.25);
-  color: var(--secondary-text-clr); /* Cor de texto mais suave, pois é readonly */
+  color: var(--secondary-text-clr);
   flex: 1 1 0%;
   font-weight: 500;
   font-family: Poppins, sans-serif;
-  margin-bottom: 1rem; /* Mantendo o espaçamento que você tinha */
+  margin-bottom: 1rem;
 }
 
 /* --- Estilos para a caixa de resultados da busca de linha --- */
@@ -746,7 +755,7 @@ body{
   z-index: 10;
 }
 .location-wrapper {
-  position: relative; /* Necessário para os resultados flutuarem abaixo */
+  position: relative;
 }
 .result-item {
   padding: 12px;
@@ -760,10 +769,10 @@ body{
 /* --- ESTILOS DAS NOTIFICAÇÕES (TOAST) --- */
 
 #toast-container {
-  position: fixed; /* Fica fixo na tela */
+  position: fixed;
   top: 20px;
   right: 20px;
-  z-index: 9999; /* Garante que fique acima de tudo */
+  z-index: 9999;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -773,14 +782,13 @@ body{
 .toast {
   padding: 16px;
   border-radius: 8px;
-  background: var(--hover-clr); /* Reutiliza sua cor de hover */
+  background: var(--hover-clr);
   color: var(--text-clr);
   border: 1px solid var(--line-clr);
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   font-weight: 500;
   opacity: 0;
   transform: translateX(100%);
-  /* Animação de entrada */
   animation: slideIn 0.5s forwards;
 }
 
@@ -805,11 +813,76 @@ body{
 
 /* Variações de cor */
 .toast.success {
-  border-left: 5px solid #4CAF50; /* Verde */
+  border-left: 5px solid #4CAF50;
 }
 .toast.error {
-  border-left: 5px solid var(--accent-clr); /* Seu vermelho */
+  border-left: 5px solid var(--accent-clr);
 }
 .toast.warning {
-  border-left: 5px solid #ff9800; /* Laranja */
+  border-left: 5px solid #ff9800;
+}
+
+/* --- RESPONSIVIDADE --- */
+@media (max-width: 768px) {
+  /* Mostra o botão hambúrguer */
+  #hamburger-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Ajusta o layout para 1 coluna */
+  body {
+    grid-template-columns: 1fr;
+  }
+
+  /* Sidebar oculto por padrão em mobile */
+  #sidebar {
+    position: fixed;
+    top: 0;
+    left: -250px;
+    height: 100vh;
+    z-index: 1000;
+    transition: left 0.3s ease-in-out;
+  }
+
+  /* Sidebar aberto */
+  #sidebar.mobile-open {
+    left: 0;
+  }
+
+  /* Ajusta o container principal da tela Alert */
+  .container {
+    padding: 1rem;
+    margin: 1rem;
+    margin-top: 80px;
+  }
+
+  /* Empilha os botões de localização na tela Alert */
+  .location-wrapper {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .location-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Melhora o grid dos tipos de incidente em telas pequenas */
+  .incident-types {
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  }
+
+  /* Ajusta o mapa para considerar o botão hambúrguer */
+  #map {
+    height: 100vh;
+  }
+
+  /* Ajusta toast para mobile */
+  #toast-container {
+    width: calc(100% - 40px);
+    left: 20px;
+    right: 20px;
+  }
 }

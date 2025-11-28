@@ -1,11 +1,42 @@
 const toggleButton = document.getElementById('toggle-btn')
 const sidebar = document.getElementById('sidebar')
+const hamburgerBtn = document.getElementById('hamburger-btn')
+const sidebarOverlay = document.getElementById('sidebar-overlay')
 
 function toggleSidebar(){
   sidebar.classList.toggle('close')
   toggleButton.classList.toggle('rotate')
 
   closeAllSubMenus()
+}
+
+// Função para abrir/fechar sidebar em mobile
+function toggleMobileSidebar() {
+  sidebar.classList.toggle('mobile-open')
+  sidebarOverlay.classList.toggle('show')
+}
+
+// Event listener para o botão hambúrguer
+if (hamburgerBtn) {
+  hamburgerBtn.addEventListener('click', toggleMobileSidebar)
+}
+
+// Event listener para o overlay (fechar ao clicar fora)
+if (sidebarOverlay) {
+  sidebarOverlay.addEventListener('click', toggleMobileSidebar)
+}
+
+// Event listener para o botão de fechar dentro do sidebar (em mobile)
+if (toggleButton) {
+  toggleButton.addEventListener('click', () => {
+    // Verifica se está em mobile (sidebar com classe mobile-open)
+    if (sidebar.classList.contains('mobile-open')) {
+      toggleMobileSidebar()
+    } else {
+      // Desktop: comportamento normal
+      toggleSidebar()
+    }
+  })
 }
 
 function toggleSubMenu(button){
