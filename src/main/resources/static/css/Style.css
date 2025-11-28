@@ -50,6 +50,8 @@ body.light-mode .theme-toggle #sun-icon {
   text-align: center;
   aspect-ratio: 16 / 7; 
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .incident-card:hover {
@@ -856,6 +858,9 @@ body{
     padding: 1rem;
     margin: 1rem;
     margin-top: 80px;
+    aspect-ratio: auto;
+    width: calc(100% - 2rem);
+    max-width: calc(100% - 2rem);
   }
 
   /* Empilha os botões de localização na tela Alert */
