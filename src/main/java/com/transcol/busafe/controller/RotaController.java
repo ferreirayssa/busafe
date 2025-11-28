@@ -7,8 +7,10 @@ import com.transcol.busafe.repository.RotaRepository;
 import com.transcol.busafe.repository.PontoRotaRepository;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/rotas")
@@ -66,11 +68,30 @@ public class RotaController {
 
     @GetMapping("/sugestoes")
     public List<Rota> getRotaSugestoes(@RequestParam String termo) {
+
         if (termo == null || termo.length() < 1) {
-            return List.of(); // Retorna lista vazia
+            return List.of();
         }
-        // Usa o novo método do repositório
-        return rotaRepo.findTop10DistinctByLinhaTranscolContainingIgnoreCaseOrLinhaMunicipalContainingIgnoreCase(termo, termo);
+
+        // Busca original
+        List<Rota> rotas = rotaRepo
+                .findTop10DistinctByLinhaTranscolContainingIgnoreCaseOrLinhaMunicipalContainingIgnoreCase(
+                        termo, termo
+                );
+
+        // --- Deduplicar usando stream ---
+        return rotas.stream()
+            .collect(Collectors.toMap(
+                r -> r.getLinhaTranscol() != null
+                        ? r.getLinhaTranscol().toString()
+                        : r.getLinhaMunicipal().toString(),
+                r -> r,
+                (primeiro, duplicado) -> primeiro,      // mantém o primeiro
+                LinkedHashMap::new                      // mantém a ordem original
+            ))
+            .values()
+            .stream()
+            .toList();
     }
 
     // Função de fallback, retorna uma FeatureCollection vazia (200 OK, não erro)
