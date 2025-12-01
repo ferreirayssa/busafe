@@ -73,83 +73,83 @@ body.light-mode .theme-toggle #sun-icon {
 }
 
 
-.icon-assault svg {
+.icon-assalto svg {
   fill: #e53935; 
   transition: fill 0.3s ease, transform 0.3s ease;
 }
 
-.icon-harassment svg {
+.icon-assedio svg {
   fill: #ff9800; 
   transition: fill 0.3s ease, transform 0.3s ease;
 }
 
-.icon-violence svg {
+.icon-violencia svg {
   fill: #9c27b0; 
   transition: fill 0.3s ease, transform 0.3s ease;
 }
 
-.icon-theft svg {
+.icon-furto svg {
   fill: #2196f3; 
   transition: fill 0.3s ease, transform 0.3s ease;
 }
 
-.icon-other svg {
+.icon-outro svg {
   fill: #9e9e9e; 
   transition: fill 0.3s ease, transform 0.3s ease;
 }
 
 
-label:hover .icon-assault svg {
+label:hover .icon-assalto svg {
   fill: #ef5350; 
   transform: scale(1.1);
 }
 
-label:hover .icon-harassment svg {
+label:hover .icon-assedio svg {
   fill: #ffb74d; 
   transform: scale(1.1);
 }
 
-label:hover .icon-violence svg {
+label:hover .icon-violencia svg {
   fill: #ba68c8; 
   transform: scale(1.1);
 }
 
-label:hover .icon-theft svg {
+label:hover .icon-furto svg {
   fill: #64b5f6; 
   transform: scale(1.1);
 }
 
-label:hover .icon-other svg {
+label:hover .icon-outro svg {
   fill: #bdbdbd; 
   transform: scale(1.1);
 }
 
 
-input[type="radio"]:checked + label .icon-assault svg {
+input[type="radio"]:checked + label .icon-assalto svg {
   fill: #e53935;
   transform: scale(1.15);
   filter: drop-shadow(0 0 6px rgba(229, 57, 53, 0.6));
 }
 
-input[type="radio"]:checked + label .icon-harassment svg {
+input[type="radio"]:checked + label .icon-assedio svg {
   fill: #ff9800;
   transform: scale(1.15);
   filter: drop-shadow(0 0 6px rgba(255, 152, 0, 0.6));
 }
 
-input[type="radio"]:checked + label .icon-violence svg {
+input[type="radio"]:checked + label .icon-violencia svg {
   fill: #9c27b0;
   transform: scale(1.15);
   filter: drop-shadow(0 0 6px rgba(156, 39, 176, 0.6));
 }
 
-input[type="radio"]:checked + label .icon-theft svg {
+input[type="radio"]:checked + label .icon-furto svg {
   fill: #2196f3;
   transform: scale(1.15);
   filter: drop-shadow(0 0 6px rgba(33, 150, 243, 0.6));
 }
 
-input[type="radio"]:checked + label .icon-other svg {
+input[type="radio"]:checked + label .icon-outro svg {
   fill: #9e9e9e;
   transform: scale(1.15);
   filter: drop-shadow(0 0 6px rgba(158, 158, 158, 0.5));
