@@ -1,6 +1,7 @@
 # 🚌 BuSafe - Ônibus Seguro
 
 ![BuSafe](./src/main/resources/static/prototipo/Banner.png)
+[Acesse o BuSafe!](https://busafe-jhak.onrender.com/)
 
 **BuSafe** é uma solução tecnológica desenvolvida para enfrentar a crise de confiança no transporte público do Espírito Santo. O sistema utiliza um mapa intuitivo para identificar zonas seguras e perigosas, auxiliando no planejamento de viagens mais seguras.
 
