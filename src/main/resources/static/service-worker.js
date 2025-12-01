@@ -1,7 +1,7 @@
 const CACHE_NAME = 'busafe-v1';
 const urlsToCache = [
-  '/Index.html',
-  '/html/Alert.html',
+  '/index.html',
+  '/html/alert.html',
   '/css/Style.css',
   '/js/scripts.js',
   '/Logos/Logo_3.png',
@@ -97,7 +97,7 @@ self.addEventListener('fetch', (event) => {
           .catch((error) => {
             console.error('[Service Worker] Erro ao buscar:', error);
             // Retorna uma página offline personalizada se disponível
-            return caches.match('/Index.html');
+            return caches.match('/index.html');
           });
       })
   );

@@ -2,7 +2,7 @@
   "name": "BuSafe - Ônibus Seguro",
   "short_name": "BuSafe",
   "description": "Aplicativo para reportar incidentes e visualizar rotas de ônibus com segurança",
-  "start_url": "/Index.html",
+  "start_url": "/index.html",
   "display": "standalone",
   "background_color": "#11121a",
   "theme_color": "#ef5350",
@@ -28,7 +28,7 @@
       "name": "Reportar Incidente",
       "short_name": "Reportar",
       "description": "Reportar um incidente rapidamente",
-      "url": "/html/Alert.html",
+      "url": "/html/alert.html",
       "icons": [
         {
           "src": "/Logos/Logo_3.png",
@@ -40,7 +40,7 @@
       "name": "Ver Mapa",
       "short_name": "Mapa",
       "description": "Visualizar mapa de rotas",
-      "url": "/Index.html",
+      "url": "/index.html",
       "icons": [
         {
           "src": "/Logos/Logo_3.png",
