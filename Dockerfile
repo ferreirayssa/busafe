@@ -9,6 +9,12 @@ COPY pom.xml .
 COPY .mvn .mvn
 COPY mvnw .
 COPY mvnw.cmd .
+
+# --- CORREÇÃO AQUI ---
+# Dá permissão de execução para o script wrapper (necessário se vindo do Windows)
+RUN chmod +x mvnw
+# ---------------------
+
 RUN ./mvnw dependency:go-offline -B
 
 # Copia o código-fonte e empacota
