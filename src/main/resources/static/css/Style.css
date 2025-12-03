@@ -4,7 +4,7 @@
   --line-clr: #42434a;
   --hover-clr: #222533;
   --text-clr: #e6e6ef;
-  --accent-clr: #ef5350;
+  --accent-clr: #10659c;
   --secondary-text-clr: #b0b3c1;
 }
 
@@ -14,7 +14,7 @@ body.light-mode {
   --line-clr: #d9dde3;    /* Linhas divisórias claras */
   --hover-clr: #e4e6eb;   /* Cor de hover clara */
   --text-clr: #050505;    /* Texto principal escuro */
-  --accent-clr: #d93b38;  /* Cor de destaque (vermelho um pouco mais escuro) */
+  --accent-clr: #10659c;  /* Cor de destaque (vermelho um pouco mais escuro) */
   --secondary-text-clr: #555e70; /* Texto secundário */
 }
 
@@ -56,7 +56,7 @@ body.light-mode .theme-toggle #sun-icon {
 
 .incident-card:hover {
   transform: scale(1.02);
-  box-shadow: 0 12px 40px rgba(2,6,23,0.7);
+  box-shadow: 0 12px 40px rgba(4, 7, 23, 0.208);
 }
 
 .container h1{
@@ -183,7 +183,7 @@ input[type="radio"]:checked + label .icon-outro svg {
   display: grid;
   place-items: center;
   border-radius: 8px;
-  background: rgba(0,0,0,0.2);
+  background: rgba(0, 0, 0, 0.1);
   font-size: 1.1rem;
 }
 
@@ -196,7 +196,7 @@ input[type="radio"]:checked + label .icon-outro svg {
 .incident-card input:checked + label{
   outline: 2px solid var(--accent-clr);
   outline-offset: 5px;  
-  background: rgba(0,0,0,0.3);
+  background: rgba(0, 0, 0, 0);
 }
 
 textarea{
@@ -231,15 +231,15 @@ textarea{
 
 .location-wrapper select:hover {
   background: rgba(0, 0, 0, 0.35);
-  border-color: #e53935; 
-  box-shadow: 0 4px 12px rgba(229, 57, 53, 0.5);
+  border-color: #10659c; 
+  box-shadow: 0 4px 12px rgb(11, 67, 105);
 }
 
 .location-btn {
   padding: 0.6rem 0.9rem;
   border-radius: 0.6rem;
   border: none;
-  background: linear-gradient(90deg, #e53935, #ef5350);
+  background: linear-gradient(90deg, #10659c, #1375b7);
   color: white;
   cursor: pointer;
   font-weight: 600;
@@ -247,18 +247,18 @@ textarea{
   align-items: center;
   gap: 0.4rem;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(229, 57, 53, 0.5); 
+  box-shadow: 0 4px 12px rgb(11, 67, 105); 
 }
 
 .location-btn:hover {
-  background: linear-gradient(90deg, #ef5350, #f0625f);
+  background: linear-gradient(90deg, #10659c, #1375b7);
   transform: translateY(-2px) scale(1.03);
-  box-shadow: 0 6px 18px rgba(229, 57, 53, 0.7);
+  box-shadow: 0 6px 18px  rgb(11, 67, 105);
 }
 
 .location-btn:active {
   transform: translateY(0) scale(0.98);
-  box-shadow: 0 4px 10px rgba(229, 57, 53, 0.5);
+  box-shadow: 0 4px 10px rgb(11, 67, 105);
 }
 
 .location-btn svg {
@@ -278,24 +278,24 @@ textarea{
   padding: 0.75rem 1.1rem;
   border-radius: 0.6rem;
   border: none;
-  background: linear-gradient(90deg, #e53935, #ef5350);
+  background: linear-gradient(90deg, #10659c, #1375b7);
   color: white;
   cursor: pointer;
   font-weight: 600;
   font-size: 1rem;
-  box-shadow: 0 4px 12px rgba(229, 57, 53, 0.5);
+  box-shadow: 0 4px 12px rgb(11, 67, 105);
   transition: all 0.3s ease;
 }
 
 .submit-btn:hover {
-  background: linear-gradient(90deg, #ef5350, #f0625f);
-  box-shadow: 0 6px 18px rgba(229, 57, 53, 0.7);
+  background: linear-gradient(90deg, #10659c, #1375b7);
+  box-shadow: 0 6px 18px rgb(11, 67, 105);
   transform: translateY(-2px) scale(1.02);
 }
 
 .submit-btn:active {
   transform: translateY(0) scale(0.98);
-  box-shadow: 0 4px 10px rgba(229, 57, 53, 0.5);
+  box-shadow: 0 4px 10px rgb(11, 67, 105);
 }
 
 *{
@@ -327,14 +327,14 @@ body{
   padding: 12px;
   cursor: pointer;
   display: none;
-  box-shadow: 0 4px 12px rgba(239, 83, 80, 0.4);
+  box-shadow: 0 4px 12px rgb(11, 67, 105);
   transition: all 0.3s ease;
 }
 
 #hamburger-btn:hover {
-  background: #f0625f;
+  background: #10659c;
   transform: scale(1.05);
-  box-shadow: 0 6px 18px rgba(239, 83, 80, 0.6);
+  box-shadow: 0 6px 18px rgb(11, 67, 105);
 }
 
 #hamburger-btn svg {
@@ -574,10 +574,10 @@ body{
   align-items: center;
   gap: .75rem;
   padding: .6rem .9rem;
-  background: #f44336; /* red */
+  background: #10659c; /* red */
   color: #fff;
   border-radius: .6rem;
-  box-shadow: 0 6px 18px rgba(244,67,54,0.25);
+  box-shadow: 0 6px 18px rgb(11, 67, 105);
   text-decoration: none;
   animation: pulse-red 2s ease-in-out infinite;
   transition: transform 150ms ease, box-shadow 150ms ease;
@@ -592,16 +592,16 @@ body{
 
 .Alert > a:hover{
   transform: translateY(-2px) scale(1.04);
-  box-shadow: 0 14px 40px rgba(244,67,54,0.35);
+  box-shadow: 0 14px 40px rgb(11, 67, 105);
   animation-play-state: paused; 
-  background-color: #f44336 !important;
+  background-color: #10659c !important;
   color: #fff !important;
 }
 
 @keyframes pulse-red{
-  0%{ transform: translateY(0) scale(1); box-shadow: 0 6px 18px rgba(244,67,54,0.25); }
-  50%{ transform: translateY(-2px) scale(1.03); box-shadow: 0 10px 30px rgba(244,67,54,0.35); }
-  100%{ transform: translateY(0) scale(1); box-shadow: 0 6px 18px rgba(244,67,54,0.25); }
+  0%{ transform: translateY(0) scale(1); box-shadow: 0 6px 18px rgb(11, 67, 105); }
+  50%{ transform: translateY(-2px) scale(1.03); box-shadow: 0 10px 30px rgb(11, 67, 105); }
+  100%{ transform: translateY(0) scale(1); box-shadow: 0 6px 18px rgb(11, 67, 105); }
 }
 
 #sidebar ul li.Alert {
@@ -613,7 +613,7 @@ body{
 }
 
 #sidebar ul li.Alert a {
-  background: #ef4444;
+  background: #10659c;
   color: white;
   border-radius: 8px;
   padding: 12px 16px;
@@ -626,7 +626,7 @@ body{
 }
 
 #sidebar ul li.Alert a:hover {
-  background: #dc2626;
+  background: #10659c;
 }
 
 #sidebar ul li.Alert a svg {
@@ -690,7 +690,7 @@ body{
 }
 
 #status {
-  background-color: rgba(239, 83, 80, 0.8);
+  background-color: rgb(112, 186, 236);
   color: white;
   padding: 10px 16px;
   margin: 0 16px 16px;
@@ -704,14 +704,14 @@ body{
   display: block;
 }
 
-/* Estilos do mapa para Index.html */
+/* Estilos do mapa para index.html */
 #map {
   width: 100%;
   height: 100vh; /* 100% da altura da tela */
   background-color: var(--base-clr);
 }
 
-/* estilos para o contêiner principal no Index.html */
+/* estilos para o contêiner principal no index.html */
 #content {
   margin-left: 0px;
   height: 100vh;
@@ -732,7 +732,7 @@ body{
 
 #incidente-linha-busca:hover {
   background: rgba(0, 0, 0, 0.35);
-  border-color: #e53935; 
+  border-color: #10659c; 
 }
 
 /* --- Estilos para os campos Bairro/Município (alert.html) --- */

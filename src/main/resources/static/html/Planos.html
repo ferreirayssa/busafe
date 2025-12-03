@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Planos - BuSafe</title>
+  <title>planos - BuSafe</title>
   
   <!-- PWA Meta Tags -->
   <meta name="description" content="Escolha o melhor plano para você - BuSafe">
   <meta name="theme-color" content="#ef5350">
-  <link rel="apple-touch-icon" href="/Logos/Logo_3.png">
+  <link rel="apple-touch-icon" href="../Logos/Logo_3.png">
   <link rel="manifest" href="/manifest.json">
   <link rel="stylesheet" href="../css/Style.css">
   <script type="text/javascript" src="../js/scripts.js" defer></script>
@@ -45,7 +45,7 @@
     
     .plan-card {
       background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
-      border: 1px solid rgba(255,255,255,0.1);
+      border: 1px solid rgb(16, 101, 156);
       border-radius: 16px;
       padding: 2rem;
       transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
@@ -55,13 +55,13 @@
     
     .plan-card:hover {
       transform: translateY(-8px);
-      box-shadow: 0 12px 40px rgba(239, 83, 80, 0.2);
-      border-color: var(--accent-clr);
+      box-shadow: 0 12px 40px rgba(80, 101, 239, 0.2);
+      border-color: #10659c;
     }
     
     .plan-card.featured {
-      border: 2px solid var(--accent-clr);
-      box-shadow: 0 8px 30px rgba(239, 83, 80, 0.3);
+      border: 2px solid #10659c;
+      box-shadow: 0 8px 30px rgba(80, 101, 239, 0.2);
     }
     
     .plan-card.featured::before {
@@ -69,12 +69,12 @@
       position: absolute;
       top: 20px;
       right: -35px;
-      background: var(--accent-clr);
+      background: #e9bf08;
       color: white;
       padding: 5px 40px;
       font-size: 0.75rem;
       font-weight: 700;
-      transform: rotate(45deg);
+      transform: rotate(35deg);
       letter-spacing: 1px;
     }
     
@@ -88,7 +88,7 @@
     .plan-price {
       font-size: 2.5rem;
       font-weight: 800;
-      color: var(--accent-clr);
+      color: #10659c;
       margin-bottom: 0.25rem;
     }
     
@@ -122,7 +122,7 @@
     
     .plan-features li::before {
       content: '✓';
-      color: var(--accent-clr);
+      color: #e9bf08;
       font-weight: 700;
       font-size: 1.2rem;
       flex-shrink: 0;
@@ -150,12 +150,12 @@
     }
     
     .plan-button.primary {
-      background: var(--accent-clr);
+      background: #10659c;
       color: white;
     }
     
     .plan-button.primary:hover {
-      background: #d93b38;
+      background: #044774;
       transform: scale(1.02);
     }
     
@@ -226,7 +226,7 @@
       </li>
 
       <li>
-        <a href="../Index.html">
+        <a href="../index.html">
           <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e8eaed"><path d="M240-200h120v-200q0-17 11.5-28.5T400-440h160q17 0 28.5 11.5T600-400v200h120v-360L480-740 240-560v360Zm-80 0v-360q0-19 8.5-36t23.5-28l240-180q21-16 48-16t48 16l240 180q15 11 23.5 28t8.5 36v360q0 33-23.5 56.5T720-120H560q-17 0-28.5-11.5T520-160v-200h-80v200q0 17-11.5 28.5T400-120H240q-33 0-56.5-23.5T160-200Zm320-270Z"/></svg>
           <span>Mapa</span>
         </a>
@@ -251,7 +251,7 @@
       </li>
 
       <li>
-        <a href="Relatorio.html">
+        <a href="relatorio.html">
           <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e8eaed">
             <path d="M320-240h320v-80H320v80Zm0-160h320v-80H320v80ZM240-80q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v480q0 33-23.5 56.5T720-80H240Zm280-520v-200H240v640h480v-440H520ZM240-800v200-200 640-640Z"/>
           </svg>
@@ -260,11 +260,11 @@
       </li>
 
       <li class="active">
-        <a href="Planos.html">
+        <a href="planos.html">
           <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e8eaed">
             <path d="M640-520q17 0 28.5-11.5T680-560q0-17-11.5-28.5T640-600q-17 0-28.5 11.5T600-560q0 17 11.5 28.5T640-520Zm-320-80h200v-80H320v80ZM180-120q-34-114-67-227.5T80-580q0-92 64-156t156-64h200q29-38 70.5-59t89.5-21q25 0 42.5 17.5T720-820q0 6-1.5 12t-3.5 11q-4 11-7.5 22.5T702-751l91 91h87v279l-113 37-67 224H480v-80h-80v80H180Zm17-80h103v-80h200v80h104l53-179 117-39v-162h-21L640-693q-9-9-15-21t-6-24q0-23 11-44t27-37q-32 8-57 27.5T565-740H300q-58 0-99 41t-41 99q0 98 27 191.5T260-240Zm240-260Z"/>
           </svg>
-          <span>Planos</span>
+          <span>planos</span>
         </a>
       </li>
 
@@ -277,7 +277,7 @@
       </li>
 
       <li class="Alert">
-      <a href="Alert.html">
+      <a href="alert.html">
       <svg xmlns="http://www.w3.org/2000/svg" height="24px" width="24px" viewBox="0 -960 960 960" fill="#f44336">
         <path d="M80-160 480-880l400 720H80Zm400-80q17 0 28.5-11.5T520-280q0-17-11.5-28.5T480-320q-17 0-28.5 11.5T440-280q0 17 11.5 28.5T480-240Zm-40-160h80v-240h-80v240Z"/>
         </svg>
@@ -303,15 +303,14 @@
           
           <ul class="plan-features">
             <li>Visualização de rotas de ônibus</li>
-            <li>Reportar incidentes básicos</li>
-            <li>Visualização de relatos no mapa</li>
+            <li>Visualização de áreas de risco</li>
+            <li>Reportar incidentes</li>
             <li>Acesso ao mapa interativo</li>
             <li class="disabled">Relatórios detalhados</li>
-            <li class="disabled">Análise de tendências</li>
             <li class="disabled">Suporte prioritário</li>
           </ul>
           
-          <button class="plan-button secondary" disabled>Plano Atual</button>
+          <button class="plan-button secondary" disabled>Plano atual</button>
         </div>
 
         <!-- Plano Individual -->
@@ -322,12 +321,10 @@
           
           <ul class="plan-features">
             <li>Tudo do plano Free</li>
-            <li>Relatórios personalizados</li>
             <li>Histórico completo de incidentes</li>
             <li>Alertas em tempo real</li>
-            <li>Análise de rotas mais seguras</li>
-            <li>Estatísticas detalhadas</li>
-            <li>Suporte prioritário</li>
+            <li>Análise de tendências</li>
+            <li>Relatórios detalhados</li>
           </ul>
           
           <button class="plan-button primary" onclick="alert('Em breve! Funcionalidade de pagamento será implementada.')">Assinar Agora</button>
@@ -343,11 +340,8 @@
             <li>Tudo do plano Individual</li>
             <li>Múltiplos usuários (até 50)</li>
             <li>Dashboard administrativo</li>
-            <li>Relatórios corporativos</li>
-            <li>API de integração</li>
             <li>Análise preditiva de riscos</li>
-            <li>Gerenciamento de frotas</li>
-            <li>Suporte dedicado 24/7</li>
+            <li>Suporte prioritário</li>
           </ul>
           
           <button class="plan-button primary" onclick="alert('Entre em contato conosco para mais informações sobre o plano Empresarial.')">Contatar Vendas</button>
