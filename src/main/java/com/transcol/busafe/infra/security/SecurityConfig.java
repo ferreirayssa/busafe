@@ -35,6 +35,7 @@ public class SecurityConfig {
                         
                         // Visualização de Rotas (Para atrair usuários para o app)
                         .requestMatchers(HttpMethod.GET, "/rotas/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/rotas/**").permitAll()
 
                         // Arquivos do Frontend (HTML, CSS, JS, Imagens, PWA)
                         .requestMatchers("/", "/index.html", "/html/**", "/css/**", "/js/**", "/Logos/**", "/manifest.json", "/service-worker.js").permitAll()
@@ -42,20 +43,11 @@ public class SecurityConfig {
                         // 🔒 ÁREA RESTRITA (Precisa de Token JWT válido)
                         // Reportar incidentes (Qualquer usuário logado: USER, FUNCIONARIO, EMPRESA)
                         .requestMatchers(HttpMethod.POST, "/relatos").authenticated()
-
-                        // Visualizar lista de relatos (Talvez apenas EMPRESA e ADMIN devam ver tudo?)
-                        // Aqui deixei authenticated(), ou seja, todo mundo vê. Se quiser restringir: .hasRole("EMPRESA")
                         .requestMatchers(HttpMethod.GET, "/relatos").authenticated()
-
-                        // Calcular Risco (Funcionalidade Premium/Logada)
                         .requestMatchers(HttpMethod.GET, "/risco").authenticated()
 
                         // 👮 ÁREA ADMINISTRATIVA (Exemplo futuro)
                         .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/rotas/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/rotas").permitAll()
-
-                        // Bloqueia qualquer outra rota não listada acima
                         .anyRequest().authenticated()
                 )
                 // Adiciona o nosso filtro de Token antes do filtro padrão do Spring
