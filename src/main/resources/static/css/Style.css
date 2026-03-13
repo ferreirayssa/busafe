@@ -404,7 +404,7 @@ body{
 }
 
 #sidebar > ul > li:first-child .logo img {
-  width: 120px;
+  width: 90px;
   height: auto;
   object-fit: contain;
   transition: opacity 0.3s ease;

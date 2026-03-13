@@ -4,11 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BuSafe - Login</title>
-  <link rel="icon" type="icon" href="../Logos/busafe.ico">
-  <link rel="stylesheet" href="../css/Style.css">
+  <link rel="icon" type="image/x-icon" href="../Logos/busafe.ico">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@8.2.0/ol.css">
   <script src="https://cdn.jsdelivr.net/npm/ol@8.2.0/dist/ol.js"></script>
   <style>
+    /* Variáveis ajustadas para o modo claro no container */
+    :root {
+      --text-clr: #333333; /* Texto principal escuro */
+      --secondary-text-clr: #666666; /* Texto secundário escuro */
+      --accent-clr: #10659c;
+      --hover-clr: rgba(0, 0, 0, 0.05); /* Hover escurecido para fundos claros */
+      --bg-dark: #0f1016;
+    }
+
     body {
       margin: 0;
       padding: 0;
@@ -17,7 +25,9 @@
       align-items: center;
       justify-content: center;
       position: relative;
-      overflow: hidden;
+      background-color: var(--bg-dark);
+      font-family: Poppins, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      overflow-y: auto;
     }
 
     #map {
@@ -27,8 +37,9 @@
       width: 100%;
       height: 100%;
       z-index: 0;
-      filter: blur(8px);
-      opacity: 0.3;
+      filter: blur(4px);
+      opacity: 0.4;
+      pointer-events: none;
     }
 
     .overlay {
@@ -37,50 +48,62 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.5);
+      background: rgba(0, 0, 0, 0.6);
       z-index: 1;
+      pointer-events: none;
     }
 
     .login-wrapper {
       position: relative;
       z-index: 2;
       width: 100%;
-      max-width: 450px;
+      max-width: 400px;
       padding: 1rem;
+      box-sizing: border-box;
       display: flex;
       flex-direction: column;
       align-items: center;
     }
 
+    /* Container alterado para modo branco */
     .login-container {
       width: 100%;
-      padding: 2.5rem;
-      background: linear-gradient(180deg, rgba(17, 18, 26, 0.95), rgba(17, 18, 26, 0.98));
-      border: 1px solid rgba(255,255,255,0.1);
+      padding: 2rem 2.5rem;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.98));
+      border: 1px solid rgba(0, 0, 0, 0.1); /* Borda sutil escura */
       border-radius: 12px;
-      box-shadow: 0 8px 30px rgba(2,6,23,0.8);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15); /* Sombra mais leve */
       backdrop-filter: blur(20px);
+      box-sizing: border-box;
     }
 
-    body.light-mode .login-container {
-      background: linear-gradient(180deg, rgba(240, 242, 245, 0.95), rgba(240, 242, 245, 0.98));
+    .logo-container {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+
+    .logo-container img {
+      max-width: 120px;
+      height: auto;
+      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.1)); /* Sombra da logo suavizada */
     }
 
     .login-container h1 {
       text-align: center;
-      font-size: 2rem;
-      margin-bottom: 0.5rem;
+      font-size: 1.8rem;
+      margin: 0.5rem 0;
       color: var(--text-clr);
     }
 
     .login-container p {
       text-align: center;
       color: var(--secondary-text-clr);
-      margin-bottom: 2rem;
+      margin-bottom: 1.5rem;
+      font-size: 0.95rem;
     }
 
     .form-group {
-      margin-bottom: 1.5rem;
+      margin-bottom: 1.2rem;
     }
 
     .form-group label {
@@ -88,16 +111,18 @@
       margin-bottom: 0.5rem;
       color: var(--text-clr);
       font-weight: 500;
+      font-size: 0.9rem;
     }
 
+    /* Inputs alterados para combinar com o fundo branco */
     .form-group input {
       width: 100%;
       padding: 0.75rem;
       border-radius: 0.6rem;
-      border: 1px solid rgba(255,255,255,0.08);
-      background: rgba(0,0,0,0.25);
+      border: 1px solid rgba(0, 0, 0, 0.15);
+      background: rgba(255, 255, 255, 0.8);
       color: var(--text-clr);
-      font-family: Poppins, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: inherit;
       font-size: 1rem;
       box-sizing: border-box;
       transition: all 0.3s ease;
@@ -111,7 +136,7 @@
 
     .login-btn {
       width: 100%;
-      padding: 0.75rem 1.1rem;
+      padding: 0.8rem;
       border-radius: 0.6rem;
       border: none;
       background: linear-gradient(90deg, #10659c, #1375b7);
@@ -119,26 +144,26 @@
       cursor: pointer;
       font-weight: 600;
       font-size: 1rem;
-      box-shadow: 0 4px 12px rgb(11, 67, 105);
+      box-shadow: 0 4px 12px rgba(16, 101, 156, 0.3); /* Sombra ajustada */
       transition: all 0.3s ease;
-      margin-top: 1rem;
+      margin-top: 0.5rem;
     }
 
     .login-btn:hover {
-      background: linear-gradient(90deg, #10659c, #1375b7);
-      box-shadow: 0 6px 18px rgb(11, 67, 105);
-      transform: translateY(-2px) scale(1.02);
+      background: linear-gradient(90deg, #1375b7, #1585cf);
+      box-shadow: 0 6px 18px rgba(16, 101, 156, 0.4);
+      transform: translateY(-2px);
     }
 
     .login-btn:active {
-      transform: translateY(0) scale(0.98);
-      box-shadow: 0 4px 10px rgb(11, 67, 105);
+      transform: translateY(0);
     }
 
     .cadastro-link {
       text-align: center;
       margin-top: 1.5rem;
       color: var(--secondary-text-clr);
+      font-size: 0.9rem;
     }
 
     .cadastro-link a {
@@ -149,7 +174,7 @@
     }
 
     .cadastro-link a:hover {
-      color: #1375b7;
+      color: #1585cf;
       text-decoration: underline;
     }
 
@@ -157,48 +182,41 @@
       background: rgba(239, 83, 80, 0.1);
       border: 1px solid #ef5350;
       color: #ef5350;
-      padding: 1rem;
+      padding: 0.8rem;
       border-radius: 0.6rem;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1.2rem;
       display: none;
+      text-align: center;
+      font-size: 0.9rem;
     }
 
     .error-message.show {
       display: block;
     }
 
+    /* Botão de voltar mantido com cores claras para contrastar com o fundo escuro do mapa */
     .back-btn {
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
-      color: var(--text-clr);
+      color: #ffffff; 
       text-decoration: none;
       margin-bottom: 1rem;
       padding: 0.5rem 1rem;
       border-radius: 0.6rem;
       transition: background 0.3s ease;
-      background: rgba(255, 255, 255, 0.05);
+      background: rgba(255, 255, 255, 0.1);
+      align-self: flex-start;
     }
 
     .back-btn:hover {
-      background: var(--hover-clr);
+      background: rgba(255, 255, 255, 0.2);
     }
 
     .back-btn svg {
       width: 20px;
       height: 20px;
-      fill: var(--text-clr);
-    }
-
-    .logo-container {
-      text-align: center;
-      margin-bottom: 2rem;
-    }
-
-    .logo-container img {
-      width: 150px;
-      height: auto;
-      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
+      fill: #ffffff;
     }
   </style>
 </head>
@@ -208,7 +226,7 @@
   <div class="overlay"></div>
   
   <div class="login-wrapper">
-    <a href="../index.html" class="back-btn">
+    <a href="../html/cadastro.html" class="back-btn">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960">
         <path d="m313-440 196 196q12 12 11.5 28T508-188q-12 11-28 11.5T452-188L188-452q-6-6-8.5-13t-2.5-15q0-8 2.5-15t8.5-13l264-264q11-11 27.5-11t28.5 11q12 12 12 28.5T508-715L313-520h447q17 0 28.5 11.5T800-480q0 17-11.5 28.5T760-440H313Z"/>
       </svg>
@@ -217,7 +235,7 @@
 
     <div class="login-container">
       <div class="logo-container">
-        <img src="../Logos/Logo_3.png" alt="BuSafe">
+        <img src="../Logos/Logo_3.png" alt="BuSafe Logo">
       </div>
 
       <h1>Entrar</h1>
@@ -248,47 +266,54 @@
   </div>
 
   <script>
-    // Inicializar mapa de fundo
+    // Inicializar mapa de fundo (Sem controles e interações)
     const base = new ol.layer.Tile({ source: new ol.source.OSM() });
     const map = new ol.Map({
       target: 'map',
       layers: [base],
       view: new ol.View({ 
-        center: ol.proj.fromLonLat([-40.307, -20.318]), 
+        center: ol.proj.fromLonLat([-40.307, -20.318]), // Coordenadas Vitória/ES
         zoom: 12 
       }),
-      controls: []
+      controls: [],
+      interactions: [] // Mapa estático
     });
 
-    // Função para formatar CPF
+    // Função para formatar CPF em tempo real
     function formatarCPF(value) {
-      value = value.replace(/\D/g, '');
-      value = value.replace(/(\d{3})(\d)/, '$1.$2');
-      value = value.replace(/(\d{3})(\d)/, '$1.$2');
-      value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-      return value;
+      return value
+        .replace(/\D/g, '')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
     }
 
-    // Aplicar máscara ao CPF
     const cpfInput = document.getElementById('cpf');
     cpfInput.addEventListener('input', function(e) {
       e.target.value = formatarCPF(e.target.value);
     });
 
-    // Submissão do formulário
+    // Lógica de Login
     document.getElementById('loginForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       
-      const cpf = document.getElementById('cpf').value;
-      const password = document.getElementById('password').value;
+      const cpfField = document.getElementById('cpf');
+      const passwordField = document.getElementById('password');
       const errorMessage = document.getElementById('errorMessage');
+      const btn = document.querySelector('.login-btn');
+
+      // Feedback visual de carregamento
+      const originalBtnText = btn.innerText;
+      btn.innerText = 'Entrando...';
+      btn.disabled = true;
+      errorMessage.classList.remove('show');
       
-      // Remover formatação do CPF
-      const cpfLimpo = cpf.replace(/[^\d]/g, '');
+      // Limpar formatação para envio
+      const cpfLimpo = cpfField.value.replace(/[^\d]/g, '');
       
       const dados = {
         login: cpfLimpo,
-        password: password
+        password: passwordField.value
       };
       
       try {
@@ -302,17 +327,25 @@
         
         if (response.ok) {
           const data = await response.json();
-          // Armazenar token
+          
+          // Salva o token JWT
           localStorage.setItem('token', data.token);
-          // Redirecionar para página principal
+          
+          // Redireciona
           window.location.href = '../index.html';
         } else {
+          // Erro de autenticação (401, 403, etc)
+          errorMessage.textContent = 'Credenciais inválidas. Verifique seu CPF e senha.';
           errorMessage.classList.add('show');
         }
       } catch (error) {
-        console.error('Erro:', error);
-        errorMessage.textContent = 'Erro ao processar login. Tente novamente.';
+        console.error('Erro de conexão:', error);
+        errorMessage.textContent = 'Erro de conexão com o servidor.';
         errorMessage.classList.add('show');
+      } finally {
+        // Restaura o botão
+        btn.innerText = originalBtnText;
+        btn.disabled = false;
       }
     });
   </script>
