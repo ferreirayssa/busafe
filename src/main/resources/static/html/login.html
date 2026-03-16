@@ -26,11 +26,13 @@
       justify-content: center;
       position: relative;
       background-color: var(--bg-dark);
+      background: url('../prototipo/osm.png') no-repeat center center fixed;
+      background-size: cover;
       font-family: Poppins, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       overflow-y: auto;
     }
 
-    #map {
+    /* #map {
       position: fixed;
       top: 0;
       left: 0;
@@ -40,7 +42,7 @@
       filter: blur(4px);
       opacity: 0.4;
       pointer-events: none;
-    }
+    } */
 
     .overlay {
       position: fixed;
@@ -83,7 +85,7 @@
     }
 
     .logo-container img {
-      max-width: 120px;
+      max-width: 100px;
       height: auto;
       filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.1)); /* Sombra da logo suavizada */
     }
