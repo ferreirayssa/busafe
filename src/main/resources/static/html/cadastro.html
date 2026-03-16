@@ -24,11 +24,13 @@
       align-items: center; /* Centraliza verticalmente */
       justify-content: center; /* Centraliza horizontalmente */
       position: relative;
-      background-color: #0f1016; /* Cor de fundo de segurança */
+      background-color: var(--bg-dark);
+      background: url('../prototipo/osm.png') no-repeat center center fixed;
+      background-size: cover;
       font-family: Poppins, 'Segoe UI', sans-serif;
     }
 
-    #map {
+    /* #map {
       position: fixed;
       top: 0;
       left: 0;
@@ -37,7 +39,8 @@
       z-index: 0;
       filter: blur(4px);
       opacity: 0.4;
-    }
+    } 
+    */
 
     .overlay {
       position: fixed;
@@ -215,6 +218,18 @@
       height: 18px;
       fill: #ffffff;
     }
+
+    .logo-container {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+
+    .logo-container img {
+      max-width: 100px;
+      height: auto;
+      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.1));
+    }
+
   </style>
 </head>
 
@@ -231,6 +246,9 @@
     </a>
 
     <div class="cadastro-container">
+      <div class="logo-container">
+        <img src="../Logos/Logo_3.png" alt="BuSafe Logo">
+      </div>
       <h1>Criar Conta</h1>
       <p>Preencha os dados abaixo para se cadastrar</p>
 
