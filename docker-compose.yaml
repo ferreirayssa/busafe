@@ -25,7 +25,7 @@ services:
     
     # Mapeia a porta 5432 do container para a sua máquina.
     ports:
-      - "25060:5432"
+      - "5439:5432"
 
     # Define um volume para que os dados do banco de dados persistam.
     volumes:
