@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
+
+//api que retorna todas as rotas
 @RequestMapping("/rotas")
 public class KmlController {
 

@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/rotas")
+@RequestMapping("/api/rotas") //na verdade deve ser a /rotas
 
 public class RotaController {
 
@@ -25,7 +25,7 @@ public class RotaController {
         this.pontoRepo = pontoRepo;
     }
 
-    // Método de busca, agora unificado em um único endpoint
+//api que retorna pelo número do ônibus
     @GetMapping("/buscar/{codigo}")
     public Map<String, Object> buscar(@PathVariable String codigo) {
         try {
