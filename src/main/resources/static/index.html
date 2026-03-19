@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="PT-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BuSafe — Mapa</title>
+  <link rel="icon" href="./Logos/busafe.ico">
+  <meta name="theme-color" content="#11121a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="BuSafe">
+  <link rel="apple-touch-icon" href="./Logos/Logo_3.png">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="css/Style.css">
+  <script src="js/scripts.js" defer></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@8.2.0/ol.css">
+  <script src="https://cdn.jsdelivr.net/npm/ol@8.2.0/dist/ol.js"></script>
+</head>
+<body>
+
+  <button id="hamburger-btn" aria-label="Abrir menu">
+    <i class="bi bi-list"></i>
+  </button>
+
+  <div id="sidebar-overlay"></div>
+
+  <nav id="sidebar">
+    <!-- cabeçalho -->
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <img src="Logos/Logo_3.png" alt="BuSafe">
+      </div>
+      <button id="toggle-btn" aria-label="Recolher menu">
+        <i class="bi bi-chevron-double-left"></i>
+      </button>
+    </div>
+
+    <!-- busca -->
+    <div class="sidebar-search">
+      <form class="search-form" onsubmit="return false;">
+        <i class="bi bi-search"></i>
+        <input type="search" id="linha" name="q" placeholder="Buscar linha... (ex: 506)">
+      </form>
+    </div>
+    <div class="search-controls">
+      <button id="go">Buscar</button>
+      <button id="clear">Limpar</button>
+    </div>
+    <div id="status"></div>
+
+    <!-- nav scrollável -->
+    <div class="sidebar-nav">
+      <div class="nav-label">Navegação</div>
+
+      <li class="active" style="list-style:none;">
+        <a href="index.html" class="nav-item">
+          <i class="bi bi-map"></i>
+          <span>Mapa</span>
+        </a>
+      </li>
+
+      <a href="html/relatorio.html" class="nav-item">
+        <i class="bi bi-file-earmark-bar-graph"></i>
+        <span>Relatório</span>
+        <span class="nav-badge">PRO</span>
+      </a>
+
+      <a href="html/planos.html" class="nav-item">
+        <i class="bi bi-gem"></i>
+        <span>Planos</span>
+      </a>
+
+      <a href="html/cadastro.html" class="nav-item">
+        <i class="bi bi-person-plus"></i>
+        <span>Cadastro</span>
+      </a>
+
+      <div class="nav-label">Linhas Frequentes</div>
+
+      <button class="nav-item" onclick="toggleSubMenu(this)">
+        <i class="bi bi-bus-front"></i>
+        <span>Ver linhas</span>
+        <i class="bi bi-chevron-down dropdown-arrow"></i>
+      </button>
+      <div class="sub-menu">
+        <div>
+          <a href="#" class="nav-item">505 — Terminal Jardim América</a>
+          <a href="#" class="nav-item">591 — Campo Grande</a>
+          <a href="#" class="nav-item">506 — Terminal Vila Velha</a>
+          <a href="#" class="nav-item">515 — Bairro República</a>
+        </div>
+      </div>
+
+      <div class="nav-label">Preferências</div>
+
+      <a href="#" id="theme-btn" class="nav-item theme-toggle">
+        <i class="bi bi-moon-stars" id="moon-icon"></i>
+        <i class="bi bi-sun"        id="sun-icon"></i>
+        <span>Alterar Tema</span>
+      </a>
+    </div>
+
+    <!-- rodapé fixo: reportar -->
+    <div class="sidebar-footer">
+      <a href="html/alert.html" class="btn-report">
+        <i class="bi bi-exclamation-triangle"></i>
+        <span>Reportar Incidente</span>
+        <div class="report-dot"></div>
+      </a>
+    </div>
+  </nav>
+
+  <main id="content">
+    <div id="map"></div>
+    <div id="map-legend">
+      <div class="legend-title">Legenda</div>
+      <div class="legend-item"><div class="legend-line" style="background:#2e7d32;"></div> Ida</div>
+      <div class="legend-item"><div class="legend-line" style="background:#d32f2f;"></div> Volta</div>
+      <div class="legend-item"><div class="legend-dot"  style="background:#1976d2;"></div> Sua posição</div>
+    </div>
+  </main>
+
+  <div id="toast-container"></div>
+
+  <script>
+    const GEOJSON_URL = "/rotas/geojson";
+    const statusEl = document.getElementById('status');
+
+    function showStatus(msg, ms = 2500) {
+      statusEl.textContent = msg;
+      statusEl.classList.add('show');
+      if (ms) setTimeout(() => statusEl.classList.remove('show'), ms);
+    }
+
+    const base             = new ol.layer.Tile({ source: new ol.source.OSM() });
+    const todasRotasSource = new ol.source.Vector({ url: GEOJSON_URL + "?v=" + Date.now(), format: new ol.format.GeoJSON() });
+
+    const styleBySentido = feature => {
+      const isVolta = /volta/i.test(String(feature.get('sentido') || ''));
+      return new ol.style.Style({ stroke: new ol.style.Stroke({ color: isVolta ? '#d32f2f' : '#2e7d32', width: 3 }) });
+    };
+
+    const rotasLayer    = new ol.layer.Vector({ source: todasRotasSource, style: styleBySentido });
+    const resultadoSource = new ol.source.Vector({ features: [] });
+    const resultadoLayer  = new ol.layer.Vector({
+      source: resultadoSource,
+      style: new ol.style.Style({ stroke: new ol.style.Stroke({ color: '#812f9a', width: 4 }) })
+    });
+
+    const map = new ol.Map({
+      target: 'map',
+      layers: [base, rotasLayer, resultadoLayer],
+      view: new ol.View({ center: ol.proj.fromLonLat([-40.307, -20.318]), zoom: 12 })
+    });
+
+    todasRotasSource.on('change', () => {
+      if (todasRotasSource.getState() === 'loading') { showStatus('Carregando rotas…', 0); }
+      else if (todasRotasSource.getState() === 'ready') {
+        statusEl.classList.remove('show');
+        map.getView().fit(todasRotasSource.getExtent(), { padding: [40,40,40,40], maxZoom: 15 });
+      }
+    });
+    todasRotasSource.on('error', () => showStatus('Falha ao carregar rotas.', 5000));
+
+    document.getElementById('clear').onclick = () => {
+      resultadoSource.clear();
+      rotasLayer.setVisible(true);
+      document.getElementById('linha').value = '';
+      showStatus('Resultado limpo.');
+    };
+
+    document.getElementById('go').onclick = async () => {
+      const codigo = document.getElementById('linha').value.trim();
+      if (!codigo) { showStatus('Informe o código da linha.'); return; }
+      try {
+        showStatus('Buscando linha ' + codigo + '…', 0);
+        const resp = await fetch(`/api/rotas/buscar/${encodeURIComponent(codigo)}`);
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const json = await resp.json();
+        if (json.features?.length) {
+          const feats = new ol.format.GeoJSON().readFeatures(json, { featureProjection: 'EPSG:3857' });
+          resultadoSource.clear();
+          resultadoSource.addFeatures(feats);
+          rotasLayer.setVisible(false);
+          statusEl.classList.remove('show');
+          map.getView().fit(resultadoSource.getExtent(), { padding: [40,40,40,40], maxZoom: 15 });
+          showStatus('Linha ' + codigo + ' exibida!');
+        } else {
+          resultadoSource.clear();
+          rotasLayer.setVisible(true);
+          showStatus('Nenhuma rota encontrada.', 3000);
+        }
+      } catch (err) {
+        console.error(err);
+        showStatus('Erro ao buscar linha.', 5000);
+      }
+    };
+
+    document.getElementById('linha').addEventListener('keyup', e => {
+      if (e.key === 'Enter') document.getElementById('go').click();
+    });
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(pos => {
+        const c = ol.proj.fromLonLat([pos.coords.longitude, pos.coords.latitude]);
+        map.getView().animate({ center: c, zoom: 15, duration: 1000 });
+        const f = new ol.Feature(new ol.geom.Point(c));
+        f.setStyle(new ol.style.Style({ image: new ol.style.Circle({ radius: 8, fill: new ol.style.Fill({ color: '#1976d2' }), stroke: new ol.style.Stroke({ color: '#fff', width: 2 }) }) }));
+        map.addLayer(new ol.layer.Vector({ source: new ol.source.Vector({ features: [f] }) }));
+        showStatus('Localização encontrada!');
+      }, err => { console.error(err); showStatus('Localização não encontrada.'); });
+    }
+
+    document.querySelectorAll('.sub-menu .nav-item').forEach(link => {
+      link.addEventListener('click', e => {
+        e.preventDefault();
+        document.getElementById('linha').value = link.textContent.trim().split('—')[0].trim();
+        document.getElementById('go').click();
+        closeAllSubMenus();
+      });
+    });
+  </script>
+</body>
+</html>

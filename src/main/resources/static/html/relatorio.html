@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="PT-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Relatório — BuSafe</title>
+  <link rel="icon" href="../Logos/busafe.ico">
+  <link rel="apple-touch-icon" href="../Logos/Logo_3.png">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="../css/Style.css">
+  <script src="../js/scripts.js" defer></script>
+</head>
+<body>
+
+  <button id="hamburger-btn" aria-label="Abrir menu">
+    <i class="bi bi-list"></i>
+  </button>
+
+  <div id="sidebar-overlay"></div>
+
+  <nav id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo"><img src="../Logos/Logo_3.png" alt="BuSafe"></div>
+      <button id="toggle-btn" aria-label="Recolher menu">
+        <i class="bi bi-chevron-double-left"></i>
+      </button>
+    </div>
+
+    <div class="sidebar-search">
+      <form class="search-form" onsubmit="return false;">
+        <i class="bi bi-search"></i>
+        <input type="search" id="linha" name="q" placeholder="Buscar linha... (ex: 506)">
+      </form>
+    </div>
+    <div class="search-controls">
+      <button id="go">Buscar</button>
+      <button id="clear">Limpar</button>
+    </div>
+    <div id="status"></div>
+
+    <div class="sidebar-nav">
+      <div class="nav-label">Navegação</div>
+
+      <a href="../index.html" class="nav-item">
+        <i class="bi bi-map"></i><span>Mapa</span>
+      </a>
+
+      <li class="active" style="list-style:none;">
+        <a href="relatorio.html" class="nav-item active">
+          <i class="bi bi-file-earmark-bar-graph"></i><span>Relatório</span>
+          <span class="nav-badge">PRO</span>
+        </a>
+      </li>
+
+      <a href="planos.html" class="nav-item">
+        <i class="bi bi-gem"></i><span>Planos</span>
+      </a>
+
+      <a href="cadastro.html" class="nav-item">
+        <i class="bi bi-person-plus"></i><span>Cadastro</span>
+      </a>
+
+      <div class="nav-label">Linhas Frequentes</div>
+
+      <button class="nav-item" onclick="toggleSubMenu(this)">
+        <i class="bi bi-bus-front"></i>
+        <span>Ver linhas</span>
+        <i class="bi bi-chevron-down dropdown-arrow"></i>
+      </button>
+      <div class="sub-menu">
+        <div>
+          <a href="#" class="nav-item">505 — Terminal Jardim América</a>
+          <a href="#" class="nav-item">591 — Campo Grande</a>
+          <a href="#" class="nav-item">506 — Terminal Vila Velha</a>
+          <a href="#" class="nav-item">515 — Bairro República</a>
+        </div>
+      </div>
+
+      <div class="nav-label">Preferências</div>
+
+      <a href="#" id="theme-btn" class="nav-item theme-toggle">
+        <i class="bi bi-moon-stars" id="moon-icon"></i>
+        <i class="bi bi-sun"        id="sun-icon"></i>
+        <span>Alterar Tema</span>
+      </a>
+    </div>
+
+    <div class="sidebar-footer">
+      <a href="alert.html" class="btn-report">
+        <i class="bi bi-exclamation-triangle"></i>
+        <span>Reportar Incidente</span>
+        <div class="report-dot"></div>
+      </a>
+    </div>
+  </nav>
+
+  <main id="content">
+    <div class="container" style="display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:60vh;">
+      <i class="bi bi-file-earmark-bar-graph" style="font-size:80px;color:#e9bf08;margin-bottom:1.5rem;"></i>
+      <h1 style="font-size:2rem;margin-bottom:.75rem;">Em Breve</h1>
+      <p style="font-size:1.05rem;color:var(--secondary-text-clr);max-width:520px;line-height:1.7;text-align:center;">
+        A funcionalidade de <strong>Relatórios</strong> estará disponível nos planos
+        <strong style="color:#10659c;">Individual</strong> e <strong style="color:#10659c;">Empresarial</strong>.
+      </p>
+      <p style="font-size:.9rem;color:var(--secondary-text-clr);margin-top:1.25rem;">
+        Conheça os <a href="planos.html" style="color:#10659c;text-decoration:none;font-weight:600;">planos disponíveis</a>.
+      </p>
+    </div>
+  </main>
+
+  <div id="toast-container"></div>
+</body>
+</html>
