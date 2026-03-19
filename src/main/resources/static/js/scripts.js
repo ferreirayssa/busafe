@@ -1,120 +1,94 @@
-const toggleButton = document.getElementById('toggle-btn')
-const sidebar = document.getElementById('sidebar')
-const hamburgerBtn = document.getElementById('hamburger-btn')
-const sidebarOverlay = document.getElementById('sidebar-overlay')
+/* ============================================================
+   scripts.js — BuSafe  (sidebar + tema)
+   ============================================================ */
 
-function toggleSidebar(){
-  sidebar.classList.toggle('close')
-  toggleButton.classList.toggle('rotate')
+const sidebar        = document.getElementById('sidebar');
+const toggleBtn      = document.getElementById('toggle-btn');
+const hamburgerBtn   = document.getElementById('hamburger-btn');
+const sidebarOverlay = document.getElementById('sidebar-overlay');
 
-  closeAllSubMenus()
+/* ---------- desktop: recolher/expandir ---------- */
+function toggleSidebar() {
+  sidebar.classList.toggle('close');
+  closeAllSubMenus();
 }
 
-// Função para abrir/fechar sidebar em mobile
+/* ---------- mobile: abrir/fechar ---------- */
 function toggleMobileSidebar() {
-  sidebar.classList.toggle('mobile-open')
-  sidebarOverlay.classList.toggle('show')
+  const opening = !sidebar.classList.contains('mobile-open');
+  sidebar.classList.toggle('mobile-open');
+  sidebarOverlay.classList.toggle('show');
+  // garante que abre sempre expandida, mesmo se estava colapsada no desktop
+  if (opening) sidebar.classList.remove('close');
 }
 
-// Event listener para o botão hambúrguer
-if (hamburgerBtn) {
-  hamburgerBtn.addEventListener('click', toggleMobileSidebar)
-}
+if (hamburgerBtn) hamburgerBtn.addEventListener('click', toggleMobileSidebar);
+if (sidebarOverlay) sidebarOverlay.addEventListener('click', toggleMobileSidebar);
 
-// Event listener para o overlay (fechar ao clicar fora)
-if (sidebarOverlay) {
-  sidebarOverlay.addEventListener('click', toggleMobileSidebar)
-}
-
-// Event listener para o botão de fechar dentro do sidebar (em mobile)
-if (toggleButton) {
-  toggleButton.addEventListener('click', () => {
-    // Verifica se está em mobile (sidebar com classe mobile-open)
+if (toggleBtn) {
+  toggleBtn.addEventListener('click', () => {
     if (sidebar.classList.contains('mobile-open')) {
-      toggleMobileSidebar()
+      toggleMobileSidebar();
     } else {
-      // Desktop: comportamento normal
-      toggleSidebar()
+      toggleSidebar();
     }
-  })
+  });
 }
 
-function toggleSubMenu(button){
+/* ---------- submenu ---------- */
+function toggleSubMenu(button) {
+  const sub = button.nextElementSibling;
+  const isOpen = sub.classList.contains('show');
 
-  if(!button.nextElementSibling.classList.contains('show')){
-    closeAllSubMenus()
+  closeAllSubMenus();
+
+  if (!isOpen) {
+    sub.classList.add('show');
+    button.classList.add('rotate');
   }
 
-  button.nextElementSibling.classList.toggle('show')
-  button.classList.toggle('rotate')
-
-  if(sidebar.classList.contains('close')){
-    sidebar.classList.toggle('close')
-    toggleButton.classList.toggle('rotate')
+  // se sidebar fechada, abre ela
+  if (sidebar.classList.contains('close')) {
+    sidebar.classList.remove('close');
   }
 }
 
-function closeAllSubMenus(){
-  Array.from(sidebar.getElementsByClassName('show')).forEach(ul => {
-    ul.classList.remove('show')
-    ul.previousElementSibling.classList.remove('rotate')
-  })
+function closeAllSubMenus() {
+  sidebar.querySelectorAll('.sub-menu.show').forEach(ul => {
+    ul.classList.remove('show');
+    ul.previousElementSibling.classList.remove('rotate');
+  });
 }
 
-
-const searchForm = document.querySelector('.search-form')
+/* ---------- busca: abre sidebar ao clicar ícone ---------- */
+const searchForm = document.querySelector('.search-form');
 if (searchForm) {
-  const searchInput = searchForm.querySelector('input[type="search"]')
-
-  
-  searchForm.addEventListener('submit', (e) => e.preventDefault())
-
-  searchForm.addEventListener('click', (e) => {
-    
-    if (e.target && e.target.tagName && e.target.tagName.toLowerCase() === 'input') return
-
+  const searchInput = searchForm.querySelector('input[type="search"]');
+  searchForm.addEventListener('submit', e => e.preventDefault());
+  searchForm.addEventListener('click', e => {
+    if (e.target?.tagName?.toLowerCase() === 'input') return;
     if (sidebar.classList.contains('close')) {
-      
-      toggleSidebar()
-      
-      setTimeout(() => searchInput && searchInput.focus(), 350)
+      toggleSidebar();
+      setTimeout(() => searchInput?.focus(), 320);
     } else {
-      
-      searchInput && searchInput.focus()
+      searchInput?.focus();
     }
-  })
+  });
 }
 
-// --- LÓGICA DO TEMA CLARO / ESCURO ---
+/* ---------- tema claro / escuro ---------- */
+function setTheme(theme) {
+  document.body.classList.toggle('light-mode', theme === 'light');
+}
+
+setTheme(localStorage.getItem('theme') || 'dark');
 
 const themeBtn = document.getElementById('theme-btn');
-
-// Função para aplicar o tema (claro ou escuro)
-function setAppTheme(theme) {
-  if (theme === 'light') {
-    document.body.classList.add('light-mode');
-  } else {
-    document.body.classList.remove('light-mode');
-  }
-}
-
-// Verifica se já existe um tema salvo no navegador
-const savedTheme = localStorage.getItem('theme') || 'dark'; // Padrão é escuro
-setAppTheme(savedTheme);
-
-
-// O que acontece ao clicar no botão
 if (themeBtn) {
-  themeBtn.addEventListener('click', (e) => {
+  themeBtn.addEventListener('click', e => {
     e.preventDefault();
-    
-    // Verifica qual é o tema atual e inverte
-    let newTheme = document.body.classList.contains('light-mode') ? 'dark' : 'light';
-    
-    // Aplica o novo tema
-    setAppTheme(newTheme);
-    
-    // Salva a escolha no navegador
-    localStorage.setItem('theme', newTheme);
+    const next = document.body.classList.contains('light-mode') ? 'dark' : 'light';
+    setTheme(next);
+    localStorage.setItem('theme', next);
   });
 }
