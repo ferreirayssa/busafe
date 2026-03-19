@@ -1,0 +1,34 @@
+services:
+  backend:
+    # Constrói a imagem a partir do Dockerfile no diretório atual.
+    build: .
+    
+    # Mapeia a porta 8080 do container para a porta 8080 da sua máquina local.
+    ports:
+      - "8080:8080"
+    
+    # Carrega as variáveis de ambiente do arquivo .env.
+    env_file:
+      - .env
+
+    # Garante que o serviço de banco de dados (db) inicie antes do backend.
+    depends_on:
+      - db
+
+  db:
+    # Usa a imagem oficial do PostgreSQL 17.
+    image: postgres:17-alpine
+    
+    # Carrega as variáveis de ambiente do arquivo .env.
+    env_file:
+      - .env
+    
+    # Mapeia a porta 5432 do container para a sua máquina.
+    ports:
+      - "5439:5432"
+
+    # Define um volume para que os dados do banco de dados persistam.
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+volumes:
+  postgres_data:
