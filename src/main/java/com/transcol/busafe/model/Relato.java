@@ -1,63 +1,50 @@
 package com.transcol.busafe.model;
 
-import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+import lombok.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.time.LocalDateTime;
-import java.util.Objects;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity
-@Table(name = "relato")
+@Builder // Adicional útil para criar relatos rapidamente
+@Document(collection = "relato")
 public class Relato {
-        @Id
-        @GeneratedValue(strategy = GenerationType.IDENTITY)
-        private Long id;
 
-        @Column(columnDefinition = "text")
-        private String descricao;
+    @Id
+    private String id; // Alterado para String para o ObjectId do MongoDB
 
-        @Column(length = 10, nullable = false)
-        private String tipo;
+    private String descricao;
 
-        @Column(columnDefinition = "double precision", nullable = false)
-        private Double latitude;
+    private String tipo;
 
-        @Column(columnDefinition = "double precision", nullable = false)
-        private Double longitude;
+    private Double latitude;
 
-        @Column(name = "data_relato", nullable = false, updatable = false)
-        private LocalDateTime dataRelato;
+    private Double longitude;
 
-        @Column(length = 50)
-        private String bairro;
+    @Field("dataRelato")
+    private LocalDateTime dataRelato = LocalDateTime.now(); // Inicializa com a data atual por padrão
 
-        @Column(length = 50)
-        private String municipio;
+    private String bairro;
 
-        @Column(name = "linha_municipal")
-        private Integer linhaMunicipal;
+    private String municipio;
 
-        @Column(name = "linha_transcol")
-        private Integer linhaTranscol;
+    @Field("linhaMunicipal")
+    private Integer linhaMunicipal;
 
-        @PrePersist
-        protected void onCreate() {
-            this.dataRelato = LocalDateTime.now();
-        }
-
+    @Field("linhaTranscol")
+    private Integer linhaTranscol;
+    
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Relato relato = (Relato) o;
-        return id != null && Objects.equals(id, relato.id);
+        return id != null && id.equals(relato.id);
     }
 
     @Override
