@@ -17,6 +17,7 @@ import com.transcol.busafe.model.Rota;
 import com.transcol.busafe.repository.RotaRepository;
 
 @RestController
+
 @RequestMapping("/api/rotas")
 public class RotaController {
 
@@ -26,6 +27,9 @@ public class RotaController {
     public RotaController(RotaRepository rotaRepo) {
         this.rotaRepo = rotaRepo;
     }
+
+
+//api que retorna pelo número do ônibus
 
     @GetMapping("/buscar/{codigo}")
     public Map<String, Object> buscar(@PathVariable String codigo) {
