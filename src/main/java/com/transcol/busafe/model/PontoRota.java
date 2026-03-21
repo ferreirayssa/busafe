@@ -1,25 +1,28 @@
 package com.transcol.busafe.model;
 
-import jakarta.persistence.*;
+import org.springframework.data.mongodb.core.mapping.Field;
 
-@Entity @Table(name="rota_ponto")
+import lombok.Data;
+
+@Data // Se não quiser usar Lombok, mantenha os Getters/Setters manuais
 public class PontoRota {
-  @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
+    
+    // No MongoDB, objetos aninhados em listas geralmente não precisam de um @Id próprio, 
+    // a menos que você precise referenciá-los individualmente via API.
+    private String id; 
 
-  @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name="rota_id", nullable=false)
-  private Rota rota;
-  private Integer ordem;
-  private Double lat;
-  private Double lon;
+    private Integer ordem;
+    
+    // Mapeando para 'lat' e 'lon' conforme seu JSON/Classe original
+    private Double lat;
+    private Double lon;
 
-  public Long getId() { return id; }
-  public Rota getRota() { return rota; }
-  public void setRota(Rota r) { this.rota = r; }
-  public Integer getOrdem() { return ordem; }
-  public void setOrdem(Integer o) { this.ordem = o; }
-  public Double getLat() { return lat; }
-  public void setLat(Double v) { this.lat = v; }
-  public Double getLon() { return lon; }
-  public void setLon(Double v) { this.lon = v; }
+    @Field("rota_id")
+    private Long rotaId;
+
+    /* IMPORTANTE: 
+       Removemos o 'private Rota rota;' daqui. 
+       No NoSQL, a relação é implícita: se o ponto está dentro da lista de uma Rota, 
+       ele já "sabe" a quem pertence. Evitamos referências circulares.
+    */
 }
