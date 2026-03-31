@@ -95,7 +95,7 @@ public class RotaController {
             ))
             .values()
             .stream()
-            .limit(10) // Garante o Top 10 após a deduplicação
+            .limit(5) // Garante o Top 5 após a deduplicação
             .toList();
     }
 

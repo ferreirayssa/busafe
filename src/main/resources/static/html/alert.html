@@ -362,10 +362,11 @@
     });
 
     resultadosDiv.addEventListener('click', e => {
-      if (e.target.classList.contains('result-item')) {
-        buscaInput.value        = e.target.textContent;
-        numeroSelecionado.value = e.target.dataset.numero;
-        tipoSelecionado.value   = e.target.dataset.tipo;
+      const item = e.target.closest('.result-item'); // Pega o item mesmo clicando na borda
+      if (item) {
+        buscaInput.value = item.textContent; 
+        numeroSelecionado.value = item.dataset.numero;
+        tipoSelecionado.value = item.dataset.tipo;
         resultadosDiv.style.display = 'none';
         updateProgress();
       }
