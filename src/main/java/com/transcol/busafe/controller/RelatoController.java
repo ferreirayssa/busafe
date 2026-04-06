@@ -14,11 +14,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.transcol.busafe.model.Relato;
 import com.transcol.busafe.repository.RelatoRepository;
 
-<<<<<<< rayssaf
-
-=======
-import jakarta.validation.Valid;
->>>>>>> main
 
 @RestController
 @RequestMapping("/relatos")

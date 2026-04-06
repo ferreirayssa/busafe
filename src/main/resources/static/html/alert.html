@@ -495,6 +495,12 @@
         });
         if (resp.ok) {
           showToast('Incidente reportado com sucesso!','success');
+
+          // Se tem linha selecionada, ativa rastreamento em tempo real
+          if (numeroLinha && tipoLinha) {
+            iniciarRastreamento(tipoIncidente, parseInt(numeroLinha), tipoLinha, parseFloat(lat), parseFloat(lon));
+          }
+
           document.querySelector('textarea').value = '';
           buscaInput.value = '';
           numeroSelecionado.value = tipoSelecionado.value = '';
@@ -510,6 +516,48 @@
         console.error(err);
       }
     });
+
+    /* rastreamento em tempo real apos envio */
+    async function iniciarRastreamento(tipo, linha, tipoLinha, lat, lon) {
+      try {
+        const resp = await fetch('/api/incidentes-ativos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tipo, linha, tipoLinha, latitude: lat, longitude: lon })
+        });
+        if (!resp.ok) return;
+        const { id } = await resp.json();
+        showToast('Rastreamento ativo por 30 minutos.', 'info');
+
+        if (!navigator.geolocation) return;
+
+        const watchId = navigator.geolocation.watchPosition(
+          async pos => {
+            try {
+              const r = await fetch(`/api/incidentes-ativos/${id}/coordenadas`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ latitude: pos.coords.latitude, longitude: pos.coords.longitude })
+              });
+              if (!r.ok) {
+                // Incidente expirou ou foi removido
+                navigator.geolocation.clearWatch(watchId);
+                showToast('Rastreamento encerrado.', 'info');
+              }
+            } catch(e) { console.error(e); }
+          },
+          err => console.error('Erro no watchPosition:', err),
+          { enableHighAccuracy: true, maximumAge: 5000 }
+        );
+
+        // Para o rastreamento apos 30 minutos
+        setTimeout(() => {
+          navigator.geolocation.clearWatch(watchId);
+          showToast('Rastreamento encerrado (30 min).', 'info');
+        }, 30 * 60 * 1000);
+
+      } catch(e) { console.error('Erro ao iniciar rastreamento:', e); }
+    }
 
     updateProgress();
   });
