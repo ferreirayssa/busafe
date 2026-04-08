@@ -395,22 +395,168 @@ body.light-mode #sun-icon  { display: inline; }
   padding: 10px 14px;
   backdrop-filter: blur(8px);
   z-index: 10;
-  min-width: 130px;
-  pointer-events: none;
+  min-width: 180px;
+  pointer-events: auto;
 }
 body.light-mode #map-legend { background: rgba(240,242,245,.92); }
 
 #map-legend .legend-title {
-  font-size: 9px; font-weight: 700; letter-spacing: 1px;
-  color: var(--secondary-text-clr); text-transform: uppercase; margin-bottom: 8px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--secondary-text-clr);
+  text-transform: uppercase;
+  margin-bottom: 8px;
 }
+
 #map-legend .legend-item {
-  display: flex; align-items: center; gap: 8px;
-  font-size: 11px; color: var(--text-clr); margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-clr);
+  margin-bottom: 5px;
 }
-#map-legend .legend-item:last-child { margin-bottom: 0; }
-#map-legend .legend-line { width: 18px; height: 3px; border-radius: 2px; flex-shrink: 0; }
-#map-legend .legend-dot  { width: 10px; height: 10px; border-radius: 50%; border: 2px solid white; flex-shrink: 0; }
+
+#map-legend .legend-item:last-of-type { margin-bottom: 10px; }
+
+#map-legend .legend-line {
+  width: 18px;
+  height: 3px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+#map-legend .legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid white;
+  flex-shrink: 0;
+}
+
+.legend-center-btn {
+  width: 100%;
+  border: 1px solid rgba(255,255,255,.08);
+  background: var(--hover-clr);
+  color: var(--text-clr);
+  border-radius: 8px;
+  padding: 9px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: inherit;
+  font-size: .8rem;
+  cursor: pointer;
+  transition: .2s ease;
+}
+
+.legend-center-btn:hover {
+  border-color: var(--accent-clr);
+  transform: translateY(-1px);
+}
+
+.map-floating-btn {
+  position: absolute;
+  right: 16px;
+  bottom: 172px;
+  width: 52px;
+  height: 52px;
+  border: none;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10659c, #1375b7);
+  color: white;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  z-index: 11;
+  box-shadow: 0 10px 28px rgba(11,67,105,.38);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.map-floating-btn:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 14px 30px rgba(11,67,105,.48);
+}
+
+.gps-edge-indicator {
+  position: absolute;
+  width: 54px;
+  height: 54px;
+  border: none;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10659c, #1375b7);
+  color: white;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  z-index: 14;
+  box-shadow: 0 10px 28px rgba(11,67,105,.42);
+  transition: transform .2s ease, box-shadow .2s ease, opacity .2s ease;
+}
+
+.gps-edge-indicator:hover {
+  transform: translate(-50%, -50%) scale(1.05);
+  box-shadow: 0 14px 30px rgba(11,67,105,.5);
+}
+
+.gps-edge-indicator.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.gps-edge-arrow {
+  display: grid;
+  place-items: center;
+  transform-origin: center;
+  transition: transform .15s linear;
+}
+
+#incident-popup {
+  background: var(--base-clr, #11121a);
+  color: var(--text-clr, #e6e6ef);
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.45;
+  box-shadow: 0 8px 24px rgba(0,0,0,.35);
+  max-width: 260px;
+  border: 1px solid rgba(255,255,255,.06);
+}
+
+#incident-popup .popup-title {
+  display: block;
+  font-size: .85rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+#incident-popup .popup-desc {
+  margin-top: 6px;
+  color: var(--secondary-text-clr);
+}
+
+@media (max-width: 768px) {
+  #map-legend {
+    right: 12px;
+    bottom: 12px;
+    min-width: 170px;
+    max-width: calc(100vw - 24px);
+  }
+
+  .map-floating-btn {
+    right: 12px;
+    bottom: 182px;
+    width: 48px;
+    height: 48px;
+  }
+
+  .gps-edge-indicator {
+    width: 50px;
+    height: 50px;
+  }
+}
 
 /* ============================================================
    CONTAINER (alert.html e similares)

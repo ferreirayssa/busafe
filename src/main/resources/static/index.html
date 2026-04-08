@@ -147,19 +147,38 @@
 
   <main id="content">
     <div id="map"></div>
-    <div id="map-legend">
-      <div class="legend-title">Legenda</div>
-      <div class="legend-item"><div class="legend-line" style="background:#812f9a;"></div> Rota</div>
-      <div class="legend-item"><div class="legend-dot"  style="background:#1976d2;"></div> Sua posição</div>
-      <div class="legend-item"><div class="legend-dot"  style="background:#e53935;"></div> Incidente ativo</div>
-    </div>
+      <button id="legend-center-btn" class="legend-center-btn" type="button" aria-label="Centralizar GPS no mapa">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M8 0a.5.5 0 0 1 .5.5V2h1.5a.5.5 0 0 1 0 1H8.5v1.5a.5.5 0 0 1-1 0V3H6a.5.5 0 0 1 0-1h1.5V.5A.5.5 0 0 1 8 0zm0 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 1a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm7.5-4a.5.5 0 0 1-.5.5H13v1.5a.5.5 0 0 1-1 0V8.5h-1.5a.5.5 0 0 1 0-1H12V6a.5.5 0 0 1 1 0v1.5h2a.5.5 0 0 1 .5.5zM4 8a.5.5 0 0 1-.5.5H2V10a.5.5 0 0 1-1 0V8.5H-.5a.5.5 0 0 1 0-1H1V6a.5.5 0 0 1 1 0v1.5h1.5A.5.5 0 0 1 4 8z"/>
+      </svg>
+      <span>Centralizar GPS</span>
+    </button>
+  </div>
+
+  <button id="gps-center-btn" class="map-floating-btn" type="button" aria-label="Centralizar GPS no mapa">
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+      <path d="M8 0a.5.5 0 0 1 .5.5V2h1.5a.5.5 0 0 1 0 1H8.5v1.5a.5.5 0 0 1-1 0V3H6a.5.5 0 0 1 0-1h1.5V.5A.5.5 0 0 1 8 0zm0 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 1a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm7.5-4a.5.5 0 0 1-.5.5H13v1.5a.5.5 0 0 1-1 0V8.5h-1.5a.5.5 0 0 1 0-1H12V6a.5.5 0 0 1 1 0v1.5h2a.5.5 0 0 1 .5.5zM4 8a.5.5 0 0 1-.5.5H2V10a.5.5 0 0 1-1 0V8.5H-.5a.5.5 0 0 1 0-1H1V6a.5.5 0 0 1 1 0v1.5h1.5A.5.5 0 0 1 4 8z"/>
+    </svg>
+  </button>
+
+  <button id="gps-edge-indicator" class="gps-edge-indicator hidden" type="button" aria-label="Voltar para minha localização">
+    <span id="gps-edge-arrow" class="gps-edge-arrow">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M8 0l3.5 16L8 12.75 4.5 16 8 0z"/>
+      </svg>
   </main>
 
   <div id="toast-container"></div>
 
   <script>
     const GEOJSON_URL = "/rotas/geojson";
+    const RELATOS_URL = "/relatos";
     const statusEl = document.getElementById('status');
+    const contentEl = document.getElementById('content');
+    const legendCenterBtn = document.getElementById('legend-center-btn');
+    const gpsCenterBtn = document.getElementById('gps-center-btn');
+    const gpsEdgeIndicator = document.getElementById('gps-edge-indicator');
+    const gpsEdgeArrow = document.getElementById('gps-edge-arrow');
 
     function showStatus(msg, ms = 2500) {
       statusEl.textContent = msg;
@@ -167,34 +186,49 @@
       if (ms) setTimeout(() => statusEl.classList.remove('show'), ms);
     }
 
-    const base             = new ol.layer.Tile({ source: new ol.source.OSM() });
-    const todasRotasSource = new ol.source.Vector({ url: GEOJSON_URL + "?v=" + Date.now(), format: new ol.format.GeoJSON() });
+    const base = new ol.layer.Tile({ source: new ol.source.OSM() });
+    const todasRotasSource = new ol.source.Vector({
+      url: GEOJSON_URL + "?v=" + Date.now(),
+      format: new ol.format.GeoJSON()
+    });
 
     const styleBySentido = feature => {
       const isVolta = /volta/i.test(String(feature.get('sentido') || ''));
-      return new ol.style.Style({ stroke: new ol.style.Stroke({ color: isVolta ? '#d32f2f' : '#2e7d32', width: 3 }) });
+      return new ol.style.Style({
+        stroke: new ol.style.Stroke({ color: isVolta ? '#d32f2f' : '#2e7d32', width: 3 })
+      });
     };
 
-    const rotasLayer    = new ol.layer.Vector({ source: todasRotasSource, style: styleBySentido });
+    const rotasLayer = new ol.layer.Vector({ source: todasRotasSource, style: styleBySentido });
     const resultadoSource = new ol.source.Vector({ features: [] });
-    const resultadoLayer  = new ol.layer.Vector({
+    const resultadoLayer = new ol.layer.Vector({
       source: resultadoSource,
-      style: new ol.style.Style({ stroke: new ol.style.Stroke({ color: '#812f9a', width: 4 }) })
+      style: new ol.style.Style({
+        stroke: new ol.style.Stroke({ color: '#812f9a', width: 4 })
+      })
     });
 
     const map = new ol.Map({
       target: 'map',
       layers: [base, rotasLayer, resultadoLayer],
-      view: new ol.View({ center: ol.proj.fromLonLat([-40.307, -20.318]), zoom: 12 })
+      view: new ol.View({
+        center: ol.proj.fromLonLat([-40.307, -20.318]),
+        zoom: 12
+      })
     });
 
     todasRotasSource.on('change', () => {
-      if (todasRotasSource.getState() === 'loading') { showStatus('Carregando rotas…', 0); }
-      else if (todasRotasSource.getState() === 'ready') {
+      if (todasRotasSource.getState() === 'loading') {
+        showStatus('Carregando rotas…', 0);
+      } else if (todasRotasSource.getState() === 'ready') {
         statusEl.classList.remove('show');
-        map.getView().fit(todasRotasSource.getExtent(), { padding: [40,40,40,40], maxZoom: 15 });
+        map.getView().fit(todasRotasSource.getExtent(), {
+          padding: [40, 40, 40, 40],
+          maxZoom: 15
+        });
       }
     });
+
     todasRotasSource.on('error', () => showStatus('Falha ao carregar rotas.', 5000));
 
     document.getElementById('clear').onclick = () => {
@@ -206,19 +240,32 @@
 
     document.getElementById('go').onclick = async () => {
       const codigo = document.getElementById('linha').value.trim();
-      if (!codigo) { showStatus('Informe o código da linha.'); return; }
+      if (!codigo) {
+        showStatus('Informe o código da linha.');
+        return;
+      }
+
       try {
         showStatus('Buscando linha ' + codigo + '…', 0);
         const resp = await fetch(`/api/rotas/buscar/${encodeURIComponent(codigo)}`);
         if (!resp.ok) throw new Error('HTTP ' + resp.status);
+
         const json = await resp.json();
         if (json.features?.length) {
-          const feats = new ol.format.GeoJSON().readFeatures(json, { featureProjection: 'EPSG:3857' });
+          const feats = new ol.format.GeoJSON().readFeatures(json, {
+            featureProjection: 'EPSG:3857'
+          });
+
           resultadoSource.clear();
           resultadoSource.addFeatures(feats);
           rotasLayer.setVisible(false);
           statusEl.classList.remove('show');
-          map.getView().fit(resultadoSource.getExtent(), { padding: [40,40,40,40], maxZoom: 15 });
+
+          map.getView().fit(resultadoSource.getExtent(), {
+            padding: [40, 40, 40, 40],
+            maxZoom: 15
+          });
+
           showStatus('Linha ' + codigo + ' exibida!');
         } else {
           resultadoSource.clear();
@@ -235,17 +282,6 @@
       if (e.key === 'Enter') document.getElementById('go').click();
     });
 
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(pos => {
-        const c = ol.proj.fromLonLat([pos.coords.longitude, pos.coords.latitude]);
-        map.getView().animate({ center: c, zoom: 15, duration: 1000 });
-        const f = new ol.Feature(new ol.geom.Point(c));
-        f.setStyle(new ol.style.Style({ image: new ol.style.Circle({ radius: 8, fill: new ol.style.Fill({ color: '#1976d2' }), stroke: new ol.style.Stroke({ color: '#fff', width: 2 }) }) }));
-        map.addLayer(new ol.layer.Vector({ source: new ol.source.Vector({ features: [f] }) }));
-        showStatus('Localização encontrada!');
-      }, err => { console.error(err); showStatus('Localização não encontrada.'); });
-    }
-
     document.querySelectorAll('.sub-menu .nav-item').forEach(link => {
       link.addEventListener('click', e => {
         e.preventDefault();
@@ -255,109 +291,331 @@
       });
     });
 
-    /* ============================================================
-       INCIDENTES ATIVOS — polling a cada 10s
-       ============================================================ */
-    const incidenteSource = new ol.source.Vector({ features: [] });
-    const trilhaSource    = new ol.source.Vector({ features: [] });
-
     const INCIDENT_ICONS = {
-      assalto:              { color: '#e53935', label: '!' },
-      assedio:              { color: '#ff9800', label: '!' },
-      violencia:            { color: '#9c27b0', label: '!' },
-      furto:                { color: '#2196f3', label: '!' },
-      onibus_parado_quebrado: { color: '#ef6c00', label: 'X' },
-      outro:                { color: '#9e9e9e', label: '?' }
+      assalto: { color: '#e53935', label: 'Assalto' },
+      assedio: { color: '#ff9800', label: 'Assédio' },
+      violencia: { color: '#9c27b0', label: 'Violência' },
+      furto: { color: '#2196f3', label: 'Furto' },
+      onibus_parado_quebrado: { color: '#ef6c00', label: 'Ônibus parado/quebrado' },
+      outro: { color: '#9e9e9e', label: 'Outro' }
     };
 
-    function criarEstiloIncidente(tipo) {
+    const relatoSource = new ol.source.Vector({ features: [] });
+    const userLocationSource = new ol.source.Vector({ features: [] });
+
+    const relatoLayer = new ol.layer.Vector({ source: relatoSource });
+    const userLocationLayer = new ol.layer.Vector({ source: userLocationSource });
+
+    map.addLayer(relatoLayer);
+    map.addLayer(userLocationLayer);
+
+    const popupEl = document.createElement('div');
+    popupEl.id = 'incident-popup';
+    document.body.appendChild(popupEl);
+
+    const popup = new ol.Overlay({
+      element: popupEl,
+      positioning: 'bottom-center',
+      offset: [0, -18],
+      stopEvent: false
+    });
+
+    map.addOverlay(popup);
+    popupEl.style.display = 'none';
+
+    let userFeature = null;
+    let currentUserCoord = null;
+    let firstLocationFix = true;
+    let geoWatchId = null;
+
+    function hexToRgba(hex, alpha) {
+      const clean = hex.replace('#', '');
+      const bigint = parseInt(clean, 16);
+      const r = (bigint >> 16) & 255;
+      const g = (bigint >> 8) & 255;
+      const b = bigint & 255;
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+
+    const relatoIconCache = new Map();
+
+    function createRelatoCanvas(color) {
+      if (relatoIconCache.has(color)) return relatoIconCache.get(color);
+
+      const size = 96;
+      const center = size / 2;
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+
+      const ctx = canvas.getContext('2d');
+
+      const gradient = ctx.createRadialGradient(center, center, 8, center, center, 34);
+      gradient.addColorStop(0, hexToRgba(color, 0.42));
+      gradient.addColorStop(0.45, hexToRgba(color, 0.18));
+      gradient.addColorStop(1, hexToRgba(color, 0));
+
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(center, center, 34, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.fillStyle = color;
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 4;
+      ctx.arc(center, center, 10, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.fillStyle = '#ffffff';
+      ctx.arc(center, center, 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      relatoIconCache.set(color, canvas);
+      return canvas;
+    }
+
+    function criarEstiloRelato(tipo) {
       const cfg = INCIDENT_ICONS[tipo] || INCIDENT_ICONS.outro;
       return new ol.style.Style({
-        image: new ol.style.Circle({
-          radius: 10,
-          fill: new ol.style.Fill({ color: cfg.color }),
-          stroke: new ol.style.Stroke({ color: '#fff', width: 2 })
-        }),
-        text: new ol.style.Text({
-          text: cfg.label,
-          fill: new ol.style.Fill({ color: '#fff' }),
-          font: 'bold 12px Poppins, sans-serif'
+        image: new ol.style.Icon({
+          img: createRelatoCanvas(cfg.color),
+          imgSize: [96, 96],
+          anchor: [0.5, 0.5],
+          anchorXUnits: 'fraction',
+          anchorYUnits: 'fraction'
         })
       });
     }
 
-    map.addLayer(new ol.layer.Vector({
-      source: trilhaSource,
-      style: new ol.style.Style({
-        stroke: new ol.style.Stroke({ color: 'rgba(229,57,53,0.5)', width: 3, lineDash: [6, 4] })
-      })
-    }));
-    map.addLayer(new ol.layer.Vector({ source: incidenteSource }));
-
-    // Popup overlay para info do incidente
-    const popupEl = document.createElement('div');
-    popupEl.id = 'incident-popup';
-    popupEl.style.cssText = 'background:var(--base-clr,#11121a);color:var(--text-clr,#e6e6ef);padding:8px 12px;border-radius:8px;font-size:13px;box-shadow:0 2px 12px rgba(0,0,0,.4);pointer-events:auto;max-width:200px;';
-    document.body.appendChild(popupEl);
-    const popup = new ol.Overlay({ element: popupEl, positioning: 'bottom-center', offset: [0, -14], stopEvent: false });
-    map.addOverlay(popup);
-    popupEl.style.display = 'none';
-
-    map.on('click', evt => {
-      const feat = map.forEachFeatureAtPixel(evt.pixel, f => f, { layerFilter: l => l.getSource() === incidenteSource });
-      if (feat) {
-        const tipo = feat.get('tipo') || 'incidente';
-        const linha = feat.get('linha') || '—';
-        const mins = feat.get('minutosRestantes') || '?';
-        popupEl.innerHTML = `<strong>${tipo.toUpperCase()}</strong><br>Linha: ${linha}<br>Expira em: ${mins} min`;
-        popup.setPosition(evt.coordinate);
-        popupEl.style.display = 'block';
-      } else {
-        popupEl.style.display = 'none';
-      }
-    });
-
-    async function carregarIncidentesAtivos() {
-      try {
-        const resp = await fetch('/api/incidentes-ativos');
-        if (!resp.ok) return;
-        const incidentes = await resp.json();
-
-        incidenteSource.clear();
-        trilhaSource.clear();
-
-        incidentes.forEach(inc => {
-          const coord = inc.coordenada;
-          if (!coord) return;
-
-          // Icone do incidente na posicao atual
-          const ponto = ol.proj.fromLonLat([coord.lon, coord.lat]);
-          const feat = new ol.Feature(new ol.geom.Point(ponto));
-          feat.setStyle(criarEstiloIncidente(inc.tipo));
-          feat.set('tipo', inc.tipo);
-          feat.set('linha', inc.linha);
-
-          // Calcula minutos restantes
-          if (inc.criadoEm) {
-            const restante = Math.max(0, 30 - Math.floor((Date.now() - inc.criadoEm) / 60000));
-            feat.set('minutosRestantes', restante);
-          }
-
-          incidenteSource.addFeature(feat);
-
-          // Trilha percorrida
-          if (inc.coordenadas && inc.coordenadas.length > 1) {
-            const pontos = inc.coordenadas.map(c => ol.proj.fromLonLat([c.lon, c.lat]));
-            const trilha = new ol.Feature(new ol.geom.LineString(pontos));
-            trilhaSource.addFeature(trilha);
-          }
-        });
-      } catch(e) { console.error('Erro ao carregar incidentes ativos:', e); }
+    function criarEstiloUsuario() {
+      return new ol.style.Style({
+        image: new ol.style.Circle({
+          radius: 8,
+          fill: new ol.style.Fill({ color: '#1976d2' }),
+          stroke: new ol.style.Stroke({ color: '#fff', width: 2 })
+        })
+      });
     }
 
-    // Polling a cada 10 segundos
-    carregarIncidentesAtivos();
-    setInterval(carregarIncidentesAtivos, 10000);
+    function formatarTipo(tipo) {
+      return (INCIDENT_ICONS[tipo]?.label || 'Outro');
+    }
+
+    function formatarData(dataRelato) {
+      if (!dataRelato) return 'Horário não informado';
+
+      const dt = new Date(dataRelato);
+      if (Number.isNaN(dt.getTime())) return dataRelato;
+
+      return dt.toLocaleString('pt-BR', {
+        dateStyle: 'short',
+        timeStyle: 'short'
+      });
+    }
+
+    function centerOnUser() {
+      if (!currentUserCoord) {
+        showStatus('Localização ainda não disponível.');
+        return;
+      }
+
+      map.getView().animate({
+        center: currentUserCoord,
+        zoom: Math.max(map.getView().getZoom() || 15, 15),
+        duration: 700
+      });
+
+      popupEl.style.display = 'none';
+      updateGpsEdgeIndicator();
+    }
+
+    function getSafeBounds() {
+      const rect = contentEl.getBoundingClientRect();
+      const isMobile = window.innerWidth <= 768;
+      const sidebarEl = document.getElementById('sidebar');
+      const sidebarMobileOpen = isMobile && sidebarEl?.classList.contains('mobile-open');
+
+      let safeLeft = isMobile ? 80 : 24;
+      const safeTop = isMobile ? 80 : 24;
+      const safeRight = rect.width - 24;
+      const safeBottom = rect.height - 24;
+
+      if (sidebarMobileOpen) {
+        safeLeft = 280;
+      }
+
+      return { safeLeft, safeTop, safeRight, safeBottom };
+    }
+
+    function updateGpsEdgeIndicator() {
+      if (!currentUserCoord) {
+        gpsEdgeIndicator.classList.add('hidden');
+        return;
+      }
+
+      const pixel = map.getPixelFromCoordinate(currentUserCoord);
+      if (!pixel) {
+        gpsEdgeIndicator.classList.add('hidden');
+        return;
+      }
+
+      const [px, py] = pixel;
+      const { safeLeft, safeTop, safeRight, safeBottom } = getSafeBounds();
+
+      const isInside =
+        px >= safeLeft &&
+        px <= safeRight &&
+        py >= safeTop &&
+        py <= safeBottom;
+
+      if (isInside) {
+        gpsEdgeIndicator.classList.add('hidden');
+        return;
+      }
+
+      const clampedX = Math.min(safeRight, Math.max(safeLeft, px));
+      const clampedY = Math.min(safeBottom, Math.max(safeTop, py));
+
+      const deltaX = px - clampedX;
+      const deltaY = py - clampedY;
+      const angle = (Math.atan2(deltaY, deltaX) * 180 / Math.PI) + 90;
+
+      gpsEdgeIndicator.style.left = `${clampedX}px`;
+      gpsEdgeIndicator.style.top = `${clampedY}px`;
+      gpsEdgeIndicator.style.transform = 'translate(-50%, -50%)';
+      gpsEdgeArrow.style.transform = `rotate(${angle}deg)`;
+
+      gpsEdgeIndicator.classList.remove('hidden');
+    }
+
+    function atualizarUsuarioNoMapa(longitude, latitude) {
+      currentUserCoord = ol.proj.fromLonLat([longitude, latitude]);
+
+      if (!userFeature) {
+        userFeature = new ol.Feature(new ol.geom.Point(currentUserCoord));
+        userFeature.setStyle(criarEstiloUsuario());
+        userLocationSource.addFeature(userFeature);
+      } else {
+        userFeature.setGeometry(new ol.geom.Point(currentUserCoord));
+      }
+
+      if (firstLocationFix) {
+        map.getView().animate({
+          center: currentUserCoord,
+          zoom: 15,
+          duration: 900
+        });
+        firstLocationFix = false;
+        showStatus('Localização encontrada!');
+      }
+
+      updateGpsEdgeIndicator();
+    }
+
+    async function carregarRelatos() {
+      try {
+        const resp = await fetch(RELATOS_URL + '?v=' + Date.now());
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+
+        const relatos = await resp.json();
+        relatoSource.clear();
+
+        relatos.forEach(relato => {
+          if (relato.latitude == null || relato.longitude == null) return;
+
+          const coord = ol.proj.fromLonLat([
+            Number(relato.longitude),
+            Number(relato.latitude)
+          ]);
+
+          const feat = new ol.Feature(new ol.geom.Point(coord));
+          feat.setStyle(criarEstiloRelato(relato.tipo));
+
+          feat.setProperties({
+            isRelato: true,
+            id: relato.id,
+            tipo: relato.tipo,
+            descricao: relato.descricao,
+            dataRelato: relato.dataRelato,
+            bairro: relato.bairro,
+            municipio: relato.municipio,
+            linhaMunicipal: relato.linhaMunicipal,
+            linhaTranscol: relato.linhaTranscol
+          });
+
+          relatoSource.addFeature(feat);
+        });
+      } catch (e) {
+        console.error('Erro ao carregar relatos:', e);
+        showStatus('Erro ao carregar relatos.', 4000);
+      }
+    }
+
+    map.on('click', evt => {
+      const feat = map.forEachFeatureAtPixel(evt.pixel, f => f, {
+        layerFilter: layer => layer === relatoLayer
+      });
+
+      if (!feat) {
+        popupEl.style.display = 'none';
+        return;
+      }
+
+      const tipo = formatarTipo(feat.get('tipo'));
+      const descricao = feat.get('descricao') || 'Sem observações';
+      const dataRelato = formatarData(feat.get('dataRelato'));
+      const bairro = feat.get('bairro') || '—';
+      const municipio = feat.get('municipio') || '—';
+      const linha = feat.get('linhaTranscol') ?? feat.get('linhaMunicipal');
+
+      popupEl.innerHTML = `
+        <span class="popup-title">${tipo}</span>
+        <div><strong>Horário:</strong> ${dataRelato}</div>
+        <div><strong>Bairro:</strong> ${bairro}</div>
+        <div><strong>Município:</strong> ${municipio}</div>
+        ${linha != null ? `<div><strong>Linha:</strong> ${linha}</div>` : ''}
+        <div class="popup-desc"><strong>Observações:</strong> ${descricao}</div>
+      `;
+
+      popup.setPosition(evt.coordinate);
+      popupEl.style.display = 'block';
+    });
+
+    if (navigator.geolocation) {
+      geoWatchId = navigator.geolocation.watchPosition(
+        pos => {
+          atualizarUsuarioNoMapa(pos.coords.longitude, pos.coords.latitude);
+        },
+        err => {
+          console.error(err);
+          showStatus('Localização não encontrada.', 3500);
+        },
+        {
+          enableHighAccuracy: true,
+          maximumAge: 5000,
+          timeout: 10000
+        }
+      );
+    } else {
+      showStatus('Geolocalização não suportada pelo navegador.', 4000);
+    }
+
+    gpsCenterBtn?.addEventListener('click', centerOnUser);
+    legendCenterBtn?.addEventListener('click', centerOnUser);
+    gpsEdgeIndicator?.addEventListener('click', centerOnUser);
+
+    map.on('moveend', updateGpsEdgeIndicator);
+    window.addEventListener('resize', () => setTimeout(updateGpsEdgeIndicator, 80));
+    document.getElementById('toggle-btn')?.addEventListener('click', () => setTimeout(updateGpsEdgeIndicator, 320));
+    document.getElementById('hamburger-btn')?.addEventListener('click', () => setTimeout(updateGpsEdgeIndicator, 320));
+    document.getElementById('sidebar-overlay')?.addEventListener('click', () => setTimeout(updateGpsEdgeIndicator, 320));
+
+    carregarRelatos();
+    setInterval(carregarRelatos, 15000);
   </script>
+  
 </body>
 </html>
