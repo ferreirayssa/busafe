@@ -14,11 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.transcol.busafe.model.Relato;
 import com.transcol.busafe.repository.RelatoRepository;
 
-<<<<<<< rayssaf
-
-=======
 import jakarta.validation.Valid;
->>>>>>> main
 
 @RestController
 @RequestMapping("/relatos")
@@ -32,7 +28,7 @@ public class RelatoController {
 
     // Criar um novo relato (POST)
     @PostMapping
-    public ResponseEntity<Relato> criarRelato(@RequestBody Relato relato) {
+    public ResponseEntity<Relato> criarRelato(@Valid @RequestBody Relato relato) {
         // Como definimos a dataRelato = LocalDateTime.now() na Model, 
         // ela será salva automaticamente se não for enviada no JSON.
         Relato novoRelato = relatoRepo.save(relato);

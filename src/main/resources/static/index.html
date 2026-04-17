@@ -145,78 +145,258 @@
       style: new ol.style.Style({ stroke: new ol.style.Stroke({ color: '#812f9a', width: 4 }) })
     });
 
+    const relatoSource = new ol.source.Vector({ features: [] });
+    const relatoLayer  = new ol.layer.Vector({ source: relatoSource });
+
+    const busSource = new ol.source.Vector({ features: [] });
+    const busLayer  = new ol.layer.Vector({ source: busSource });
+
+    const userSource = new ol.source.Vector({ features: [] });
+    const userLayer  = new ol.layer.Vector({ source: userSource });
+
     const map = new ol.Map({
       target: 'map',
-      layers: [base, rotasLayer, resultadoLayer],
-      view: new ol.View({ center: ol.proj.fromLonLat([-40.307, -20.318]), zoom: 12 })
+      layers: [base, rotasLayer, resultadoLayer, relatoLayer, busLayer, userLayer],
+      view: new ol.View({
+        center: ol.proj.fromLonLat([-40.3128, -20.3155]),
+        zoom: 12
+      })
     });
 
-    todasRotasSource.on('change', () => {
-      if (todasRotasSource.getState() === 'loading') { showStatus('Carregando rotas…', 0); }
-      else if (todasRotasSource.getState() === 'ready') {
-        statusEl.classList.remove('show');
-        map.getView().fit(todasRotasSource.getExtent(), { padding: [40,40,40,40], maxZoom: 15 });
+    // --- Popup logic ---
+    const popupEl = document.createElement('div');
+    popupEl.className = 'ol-popup';
+    document.body.appendChild(popupEl);
+
+    const overlay = new ol.Overlay({
+      element: popupEl,
+      positioning: 'bottom-center',
+      stopEvent: true,
+      offset: [0, -15]
+    });
+    map.addOverlay(overlay);
+
+    map.on('click', evt => {
+      const feature = map.forEachFeatureAtPixel(evt.pixel, f => f);
+      if (feature && feature.getProperties().featureType) {
+        const props = feature.getProperties();
+        const coord = feature.getGeometry().getCoordinates();
+
+        let html = '';
+        if (props.featureType === 'relato') {
+          html = `
+            <div class="popup-content">
+              <h3>${props.tipo}</h3>
+              <p>${props.descricao}</p>
+              <small>${formatarData(props.dataRelato)}</small>
+            </div>
+          `;
+        } else if (props.featureType === 'onibus') {
+          html = `
+            <div class="popup-content">
+              <h3>Ônibus ${props.linha}</h3>
+              <p>Monitoramento ativo</p>
+            </div>
+          `;
+        }
+
+        popupEl.innerHTML = html;
+        overlay.setPosition(coord);
+        popupEl.style.display = 'block';
+      } else {
+        popupEl.style.display = 'none';
       }
     });
-    todasRotasSource.on('error', () => showStatus('Falha ao carregar rotas.', 5000));
+
+    // --- Relatos & Incidentes ---
+    const RELATOS_URL = "/relatos";
+    const INCIDENTES_ATIVOS_URL = "/api/incidentes/ativos";
+
+    let relatosCache = [];
+    let incidentesAtivosCache = [];
+    let linhaSelecionada = null;
+
+    const INCIDENT_ICON_DEFS = {
+      assalto: { color: '#e53935', viewBox: '0 0 16 16', path: 'M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z', label: 'Assalto' },
+      furto: { color: '#fb8c00', viewBox: '0 0 16 16', path: 'M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z', label: 'Furto' },
+      assedio: { color: '#d81b60', viewBox: '0 0 16 16', path: 'M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.288 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z', label: 'Assédio' },
+      vandalismo: { color: '#7b1fa2', viewBox: '0 0 16 16', path: 'M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z', label: 'Vandalismo' },
+      outro: { color: '#546e7a', viewBox: '0 0 16 16', path: 'M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z', label: 'Outro' },
+      bus_monitorado: {
+        color: '#0f766e',
+        viewBox: '0 0 16 16',
+        path: 'M16 7a1 1 0 0 1-1 1v3.5c0 .818-.393 1.544-1 2v2a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5V14H5v1.5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-2a2.5 2.5 0 0 1-1-2V8a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1V2.64C1 1.452 1.845.408 3.064.268A44 44 0 0 1 8 0c2.1 0 3.792.136 4.936.268C14.155.408 15 1.452 15 2.64V4a1 1 0 0 1 1 1v2zM3 11a1 1 0 1 0 2 0 1 1 0 0 0-2 0zm8 0a1 1 0 1 0 2 0 1 1 0 0 0-2 0z',
+        label: 'Ônibus monitorado'
+      }
+    };
+
+    const markerCache = new Map();
+    const busMarkerCache = new Map();
+
+    function svgToDataUrl(svg) {
+      return 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
+    }
+
+    function createMarkerSvg(def, { highlight = false, isBus = false } = {}) {
+      const size = highlight ? 112 : 104;
+      const center = size / 2;
+
+      const haloRadius = highlight ? 44 : 40;
+      const haloOpacityStrong = highlight ? 0.72 : 0.60;
+      const haloOpacityMid = highlight ? 0.32 : 0.24;
+
+      const bubbleRadius = isBus ? 16 : 15;
+      const iconSize = isBus ? 20 : 18;
+
+      return `
+        <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+          <defs>
+            <radialGradient id="g" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="${def.color}" stop-opacity="${haloOpacityStrong}" />
+              <stop offset="38%" stop-color="${def.color}" stop-opacity="${haloOpacityMid}" />
+              <stop offset="72%" stop-color="${def.color}" stop-opacity="0.10" />
+              <stop offset="100%" stop-color="${def.color}" stop-opacity="0" />
+            </radialGradient>
+          </defs>
+
+          <circle cx="${center}" cy="${center}" r="${haloRadius}" fill="url(#g)" />
+
+          <circle
+            cx="${center}"
+            cy="${center}"
+            r="${bubbleRadius}"
+            fill="${def.color}"
+            stroke="#ffffff"
+            stroke-width="3.2"
+          />
+
+          <svg
+            x="${center - iconSize / 2}"
+            y="${center - iconSize / 2}"
+            width="${iconSize}"
+            height="${iconSize}"
+            viewBox="${def.viewBox}"
+          >
+            <path d="${def.path}" fill="#ffffff"/>
+          </svg>
+        </svg>
+      `;
+    }
+
+    function getMarkerStyle(type, { highlight = false, isBus = false, rotation = 0 } = {}) {
+      const def = INCIDENT_ICON_DEFS[type] || INCIDENT_ICON_DEFS.outro;
+      const cacheKey = `${type}-${highlight}-${isBus}`;
+
+      const cache = isBus ? busMarkerCache : markerCache;
+      if (!cache.has(cacheKey)) {
+        const svg = createMarkerSvg(def, { highlight, isBus });
+        cache.set(cacheKey, svgToDataUrl(svg));
+      }
+
+      const markerSize = highlight ? 112 : 104;
+
+      return new ol.style.Style({
+        image: new ol.style.Icon({
+          src: cache.get(cacheKey),
+          imgSize: [markerSize, markerSize],
+          anchor: [0.5, 0.5],
+          rotateWithView: true,
+          rotation
+        }),
+        zIndex: highlight ? 30 : (isBus ? 25 : 20)
+      });
+    }
+
+    function formatarData(value) {
+      if (!value) return 'Horário não informado';
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return String(value);
+      return d.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+    }
+
+    function linhaDoRelato(relato) {
+      return relato.linhaTranscol ?? relato.linhaMunicipal ?? null;
+    }
+
+    function isLinhaSelecionada(linha) {
+      if (linhaSelecionada == null || linha == null) return false;
+      return String(linhaSelecionada).trim() === String(linha).trim();
+    }
+
+    function renderRelatos() {
+      relatoSource.clear();
+      relatosCache.forEach(relato => {
+        if (relato.latitude == null || relato.longitude == null) return;
+        const linha = linhaDoRelato(relato);
+        const highlight = isLinhaSelecionada(linha);
+        const coord = ol.proj.fromLonLat([Number(relato.longitude), Number(relato.latitude)]);
+        const feat = new ol.Feature(new ol.geom.Point(coord));
+        feat.setProperties({ featureType: 'relato', ...relato, linha });
+        feat.setStyle(getMarkerStyle(relato.tipo, { highlight }));
+        relatoSource.addFeature(feat);
+      });
+    }
+
+    function renderOnibusAtivos() {
+      busSource.clear();
+      incidentesAtivosCache.forEach(inc => {
+        if (!inc?.coordenada || inc.linha == null) return;
+        const coord = ol.proj.fromLonLat([inc.coordenada.lon, inc.coordenada.lat]);
+        const highlight = isLinhaSelecionada(inc.linha);
+        const feat = new ol.Feature(new ol.geom.Point(coord));
+        feat.setProperties({ featureType: 'onibus', ...inc });
+        feat.setStyle(getMarkerStyle('bus_monitorado', { highlight, isBus: true }));
+        busSource.addFeature(feat);
+      });
+    }
+
+    async function carregarRelatos() {
+      try {
+        const resp = await fetch(RELATOS_URL + '?v=' + Date.now());
+        relatosCache = await resp.json();
+        renderRelatos();
+      } catch (err) { console.error(err); }
+    }
+
+    async function carregarIncidentesAtivos() {
+      try {
+        const resp = await fetch(INCIDENTES_ATIVOS_URL + '?v=' + Date.now());
+        incidentesAtivosCache = await resp.json();
+        renderOnibusAtivos();
+      } catch (err) { console.error(err); }
+    }
 
     document.getElementById('clear').onclick = () => {
       resultadoSource.clear();
       rotasLayer.setVisible(true);
       document.getElementById('linha').value = '';
-      showStatus('Resultado limpo.');
+      linhaSelecionada = null;
+      renderRelatos();
+      renderOnibusAtivos();
     };
 
     document.getElementById('go').onclick = async () => {
       const codigo = document.getElementById('linha').value.trim();
-      if (!codigo) { showStatus('Informe o código da linha.'); return; }
+      if (!codigo) return;
       try {
-        showStatus('Buscando linha ' + codigo + '…', 0);
         const resp = await fetch(`/api/rotas/buscar/${encodeURIComponent(codigo)}`);
-        if (!resp.ok) throw new Error('HTTP ' + resp.status);
         const json = await resp.json();
         if (json.features?.length) {
           const feats = new ol.format.GeoJSON().readFeatures(json, { featureProjection: 'EPSG:3857' });
           resultadoSource.clear();
           resultadoSource.addFeatures(feats);
           rotasLayer.setVisible(false);
-          statusEl.classList.remove('show');
-          map.getView().fit(resultadoSource.getExtent(), { padding: [40,40,40,40], maxZoom: 15 });
-          showStatus('Linha ' + codigo + ' exibida!');
-        } else {
-          resultadoSource.clear();
-          rotasLayer.setVisible(true);
-          showStatus('Nenhuma rota encontrada.', 3000);
+          map.getView().fit(resultadoSource.getExtent(), { padding: [40, 40, 40, 40], maxZoom: 15 });
+          linhaSelecionada = codigo;
+          renderRelatos();
+          renderOnibusAtivos();
         }
-      } catch (err) {
-        console.error(err);
-        showStatus('Erro ao buscar linha.', 5000);
-      }
+      } catch (err) { console.error(err); }
     };
 
-    document.getElementById('linha').addEventListener('keyup', e => {
-      if (e.key === 'Enter') document.getElementById('go').click();
-    });
-
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(pos => {
-        const c = ol.proj.fromLonLat([pos.coords.longitude, pos.coords.latitude]);
-        map.getView().animate({ center: c, zoom: 15, duration: 1000 });
-        const f = new ol.Feature(new ol.geom.Point(c));
-        f.setStyle(new ol.style.Style({ image: new ol.style.Circle({ radius: 8, fill: new ol.style.Fill({ color: '#1976d2' }), stroke: new ol.style.Stroke({ color: '#fff', width: 2 }) }) }));
-        map.addLayer(new ol.layer.Vector({ source: new ol.source.Vector({ features: [f] }) }));
-        showStatus('Localização encontrada!');
-      }, err => { console.error(err); showStatus('Localização não encontrada.'); });
-    }
-
-    document.querySelectorAll('.sub-menu .nav-item').forEach(link => {
-      link.addEventListener('click', e => {
-        e.preventDefault();
-        document.getElementById('linha').value = link.textContent.trim().split('—')[0].trim();
-        document.getElementById('go').click();
-        closeAllSubMenus();
-      });
-    });
+    carregarRelatos();
+    carregarIncidentesAtivos();
+    setInterval(carregarIncidentesAtivos, 15000);
   </script>
 </body>
 </html>

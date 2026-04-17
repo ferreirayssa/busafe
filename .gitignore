@@ -35,3 +35,7 @@ build/
 
 ### ignora o Histórico (pode conter as senhas) ###
 /.history
+env
+.env
+.env.*
+*.env

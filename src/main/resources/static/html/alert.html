@@ -103,333 +103,117 @@
     </div>
   </nav>
 
-  <!-- Formulário -->
-  <div class="container">
-    <h1>Reporte um Incidente</h1>
-    <p class="page-subtitle">Ajude a comunidade com informações seguras e anônimas</p>
+  <main id="content">
+    <div class="form-container">
+      <h1>Reportar Incidente</h1>
+      <p>Ajude a comunidade informando ocorrências em tempo real.</p>
 
-    <!-- Progresso -->
-    <div class="progress-steps">
-      <div class="progress-step active" id="step-1">
-        <div class="step-circle">1</div>
-        <span>Tipo</span>
-      </div>
-      <div class="step-connector" id="connector-1"></div>
-      <div class="progress-step pending" id="step-2">
-        <div class="step-circle">2</div>
-        <span>Local</span>
-      </div>
-      <div class="step-connector" id="connector-2"></div>
-      <div class="progress-step pending" id="step-3">
-        <div class="step-circle">3</div>
-        <span>Linha</span>
-      </div>
+      <form id="relatoForm">
+        <div class="form-group">
+          <label for="tipo">Tipo de Incidente</label>
+          <select id="tipo" required>
+            <option value="">Selecione...</option>
+            <option value="assalto">Assalto</option>
+            <option value="furto">Furto</option>
+            <option value="assedio">Assédio</option>
+            <option value="vandalismo">Vandalismo</option>
+            <option value="outro">Outro</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="linhaTranscol">Linha (Opcional)</label>
+          <input type="number" id="linhaTranscol" placeholder="Ex: 506">
+        </div>
+
+        <div class="form-group">
+          <label for="descricao">Descrição</label>
+          <textarea id="descricao" rows="4" placeholder="Detalhes do ocorrido..." required></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Localização</label>
+          <div id="map-selection" style="height: 200px; border-radius: 8px; margin-bottom: 10px;"></div>
+          <p class="location-hint">Clique no mapa para ajustar o local ou use sua posição atual.</p>
+          <input type="hidden" id="latitude">
+          <input type="hidden" id="longitude">
+        </div>
+
+        <button type="submit" class="btn-submit">Enviar Relato</button>
+      </form>
     </div>
-
-    <!-- Tipo -->
-    <div class="section-title">Tipo de Incidente</div>
-    <div class="incident-types">
-
-      <div class="incident-card">
-        <input type="radio" name="incident" id="assalto" value="assalto">
-        <label for="assalto">
-          <div class="incident-icon" style="color:#e53935;"><i class="bi bi-cash-coin"></i></div>
-          <div>Assalto</div>
-        </label>
-      </div>
-
-      <div class="incident-card">
-        <input type="radio" name="incident" id="assedio" value="assedio">
-        <label for="assedio">
-          <div class="incident-icon" style="color:#ff9800;"><i class="bi bi-exclamation-circle"></i></div>
-          <div>Assédio</div>
-        </label>
-      </div>
-
-      <div class="incident-card">
-        <input type="radio" name="incident" id="violencia" value="violencia">
-        <label for="violencia">
-          <div class="incident-icon" style="color:#9c27b0;"><i class="bi bi-person-dash"></i></div>
-          <div>Violência</div>
-        </label>
-      </div>
-
-      <div class="incident-card">
-        <input type="radio" name="incident" id="furto" value="furto">
-        <label for="furto">
-          <div class="incident-icon" style="color:#2196f3;"><i class="bi bi-bag-x"></i></div>
-          <div>Furto</div>
-        </label>
-      </div>
-
-      <div class="incident-card">
-        <input type="radio" name="incident" id="onibus-parado-quebrado" value="onibus_parado_quebrado">
-        <label for="onibus-parado-quebrado">
-          <div class="incident-icon" style="color:#ef6c00;"><i class="bi bi-bus-front"></i></div>
-          <div>Ônibus Quebrado</div>
-        </label>
-      </div>
-
-      <div class="incident-card">
-        <input type="radio" name="incident" id="outro" value="outro">
-        <label for="outro">
-          <div class="incident-icon" style="color:#9e9e9e;"><i class="bi bi-question-circle"></i></div>
-          <div>Outro</div>
-        </label>
-      </div>
-
-    </div>
-
-    <!-- Descrição -->
-    <div class="section-title">Descrição do Incidente</div>
-    <textarea placeholder="Descreva brevemente o que aconteceu..."></textarea>
-
-    <!-- Mapa -->
-    <div class="section-title">Ponto do Incidente</div>
-    <div id="alert-map" style="height:280px;width:100%;border-radius:10px;margin-bottom:.75rem;border:1px solid rgba(255,255,255,.05);"></div>
-    <input type="hidden" id="latitude"  name="latitude">
-    <input type="hidden" id="longitude" name="longitude">
-
-    <div class="location-wrapper" style="margin-bottom:.75rem;">
-      <input type="text" id="bairro"    name="bairro"    placeholder="Bairro (automático)" readonly>
-      <input type="text" id="municipio" name="municipio" placeholder="Município (automático)" readonly>
-    </div>
-
-    <!-- Linha (opcional) -->
-    <div class="section-title">
-      Linha do Ônibus
-      <span style="font-weight:400;opacity:.6;font-size:.85em;text-transform:none;letter-spacing:0;">(opcional)</span>
-    </div>
-    <div class="location-wrapper">
-      <input type="text"
-             id="incidente-linha-busca"
-             placeholder="Digite o número da linha (ex: 506)..."
-             autocomplete="off">
-      <div id="linha-resultados" class="search-results"></div>
-      <input type="hidden" id="linha-numero-selecionada">
-      <input type="hidden" id="linha-tipo-selecionada">
-
-      <button class="location-btn" id="location-btn">
-        <i class="bi bi-crosshair2"></i>
-        Minha localização
-      </button>
-    </div>
-
-    <button class="submit-btn">
-      <i class="bi bi-send"></i>
-      Enviar Denúncia
-    </button>
-  </div>
+  </main>
 
   <div id="toast-container"></div>
 
   <script>
-  document.addEventListener('DOMContentLoaded', () => {
-
-    function showToast(msg, type = 'info') {
-      const c = document.getElementById('toast-container');
-      if (!c) return;
-      const t = document.createElement('div');
-      t.className = `toast ${type}`;
-      t.textContent = msg;
-      c.appendChild(t);
-      setTimeout(() => {
-        t.style.animation = 'toastOut .4s forwards';
-        setTimeout(() => t.remove(), 400);
-      }, 3000);
-    }
-
-    const latInput          = document.getElementById('latitude');
-    const lonInput          = document.getElementById('longitude');
-    const submitBtn         = document.querySelector('.submit-btn');
-    const locationBtn       = document.getElementById('location-btn');
-    const buscaInput        = document.getElementById('incidente-linha-busca');
-    const resultadosDiv     = document.getElementById('linha-resultados');
-    const numeroSelecionado = document.getElementById('linha-numero-selecionada');
-    const tipoSelecionado   = document.getElementById('linha-tipo-selecionada');
-    let debounceTimer;
-
-    /* progresso */
-    function updateProgress() {
-      const tipoOk  = !!document.querySelector('input[name="incident"]:checked');
-      const localOk = !!(latInput.value && lonInput.value);
-      const linhaOk = !!numeroSelecionado.value;
-
-      setStep(1, tipoOk  ? 'done' : 'active');
-      setStep(2, localOk ? 'done' : tipoOk  ? 'active' : 'pending');
-      setStep(3, linhaOk ? 'done' : localOk ? 'active' : 'pending');
-
-      document.getElementById('connector-1')?.classList.toggle('done', tipoOk);
-      document.getElementById('connector-2')?.classList.toggle('done', localOk);
-    }
-
-    function setStep(n, state) {
-      const el = document.getElementById('step-' + n);
-      if (el) el.className = 'progress-step ' + state;
-    }
-
-    document.querySelectorAll('input[name="incident"]').forEach(r =>
-      r.addEventListener('change', updateProgress)
-    );
-
-    /* mapa */
-    const pinFeature = new ol.Feature({ geometry: new ol.geom.Point(ol.proj.fromLonLat([-40.307,-20.318])) });
-    pinFeature.setStyle(new ol.style.Style({
-      image: new ol.style.Circle({ radius: 8, fill: new ol.style.Fill({ color: '#ef5350' }), stroke: new ol.style.Stroke({ color: '#fff', width: 2 }) })
-    }));
     const map = new ol.Map({
-      target: 'alert-map',
-      layers: [
-        new ol.layer.Tile({ source: new ol.source.OSM() }),
-        new ol.layer.Vector({ source: new ol.source.Vector({ features: [pinFeature] }) })
-      ],
-      view: new ol.View({ center: ol.proj.fromLonLat([-40.307,-20.318]), zoom: 12 })
+      target: 'map-selection',
+      layers: [ new ol.layer.Tile({ source: new ol.source.OSM() }) ],
+      view: new ol.View({ center: ol.proj.fromLonLat([-40.3128, -20.3155]), zoom: 14 })
     });
 
-    function updatePin(coords3857) {
-      pinFeature.getGeometry().setCoordinates(coords3857);
-      const [lon, lat] = ol.proj.toLonLat(coords3857);
-      lonInput.value = lon;
-      latInput.value = lat;
-      obterEndereco(lat, lon);
-      updateProgress();
+    const markerSource = new ol.source.Vector();
+    const markerLayer = new ol.layer.Vector({
+      source: markerSource,
+      style: new ol.style.Style({
+        image: new ol.style.Circle({
+          radius: 7,
+          fill: new ol.style.Fill({ color: '#e53935' }),
+          stroke: new ol.style.Stroke({ color: '#fff', width: 2 })
+        })
+      })
+    });
+    map.addLayer(markerLayer);
+
+    function updateMarker(coord) {
+      markerSource.clear();
+      markerSource.addFeature(new ol.Feature(new ol.geom.Point(coord)));
+      const lonLat = ol.proj.toLonLat(coord);
+      document.getElementById('longitude').value = lonLat[0];
+      document.getElementById('latitude').value = lonLat[1];
     }
 
-    async function obterEndereco(lat, lon) {
-      try {
-        const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&addressdetails=1`);
-        const d = await r.json();
-        document.getElementById('municipio').value = d.address.city || d.address.town || 'Não encontrado';
-        document.getElementById('bairro').value    = d.address.suburb || 'Não encontrado';
-      } catch(e) { console.error(e); }
-    }
+    map.on('click', evt => updateMarker(evt.coordinate));
 
-    map.on('click', e => updatePin(e.coordinate));
-
-    /* geolocalização */
-    locationBtn.addEventListener('click', () => {
-      if (!navigator.geolocation) { showToast('Geolocalização não suportada.','warning'); return; }
-      locationBtn.disabled = true;
-      locationBtn.innerHTML = '<i class="bi bi-arrow-repeat"></i> Buscando...';
-      navigator.geolocation.getCurrentPosition(
-        pos => {
-          const c = ol.proj.fromLonLat([pos.coords.longitude, pos.coords.latitude]);
-          map.getView().animate({ center: c, zoom: 16, duration: 800 });
-          updatePin(c);
-          locationBtn.disabled = false;
-          locationBtn.innerHTML = '<i class="bi bi-crosshair2"></i> Minha localização';
-        },
-        err => {
-          showToast('Não foi possível obter sua localização.','error');
-          console.error(err);
-          locationBtn.disabled = false;
-          locationBtn.innerHTML = '<i class="bi bi-crosshair2"></i> Minha localização';
-        }
-      );
+    navigator.geolocation.getCurrentPosition(pos => {
+      const coord = ol.proj.fromLonLat([pos.coords.longitude, pos.coords.latitude]);
+      map.getView().setCenter(coord);
+      updateMarker(coord);
     });
 
-    /* autocomplete */
-    async function buscarLinhas(termo) {
-      try {
-        const r = await fetch(`/api/rotas/sugestoes?termo=${termo}`);
-        exibirResultados(await r.json());
-      } catch(e) { resultadosDiv.style.display = 'none'; }
-    }
-
-    function exibirResultados(linhas) {
-      resultadosDiv.innerHTML = '';
-      if (!linhas.length) { resultadosDiv.style.display = 'none'; return; }
-      linhas.forEach(l => {
-        const numero = l.linhaTranscol || l.linhaMunicipal;
-        const tipo   = l.linhaTranscol ? 'TRANSCOL' : 'MUNICIPAL';
-        const item   = document.createElement('div');
-        item.className       = 'result-item';
-        item.textContent     = `${numero} — ${l.nome}`;
-        item.dataset.numero  = numero;
-        item.dataset.tipo    = tipo;
-        resultadosDiv.appendChild(item);
-      });
-      resultadosDiv.style.display = 'block';
-    }
-
-    buscaInput.addEventListener('input', () => {
-      clearTimeout(debounceTimer);
-      numeroSelecionado.value = '';
-      tipoSelecionado.value   = '';
-      const t = buscaInput.value.trim();
-      if (t.length < 1) { resultadosDiv.style.display = 'none'; return; }
-      debounceTimer = setTimeout(() => buscarLinhas(t), 300);
-    });
-
-    resultadosDiv.addEventListener('click', e => {
-      const item = e.target.closest('.result-item'); // Pega o item mesmo clicando na borda
-      if (item) {
-        buscaInput.value = item.textContent; 
-        numeroSelecionado.value = item.dataset.numero;
-        tipoSelecionado.value = item.dataset.tipo;
-        resultadosDiv.style.display = 'none';
-        updateProgress();
-      }
-    });
-
-    document.addEventListener('click', e => {
-      if (!buscaInput.contains(e.target) && !resultadosDiv.contains(e.target))
-        resultadosDiv.style.display = 'none';
-    });
-
-    /* envio */
-    submitBtn.addEventListener('click', async e => {
+    document.getElementById('relatoForm').onsubmit = async e => {
       e.preventDefault();
-      const descricao     = document.querySelector('textarea').value.trim();
-      const incidenteEl   = document.querySelector('input[name="incident"]:checked');
-      const tipoIncidente = incidenteEl ? incidenteEl.value : '';
-      const lat           = latInput.value;
-      const lon           = lonInput.value;
-      const bairro        = document.getElementById('bairro').value;
-      const municipio     = document.getElementById('municipio').value;
-      const numeroLinha   = numeroSelecionado.value;
-      const tipoLinha     = tipoSelecionado.value;
+      const data = {
+        tipo: document.getElementById('tipo').value,
+        linhaTranscol: document.getElementById('linhaTranscol').value || null,
+        descricao: document.getElementById('descricao').value,
+        latitude: document.getElementById('latitude').value,
+        longitude: document.getElementById('longitude').value
+      };
 
-      if (!lat || !lon || !descricao || !tipoIncidente) {
-        showToast('Preencha: tipo, localização e descrição.','warning');
+      if (!data.latitude || !data.longitude) {
+        alert('Por favor, selecione a localização no mapa.');
         return;
       }
-
-      let linhaTranscol = null, linhaMunicipal = null;
-      if (numeroLinha && tipoLinha) {
-        const n = parseInt(numeroLinha);
-        if (tipoLinha === 'TRANSCOL')  linhaTranscol  = n;
-        if (tipoLinha === 'MUNICIPAL') linhaMunicipal = n;
-      }
-
-      const dados = { descricao, tipo: tipoIncidente, latitude: parseFloat(lat), longitude: parseFloat(lon), bairro, municipio, linhaTranscol, linhaMunicipal };
 
       try {
         const resp = await fetch('/relatos', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(dados)
+          body: JSON.stringify(data)
         });
         if (resp.ok) {
-          showToast('Incidente reportado com sucesso!','success');
-          document.querySelector('textarea').value = '';
-          buscaInput.value = '';
-          numeroSelecionado.value = tipoSelecionado.value = '';
-          document.getElementById('bairro').value = document.getElementById('municipio').value = '';
-          latInput.value = lonInput.value = '';
-          document.querySelectorAll('input[name="incident"]').forEach(r => r.checked = false);
-          updateProgress();
+          alert('Relato enviado com sucesso!');
+          window.location.href = '../index.html';
         } else {
-          showToast('Erro ao reportar. Verifique os dados.','error');
+          alert('Erro ao enviar relato.');
         }
-      } catch(err) {
-        showToast('Erro ao se comunicar com o servidor.','error');
+      } catch (err) {
         console.error(err);
+        alert('Erro de conexão.');
       }
-    });
-
-    updateProgress();
-  });
+    };
   </script>
 </body>
 </html>
