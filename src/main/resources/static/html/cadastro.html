@@ -6,14 +6,14 @@
   <title>BuSafe - Cadastro</title>
   <link rel="icon" type="image/x-icon" href="../Logos/busafe.ico">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@8.2.0/ol.css">
+  
   <script src="https://cdn.jsdelivr.net/npm/ol@8.2.0/dist/ol.js"></script>
   <style>
     :root {
-      /* Variáveis ajustadas para o modo claro no container */
-      --text-clr: #333333; /* Texto principal escuro */
-      --secondary-text-clr: #666666; /* Texto secundário escuro */
+      --text-clr: #333333;
+      --secondary-text-clr: #666666;
       --accent-clr: #10659c;
-      --hover-clr: rgba(0, 0, 0, 0.05); /* Hover escurecido para fundos claros */
+      --hover-clr: rgba(0, 0, 0, 0.05);
     }
 
     body {
@@ -21,26 +21,22 @@
       padding: 0;
       min-height: 100vh;
       display: flex;
-      align-items: center; /* Centraliza verticalmente */
-      justify-content: center; /* Centraliza horizontalmente */
+      align-items: center;
+      justify-content: center;
       position: relative;
-      background-color: var(--bg-dark);
       background: url('../prototipo/osm.png') no-repeat center center fixed;
       background-size: cover;
       font-family: Poppins, 'Segoe UI', sans-serif;
     }
 
-    /* #map {
+    #map {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
       z-index: 0;
-      filter: blur(4px);
-      opacity: 0.4;
-    } 
-    */
+    }
 
     .overlay {
       position: fixed;
@@ -64,14 +60,13 @@
       align-items: center;
     }
 
-    /* Container alterado para modo branco */
     .cadastro-container {
       width: 100%;
       padding: 2rem; 
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.98));
-      border: 1px solid rgba(0, 0, 0, 0.1); /* Borda sutil escura */
+      border: 1px solid rgba(0, 0, 0, 0.1);
       border-radius: 12px;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15); /* Sombra mais leve */
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
       backdrop-filter: blur(20px);
       box-sizing: border-box;
     }
@@ -102,7 +97,6 @@
       font-size: 0.9rem;
     }
 
-    /* Inputs alterados para combinar com o fundo branco */
     .form-group input {
       width: 100%;
       padding: 0.7rem;
@@ -115,14 +109,45 @@
       transition: all 0.3s ease;
     }
 
+    /* --- ESTILO PARA A BANDEIRA DO BRASIL FIXA --- */
+    #phone {
+      /* Adiciona espaço na esquerda para a bandeira e o DDI fixa */
+      padding-left: 75px; 
+      
+      /* Insere o SVG da bandeira do Brasil como background */
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 504"><path fill="%23009b3a" d="M0 0h720v504H0z"/><path fill="%23fee335" d="M360 40L60 252l300 212 300-212z"/><circle fill="%23002776" cx="360" cy="252" r="132"/></svg>');
+      background-repeat: no-repeat;
+      
+      /* Posiciona a bandeira: esquerda centralizada verticalmente */
+      background-position: 12px center; 
+      
+      /* Define o tamanho da bandeira */
+      background-size: 24px auto; 
+    }
+
+    /* Container para colocar o +55 fixo sobre o input */
+    .phone-input-container {
+      position: relative;
+      width: 100%;
+    }
+
+    /* Prefixo +55 fixo */
+    .phone-prefix {
+      position: absolute;
+      left: 42px; /* Posicionado após a bandeira */
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.95rem;
+      color: var(--secondary-text-clr);
+      font-weight: 500;
+      pointer-events: none; /* Não interfere no clique do input */
+    }
+    /* ------------------------------------------- */
+
     .form-group input:focus {
       outline: none;
       border-color: var(--accent-clr);
       box-shadow: 0 0 0 3px rgba(16, 101, 156, 0.1);
-    }
-
-    .form-group input.error {
-      border-color: #ef5350;
     }
 
     .error-message {
@@ -132,11 +157,8 @@
       display: none;
     }
 
-    .error-message.show {
-      display: block;
-    }
+    .error-message.show { display: block; }
 
-    /* Botão atualizado seguindo o padrão da tela de login */
     .cadastro-btn {
       width: 100%;
       padding: 0.8rem;
@@ -169,12 +191,6 @@
       color: var(--accent-clr);
       text-decoration: none;
       font-weight: 600;
-      transition: color 0.3s ease;
-    }
-
-    .login-link a:hover {
-      color: #1585cf;
-      text-decoration: underline;
     }
 
     .success-message {
@@ -189,11 +205,8 @@
       font-size: 0.9rem;
     }
 
-    .success-message.show {
-      display: block;
-    }
+    .success-message.show { display: block; }
 
-    /* Botão de voltar isolado na cor branca para não sumir no mapa */
     .back-btn {
       display: inline-flex;
       align-items: center;
@@ -203,32 +216,13 @@
       margin-bottom: 1rem;
       padding: 0.4rem 0.8rem;
       border-radius: 0.6rem;
-      transition: background 0.3s ease;
       background: rgba(255, 255, 255, 0.1);
       font-size: 0.9rem;
       align-self: flex-start; 
     }
 
-    .back-btn:hover {
-      background: rgba(255, 255, 255, 0.2);
-    }
-
-    .back-btn svg {
-      width: 18px;
-      height: 18px;
-      fill: #ffffff;
-    }
-
-    .logo-container {
-      text-align: center;
-      margin-bottom: 1rem;
-    }
-
-    .logo-container img {
-      max-width: 100px;
-      height: auto;
-      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.1));
-    }
+    .logo-container { text-align: center; margin-bottom: 1rem; }
+    .logo-container img { max-width: 100px; }
 
   </style>
 </head>
@@ -270,6 +264,15 @@
         </div>
 
         <div class="form-group">
+          <label for="phone">Telefone</label>
+          <div class="phone-input-container">
+            <span class="phone-prefix">+55</span>
+            <input type="tel" id="phone" name="phone" placeholder="(00) 00000-0000" maxlength="15" required>
+          </div>
+          <div class="error-message" id="phoneError">Número de telefone inválido.</div>
+        </div>
+
+        <div class="form-group">
           <label for="password">Senha</label>
           <input type="password" id="password" name="password" minlength="6" required>
           <div class="error-message" id="passwordError">Mínimo 6 caracteres.</div>
@@ -291,86 +294,128 @@
   </div>
 
   <script>
-    // Configuração do Mapa OpenLayers
-    const base = new ol.layer.Tile({ source: new ol.source.OSM() });
+    // --- MAPA ---
     const map = new ol.Map({
       target: 'map',
-      layers: [base],
-      view: new ol.View({ 
-        center: ol.proj.fromLonLat([-40.307, -20.318]), // Coordenadas de exemplo (Vitória)
-        zoom: 12 
-      }),
-      controls: [] // Remove controles de zoom para limpar o visual
+      layers: [new ol.layer.Tile({ source: new ol.source.OSM() })],
+      view: new ol.View({ center: ol.proj.fromLonLat([-40.307, -20.318]), zoom: 12 }),
+      controls: []
     });
 
-    // --- LÓGICA DE VALIDAÇÃO ---
-    
+    // --- MÁSCARA E VALIDAÇÃO SIMPLES DO TELEFONE BRASILEIRO ---
+    const phoneInput = document.getElementById('phone');
+
+    function formatarTelefone(value) {
+      // Remove tudo que não for dígito
+      value = value.replace(/\D/g, '');
+      
+      if (value.length > 11) value = value.slice(0, 11); // Limita a 11 dígitos
+
+      // Aplica a máscara (00) 00000-0000
+      if (value.length > 6) {
+        return value.replace(/^(\d{2})(\d{5})(\d{4}).*/, '($1) $2-$3');
+      } else if (value.length > 2) {
+        return value.replace(/^(\d{2})(\d{0,5}).*/, '($1) $2');
+      } else {
+        return value.replace(/^(\d*).*/, '($1');
+      }
+    }
+
+    phoneInput.addEventListener('input', (e) => {
+      e.target.value = formatarTelefone(e.target.value);
+    });
+
+    function validarTelefone(phone) {
+      const soNumeros = phone.replace(/\D/g, '');
+      // Validação básica: checa se tem 10 (fixo) ou 11 (celular) dígitos
+      return soNumeros.length >= 10 && soNumeros.length <= 11;
+    }
+    // ---------------------------------------------------------
+
+    // --- VALIDAÇÃO CPF ---
     function validarCPF(cpf) {
       cpf = cpf.replace(/[^\d]/g, '');
       if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false;
-      
       let soma = 0, resto;
       for (let i = 1; i <= 9; i++) soma += parseInt(cpf.substring(i-1, i)) * (11 - i);
       resto = (soma * 10) % 11;
-      if ((resto === 10) || (resto === 11)) resto = 0;
+      if (resto < 2) resto = 0; else resto = 11 - resto;
       if (resto !== parseInt(cpf.substring(9, 10))) return false;
-      
       soma = 0;
       for (let i = 1; i <= 10; i++) soma += parseInt(cpf.substring(i-1, i)) * (12 - i);
       resto = (soma * 10) % 11;
-      if ((resto === 10) || (resto === 11)) resto = 0;
+      if (resto < 2) resto = 0; else resto = 11 - resto;
       if (resto !== parseInt(cpf.substring(10, 11))) return false;
-      
       return true;
     }
 
     function formatarCPF(value) {
-      return value
-        .replace(/\D/g, '')
-        .replace(/(\d{3})(\d)/, '$1.$2')
-        .replace(/(\d{3})(\d)/, '$1.$2')
-        .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+      return value.replace(/\D/g, '').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2');
     }
 
-    const cpfInput = document.getElementById('cpf');
-    cpfInput.addEventListener('input', (e) => {
-      e.target.value = formatarCPF(e.target.value);
-    });
+    document.getElementById('cpf').addEventListener('input', (e) => { e.target.value = formatarCPF(e.target.value); });
 
-    cpfInput.addEventListener('blur', function() {
-      const errorDiv = document.getElementById('cpfError');
-      if (this.value && !validarCPF(this.value)) {
-        this.classList.add('error');
-        errorDiv.classList.add('show');
-      } else {
-        this.classList.remove('error');
-        errorDiv.classList.remove('show');
-      }
-    });
+  // --- SUBMISSÃO DO FORMULÁRIO ---
+      document.getElementById('cadastroForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const cpf = document.getElementById('cpf').value;
+        const phone = document.getElementById('phone').value;
+        const pass = document.getElementById('password').value;
+        const confirm = document.getElementById('confirmPassword').value;
+        const email = document.getElementById('email').value; // Pegando o email
+        
+        let hasError = false;
 
-    document.getElementById('cadastroForm').addEventListener('submit', async function(e) {
-      e.preventDefault();
-      
-      // Validação simplificada para o exemplo
-      const cpf = document.getElementById('cpf').value;
-      const pass = document.getElementById('password').value;
-      const confirm = document.getElementById('confirmPassword').value;
-      
-      if (!validarCPF(cpf) || pass.length < 6 || pass !== confirm) {
-        alert("Por favor, corrija os erros no formulário.");
-        return;
-      }
+        // Valida Telefone
+        if (!validarTelefone(phone)) {
+          document.getElementById('phoneError').classList.add('show');
+          hasError = true;
+        } else {
+          document.getElementById('phoneError').classList.remove('show');
+        }
 
-      // Simulação de sucesso
-      document.getElementById('successMessage').classList.add('show');
-      
-      // Aqui entraria sua chamada fetch para o backend Java
-      console.log("Enviando dados para /auth/register/user...");
-      
-      setTimeout(() => {
-        // window.location.href = 'login.html';
-      }, 2000);
-    });
+        // Valida CPF
+        if (!validarCPF(cpf)) {
+          document.getElementById('cpfError').classList.add('show');
+          hasError = true;
+        } else {
+          document.getElementById('cpfError').classList.remove('show');
+        }
+
+        // Valida Senhas
+        if (pass !== confirm) {
+          document.getElementById('confirmPasswordError').classList.add('show');
+          hasError = true;
+        } else {
+          document.getElementById('confirmPasswordError').classList.remove('show');
+        }
+
+        if (hasError) return;
+
+        // --- SUCESSO E PERSISTÊNCIA ---
+        
+        // 1. Criamos o objeto com os dados
+        const dadosParaEnvio = {
+          email: email,
+          cpf: cpf.replace(/\D/g, ''),
+          telefone: '+55' + phone.replace(/\D/g, ''), 
+          senha: pass
+        };
+
+        // 2. SALVAMOS NO LOCALSTORAGE
+        // Transformamos o objeto em String (JSON.stringify) porque o storage só aceita texto
+        localStorage.setItem('usuarioCadastrado', JSON.stringify(dadosParaEnvio));
+
+        // 3. Feedback visual para o usuário
+        document.getElementById('successMessage').classList.add('show');
+        console.log("Dados persistidos no navegador:", dadosParaEnvio);
+
+        // 4. Opcional: Redirecionar para o login após um tempinho
+        setTimeout(() => {
+          window.location.href = 'login.html';
+        }, 2000);
+      });
   </script>
 </body>
 </html>

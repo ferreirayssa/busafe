@@ -52,6 +52,7 @@
       <button id="go">Buscar</button>
       <button id="clear">Limpar</button>
     </div>
+
     <div id="status"></div>
 
     <div class="sidebar-nav">
@@ -145,7 +146,7 @@
     </div>
   </nav>
 
-  <ma<main id="content">
+  <main id="content">
   <div id="map"></div>
 
   <div id="map-legend">
@@ -774,6 +775,24 @@
 
   setInterval(carregarRelatos, 15000);
   setInterval(carregarIncidentesAtivos, 10000);
+
+  async function favoritarRotaNoBanco(codigoRota) {
+    // Busca o ID do usuário que salvamos no localStorage no passo anterior
+    const usuarioLocal = JSON.parse(localStorage.getItem('usuarioBuSafe'));
+    
+    if (!usuarioLocal || !usuarioLocal.id) {
+        alert("Você precisa estar logado para favoritar!");
+        return;
+    }
+
+    const response = await fetch(`http://localhost:8080/api/users/${usuarioLocal.id}/favoritar-rota/${codigoRota}`, {
+        method: 'POST'
+    });
+
+    if (response.ok) {
+        alert("Rota salva nos favoritos!");
+    }
+}
 </script>
   
 </body>
