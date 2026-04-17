@@ -145,219 +145,636 @@
     </div>
   </nav>
 
-  <main id="content">
-    <div id="map"></div>
-    <div id="map-legend">
-      <div class="legend-title">Legenda</div>
-      <div class="legend-item"><div class="legend-line" style="background:#812f9a;"></div> Rota</div>
-      <div class="legend-item"><div class="legend-dot"  style="background:#1976d2;"></div> Sua posição</div>
-      <div class="legend-item"><div class="legend-dot"  style="background:#e53935;"></div> Incidente ativo</div>
-    </div>
-  </main>
+  <ma<main id="content">
+  <div id="map"></div>
+
+  <div id="map-legend">
+    <div class="legend-title">Legenda</div>
+    <div class="legend-item"><div class="legend-line" style="background:#812f9a;"></div> Rota</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#1976d2;"></div> Sua posição</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#e53935;"></div> Denúncia</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#0f766e;"></div> Ônibus monitorado</div>
+  </div>
+
+  <div id="map-alert-banner" class="map-alert-banner hidden"></div>
+
+  <button id="gps-center-btn" class="map-floating-btn" type="button" aria-label="Centralizar GPS no mapa">
+  <span class="gps-compass-shell" aria-hidden="true">
+    <svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" fill="currentColor" class="bi bi-compass" viewBox="0 0 16 16">
+      <path d="M8 16.016a7.5 7.5 0 0 0 1.962-14.74A1 1 0 0 0 9 0H7a1 1 0 0 0-.962 1.276A7.5 7.5 0 0 0 8 16.016m6.5-7.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0"/>
+      <path d="m6.94 7.44 4.95-2.83-2.83 4.95-4.949 2.83 2.828-4.95z"/>
+    </svg>
+  </span>
+
+  <!-- <span id="gps-direction-arrow" class="gps-direction-arrow" aria-hidden="true">
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+      <path d="M8 1.2 11 7H8.9v7H7.1V7H5L8 1.2z"/>
+    </svg>
+  </span> --> 
+</button>
+</main>
 
   <div id="toast-container"></div>
 
   <script>
-    const GEOJSON_URL = "/rotas/geojson";
-    const statusEl = document.getElementById('status');
+  const GEOJSON_URL = "/rotas/geojson";
+  const RELATOS_URL = "/relatos";
+  const INCIDENTES_ATIVOS_URL = "/api/incidentes-ativos";
 
-    function showStatus(msg, ms = 2500) {
-      statusEl.textContent = msg;
-      statusEl.classList.add('show');
-      if (ms) setTimeout(() => statusEl.classList.remove('show'), ms);
-    }
+  const statusEl = document.getElementById('status');
+  const gpsCenterBtn = document.getElementById('gps-center-btn');
+  const gpsDirectionArrow = document.getElementById('gps-direction-arrow');
+  const alertBanner = document.getElementById('map-alert-banner');
 
-    const base             = new ol.layer.Tile({ source: new ol.source.OSM() });
-    const todasRotasSource = new ol.source.Vector({ url: GEOJSON_URL + "?v=" + Date.now(), format: new ol.format.GeoJSON() });
+  function showStatus(msg, ms = 2500) {
+    statusEl.textContent = msg;
+    statusEl.classList.add('show');
+    if (ms) setTimeout(() => statusEl.classList.remove('show'), ms);
+  }
 
-    const styleBySentido = feature => {
-      const isVolta = /volta/i.test(String(feature.get('sentido') || ''));
-      return new ol.style.Style({ stroke: new ol.style.Stroke({ color: isVolta ? '#d32f2f' : '#2e7d32', width: 3 }) });
-    };
+  function showAlertBanner(msg) {
+    alertBanner.textContent = msg;
+    alertBanner.classList.remove('hidden');
+  }
 
-    const rotasLayer    = new ol.layer.Vector({ source: todasRotasSource, style: styleBySentido });
-    const resultadoSource = new ol.source.Vector({ features: [] });
-    const resultadoLayer  = new ol.layer.Vector({
-      source: resultadoSource,
-      style: new ol.style.Style({ stroke: new ol.style.Stroke({ color: '#812f9a', width: 4 }) })
-    });
+  function hideAlertBanner() {
+    alertBanner.textContent = '';
+    alertBanner.classList.add('hidden');
+  }
 
-    const map = new ol.Map({
-      target: 'map',
-      layers: [base, rotasLayer, resultadoLayer],
-      view: new ol.View({ center: ol.proj.fromLonLat([-40.307, -20.318]), zoom: 12 })
-    });
+  const base = new ol.layer.Tile({ source: new ol.source.OSM() });
+  const todasRotasSource = new ol.source.Vector({
+    url: GEOJSON_URL + "?v=" + Date.now(),
+    format: new ol.format.GeoJSON()
+  });
 
-    todasRotasSource.on('change', () => {
-      if (todasRotasSource.getState() === 'loading') { showStatus('Carregando rotas…', 0); }
-      else if (todasRotasSource.getState() === 'ready') {
-        statusEl.classList.remove('show');
-        map.getView().fit(todasRotasSource.getExtent(), { padding: [40,40,40,40], maxZoom: 15 });
-      }
-    });
-    todasRotasSource.on('error', () => showStatus('Falha ao carregar rotas.', 5000));
-
-    document.getElementById('clear').onclick = () => {
-      resultadoSource.clear();
-      rotasLayer.setVisible(true);
-      document.getElementById('linha').value = '';
-      showStatus('Resultado limpo.');
-    };
-
-    document.getElementById('go').onclick = async () => {
-      const codigo = document.getElementById('linha').value.trim();
-      if (!codigo) { showStatus('Informe o código da linha.'); return; }
-      try {
-        showStatus('Buscando linha ' + codigo + '…', 0);
-        const resp = await fetch(`/api/rotas/buscar/${encodeURIComponent(codigo)}`);
-        if (!resp.ok) throw new Error('HTTP ' + resp.status);
-        const json = await resp.json();
-        if (json.features?.length) {
-          const feats = new ol.format.GeoJSON().readFeatures(json, { featureProjection: 'EPSG:3857' });
-          resultadoSource.clear();
-          resultadoSource.addFeatures(feats);
-          rotasLayer.setVisible(false);
-          statusEl.classList.remove('show');
-          map.getView().fit(resultadoSource.getExtent(), { padding: [40,40,40,40], maxZoom: 15 });
-          showStatus('Linha ' + codigo + ' exibida!');
-        } else {
-          resultadoSource.clear();
-          rotasLayer.setVisible(true);
-          showStatus('Nenhuma rota encontrada.', 3000);
-        }
-      } catch (err) {
-        console.error(err);
-        showStatus('Erro ao buscar linha.', 5000);
-      }
-    };
-
-    document.getElementById('linha').addEventListener('keyup', e => {
-      if (e.key === 'Enter') document.getElementById('go').click();
-    });
-
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(pos => {
-        const c = ol.proj.fromLonLat([pos.coords.longitude, pos.coords.latitude]);
-        map.getView().animate({ center: c, zoom: 15, duration: 1000 });
-        const f = new ol.Feature(new ol.geom.Point(c));
-        f.setStyle(new ol.style.Style({ image: new ol.style.Circle({ radius: 8, fill: new ol.style.Fill({ color: '#1976d2' }), stroke: new ol.style.Stroke({ color: '#fff', width: 2 }) }) }));
-        map.addLayer(new ol.layer.Vector({ source: new ol.source.Vector({ features: [f] }) }));
-        showStatus('Localização encontrada!');
-      }, err => { console.error(err); showStatus('Localização não encontrada.'); });
-    }
-
-    document.querySelectorAll('.sub-menu .nav-item').forEach(link => {
-      link.addEventListener('click', e => {
-        e.preventDefault();
-        document.getElementById('linha').value = link.textContent.trim().split('—')[0].trim();
-        document.getElementById('go').click();
-        closeAllSubMenus();
-      });
-    });
-
-    /* ============================================================
-       INCIDENTES ATIVOS — polling a cada 10s
-       ============================================================ */
-    const incidenteSource = new ol.source.Vector({ features: [] });
-    const trilhaSource    = new ol.source.Vector({ features: [] });
-
-    const INCIDENT_ICONS = {
-      assalto:              { color: '#e53935', label: '!' },
-      assedio:              { color: '#ff9800', label: '!' },
-      violencia:            { color: '#9c27b0', label: '!' },
-      furto:                { color: '#2196f3', label: '!' },
-      onibus_parado_quebrado: { color: '#ef6c00', label: 'X' },
-      outro:                { color: '#9e9e9e', label: '?' }
-    };
-
-    function criarEstiloIncidente(tipo) {
-      const cfg = INCIDENT_ICONS[tipo] || INCIDENT_ICONS.outro;
-      return new ol.style.Style({
-        image: new ol.style.Circle({
-          radius: 10,
-          fill: new ol.style.Fill({ color: cfg.color }),
-          stroke: new ol.style.Stroke({ color: '#fff', width: 2 })
-        }),
-        text: new ol.style.Text({
-          text: cfg.label,
-          fill: new ol.style.Fill({ color: '#fff' }),
-          font: 'bold 12px Poppins, sans-serif'
-        })
-      });
-    }
-
-    map.addLayer(new ol.layer.Vector({
-      source: trilhaSource,
-      style: new ol.style.Style({
-        stroke: new ol.style.Stroke({ color: 'rgba(229,57,53,0.5)', width: 3, lineDash: [6, 4] })
+  const styleBySentido = feature => {
+    const isVolta = /volta/i.test(String(feature.get('sentido') || ''));
+    return new ol.style.Style({
+      stroke: new ol.style.Stroke({
+        color: isVolta ? '#d32f2f' : '#2e7d32',
+        width: 3
       })
-    }));
-    map.addLayer(new ol.layer.Vector({ source: incidenteSource }));
-
-    // Popup overlay para info do incidente
-    const popupEl = document.createElement('div');
-    popupEl.id = 'incident-popup';
-    popupEl.style.cssText = 'background:var(--base-clr,#11121a);color:var(--text-clr,#e6e6ef);padding:8px 12px;border-radius:8px;font-size:13px;box-shadow:0 2px 12px rgba(0,0,0,.4);pointer-events:auto;max-width:200px;';
-    document.body.appendChild(popupEl);
-    const popup = new ol.Overlay({ element: popupEl, positioning: 'bottom-center', offset: [0, -14], stopEvent: false });
-    map.addOverlay(popup);
-    popupEl.style.display = 'none';
-
-    map.on('click', evt => {
-      const feat = map.forEachFeatureAtPixel(evt.pixel, f => f, { layerFilter: l => l.getSource() === incidenteSource });
-      if (feat) {
-        const tipo = feat.get('tipo') || 'incidente';
-        const linha = feat.get('linha') || '—';
-        const mins = feat.get('minutosRestantes') || '?';
-        popupEl.innerHTML = `<strong>${tipo.toUpperCase()}</strong><br>Linha: ${linha}<br>Expira em: ${mins} min`;
-        popup.setPosition(evt.coordinate);
-        popupEl.style.display = 'block';
-      } else {
-        popupEl.style.display = 'none';
-      }
     });
+  };
 
-    async function carregarIncidentesAtivos() {
-      try {
-        const resp = await fetch('/api/incidentes-ativos');
-        if (!resp.ok) return;
-        const incidentes = await resp.json();
+  const rotasLayer = new ol.layer.Vector({
+    source: todasRotasSource,
+    style: styleBySentido
+  });
 
-        incidenteSource.clear();
-        trilhaSource.clear();
+  const resultadoSource = new ol.source.Vector({ features: [] });
+  const resultadoLayer = new ol.layer.Vector({
+    source: resultadoSource,
+    style: new ol.style.Style({
+      stroke: new ol.style.Stroke({ color: '#812f9a', width: 4 })
+    })
+  });
 
-        incidentes.forEach(inc => {
-          const coord = inc.coordenada;
-          if (!coord) return;
+  const relatoSource = new ol.source.Vector({ features: [] });
+  const relatoLayer = new ol.layer.Vector({ source: relatoSource });
 
-          // Icone do incidente na posicao atual
-          const ponto = ol.proj.fromLonLat([coord.lon, coord.lat]);
-          const feat = new ol.Feature(new ol.geom.Point(ponto));
-          feat.setStyle(criarEstiloIncidente(inc.tipo));
-          feat.set('tipo', inc.tipo);
-          feat.set('linha', inc.linha);
+  const busSource = new ol.source.Vector({ features: [] });
+  const busLayer = new ol.layer.Vector({ source: busSource });
 
-          // Calcula minutos restantes
-          if (inc.criadoEm) {
-            const restante = Math.max(0, 30 - Math.floor((Date.now() - inc.criadoEm) / 60000));
-            feat.set('minutosRestantes', restante);
-          }
+  const userLocationSource = new ol.source.Vector({ features: [] });
+  const userLocationLayer = new ol.layer.Vector({ source: userLocationSource });
 
-          incidenteSource.addFeature(feat);
+  const map = new ol.Map({
+    target: 'map',
+    layers: [base, rotasLayer, resultadoLayer, relatoLayer, busLayer, userLocationLayer],
+    view: new ol.View({
+      center: ol.proj.fromLonLat([-40.307, -20.318]),
+      zoom: 12
+    })
+  });
 
-          // Trilha percorrida
-          if (inc.coordenadas && inc.coordenadas.length > 1) {
-            const pontos = inc.coordenadas.map(c => ol.proj.fromLonLat([c.lon, c.lat]));
-            const trilha = new ol.Feature(new ol.geom.LineString(pontos));
-            trilhaSource.addFeature(trilha);
-          }
-        });
-      } catch(e) { console.error('Erro ao carregar incidentes ativos:', e); }
+  const popupEl = document.createElement('div');
+  popupEl.id = 'incident-popup';
+  popupEl.style.display = 'none';
+  document.body.appendChild(popupEl);
+
+  const popup = new ol.Overlay({
+    element: popupEl,
+    positioning: 'bottom-center',
+    offset: [0, -18],
+    stopEvent: false
+  });
+
+  map.addOverlay(popup);
+
+  let userFeature = null;
+  let currentUserCoord = null;
+  let firstLocationFix = true;
+  let linhaSelecionada = null;
+  let relatosCache = [];
+  let incidentesAtivosCache = [];
+
+  const INCIDENT_ICON_DEFS = {
+    assalto: {
+      color: '#e53935',
+      viewBox: '0 0 16 16',
+      path: 'M8 1.2l5.3 2v4.4c0 3.1-1.9 5.9-5.3 7.2-3.4-1.3-5.3-4.1-5.3-7.2V3.2L8 1.2zm0 3.1a.75.75 0 0 0-.75.75v3.1c0 .414.336.75.75.75s.75-.336.75-.75v-3.1A.75.75 0 0 0 8 4.3zm0 6.2a.9.9 0 1 0 0 1.8.9.9 0 0 0 0-1.8z',
+      label: 'Assalto'
+    },
+    assedio: {
+      color: '#ff9800',
+      viewBox: '0 0 16 16',
+      path: 'M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zM7.002 4a1 1 0 1 1 2 0l-.35 4.507a.65.65 0 0 1-1.3 0L7.002 4zm.998 8.5a1.1 1.1 0 1 1 0-2.2 1.1 1.1 0 0 1 0 2.2z',
+      label: 'Assédio'
+    },
+    violencia: {
+      color: '#9c27b0',
+      viewBox: '0 0 16 16',
+      path: 'M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zM7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995z',
+      label: 'Violência'
+    },
+    furto: {
+      color: '#2196f3',
+      viewBox: '0 0 16 16',
+      path: 'M0 4a2 2 0 0 1 2-2h1V1.5A1.5 1.5 0 0 1 4.5 0h7A1.5 1.5 0 0 1 13 1.5V2h1a2 2 0 0 1 2 2v1H0V4zm0 2h16v6a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V6zm11 3a1 1 0 1 0 0 2h2a1 1 0 1 0 0-2h-2z',
+      label: 'Furto'
+    },
+    onibus_parado_quebrado: {
+      color: '#ef6c00',
+      viewBox: '0 0 16 16',
+      path: 'M1 1a1 1 0 0 0-1 1v9a1.5 1.5 0 0 0 1 1.415V14.5a.5.5 0 0 0 1 0V13h10v1.5a.5.5 0 0 0 1 0v-2.085A1.5 1.5 0 0 0 14 11V2a1 1 0 0 0-1-1H1zm0 2h12v3H1V3zm1 5.5A1.5 1.5 0 1 1 2 11a1.5 1.5 0 0 1 0-2.5zM12 8.5A1.5 1.5 0 1 1 12 11a1.5 1.5 0 0 1 0-2.5z',
+      label: 'Ônibus parado/quebrado'
+    },
+    outro: {
+      color: '#9e9e9e',
+      viewBox: '0 0 16 16',
+      path: 'M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm-.93-5.412h1.858v1.536H7.07v-1.536zm1.854-1.503H7.117l-.04-.23c-.075-.43.01-.842.29-1.197.21-.267.499-.473.884-.708.575-.35.746-.545.746-.875 0-.37-.287-.64-.782-.64-.562 0-.852.297-.907.82H5.64c.044-1.506 1.12-2.36 2.754-2.36 1.543 0 2.588.78 2.588 2.013 0 .757-.39 1.245-1.216 1.717-.472.27-.657.449-.75.695-.062.164-.074.333-.03.58z',
+      label: 'Outro'
+    },
+    bus_monitorado: {
+      color: '#0f766e',
+      viewBox: '0 0 16 16',
+      path: 'M16 7a1 1 0 0 1-1 1v3.5c0 .818-.393 1.544-1 2v2a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5V14H5v1.5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-2a2.5 2.5 0 0 1-1-2V8a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1V2.64C1 1.452 1.845.408 3.064.268A44 44 0 0 1 8 0c2.1 0 3.792.136 4.936.268C14.155.408 15 1.452 15 2.64V4a1 1 0 0 1 1 1v2zM3 11a1 1 0 1 0 2 0 1 1 0 0 0-2 0zm8 0a1 1 0 1 0 2 0 1 1 0 0 0-2 0z',
+      label: 'Ônibus monitorado'
+    }
+  };
+
+  const markerCache = new Map();
+  const busMarkerCache = new Map();
+
+  function svgToDataUrl(svg) {
+    return 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
+  }
+
+  function createMarkerSvg(def, { highlight = false, isBus = false } = {}) {
+    const size = highlight ? 112 : 104;
+    const center = size / 2;
+
+    const haloRadius = highlight ? 44 : 40;
+    const haloOpacityStrong = highlight ? 0.72 : 0.60;
+    const haloOpacityMid = highlight ? 0.32 : 0.24;
+
+    const bubbleRadius = isBus ? 16 : 15;
+    const iconSize = isBus ? 20 : 18;
+
+    return `
+      <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+        <defs>
+          <radialGradient id="g" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="${def.color}" stop-opacity="${haloOpacityStrong}" />
+            <stop offset="38%" stop-color="${def.color}" stop-opacity="${haloOpacityMid}" />
+            <stop offset="72%" stop-color="${def.color}" stop-opacity="0.10" />
+            <stop offset="100%" stop-color="${def.color}" stop-opacity="0" />
+          </radialGradient>
+        </defs>
+
+        <circle cx="${center}" cy="${center}" r="${haloRadius}" fill="url(#g)" />
+
+        <circle
+          cx="${center}"
+          cy="${center}"
+          r="${bubbleRadius}"
+          fill="${def.color}"
+          stroke="#ffffff"
+          stroke-width="3.2"
+        />
+
+        <svg
+          x="${center - iconSize / 2}"
+          y="${center - iconSize / 2}"
+          width="${iconSize}"
+          height="${iconSize}"
+          viewBox="${def.viewBox}"
+        >
+          <path d="${def.path}" fill="#ffffff"/>
+        </svg>
+      </svg>
+    `;
+  }
+
+  function getMarkerStyle(type, { highlight = false, isBus = false, rotation = 0 } = {}) {
+    const def = INCIDENT_ICON_DEFS[type] || INCIDENT_ICON_DEFS.outro;
+    const cacheKey = `${type}-${highlight}-${isBus}`;
+
+    const cache = isBus ? busMarkerCache : markerCache;
+    if (!cache.has(cacheKey)) {
+      const svg = createMarkerSvg(def, { highlight, isBus });
+      cache.set(cacheKey, svgToDataUrl(svg));
     }
 
-    // Polling a cada 10 segundos
-    carregarIncidentesAtivos();
-    setInterval(carregarIncidentesAtivos, 10000);
-  </script>
+    const markerSize = highlight ? 112 : 104;
+
+    return new ol.style.Style({
+      image: new ol.style.Icon({
+        src: cache.get(cacheKey),
+        imgSize: [markerSize, markerSize],
+        anchor: [0.5, 0.5],
+        rotateWithView: true,
+        rotation
+      }),
+      zIndex: highlight ? 30 : (isBus ? 25 : 20)
+    });
+  }
+
+  function createUserStyle() {
+    return new ol.style.Style({
+      image: new ol.style.Circle({
+        radius: 8,
+        fill: new ol.style.Fill({ color: '#1976d2' }),
+        stroke: new ol.style.Stroke({ color: '#fff', width: 2 })
+      })
+    });
+  }
+
+  function formatarData(value) {
+    if (!value) return 'Horário não informado';
+
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return String(value);
+
+    return d.toLocaleString('pt-BR', {
+      dateStyle: 'short',
+      timeStyle: 'short'
+    });
+  }
+
+  function linhaDoRelato(relato) {
+    return relato.linhaTranscol ?? relato.linhaMunicipal ?? null;
+  }
+
+  function linhaDoIncidente(inc) {
+    return inc.linha ?? null;
+  }
+
+  function isLinhaSelecionada(linha) {
+    if (linhaSelecionada == null || linha == null) return false;
+    return String(linhaSelecionada).trim() === String(linha).trim();
+  }
+
+  function calcularRotacaoOnibus(coords) {
+    if (!coords || coords.length < 2) return 0;
+    const a = coords[coords.length - 2];
+    const b = coords[coords.length - 1];
+
+    const dx = b.lon - a.lon;
+    const dy = b.lat - a.lat;
+
+    if (!dx && !dy) return 0;
+
+    return Math.atan2(dx, dy);
+  }
+
+  function atualizarDirecaoBotaoGps() {
+    if (!currentUserCoord || !gpsDirectionArrow) return;
+
+    const pixel = map.getPixelFromCoordinate(currentUserCoord);
+    const size = map.getSize();
+    if (!pixel || !size) return;
+
+    const centerX = size[0] / 2;
+    const centerY = size[1] / 2;
+    const dx = pixel[0] - centerX;
+    const dy = pixel[1] - centerY;
+
+    const angle = Math.atan2(dx, -dy) * 180 / Math.PI;
+    gpsDirectionArrow.style.transform = `rotate(${angle}deg)`;
+  }
+
+  function centerOnUser() {
+    if (!currentUserCoord) {
+      showStatus('Localização ainda não disponível.');
+      return;
+    }
+
+    map.getView().animate({
+      center: currentUserCoord,
+      zoom: Math.max(map.getView().getZoom() || 15, 15),
+      duration: 700
+    });
+
+    popupEl.style.display = 'none';
+    atualizarDirecaoBotaoGps();
+  }
+
+  function renderRelatos() {
+    relatoSource.clear();
+
+    relatosCache.forEach(relato => {
+      if (relato.latitude == null || relato.longitude == null) return;
+
+      const linha = linhaDoRelato(relato);
+      const highlight = isLinhaSelecionada(linha);
+
+      const coord = ol.proj.fromLonLat([
+        Number(relato.longitude),
+        Number(relato.latitude)
+      ]);
+
+      const feat = new ol.Feature(new ol.geom.Point(coord));
+      feat.setProperties({
+        featureType: 'relato',
+        id: relato.id,
+        tipo: relato.tipo,
+        descricao: relato.descricao,
+        dataRelato: relato.dataRelato,
+        bairro: relato.bairro,
+        municipio: relato.municipio,
+        linha: linha
+      });
+
+      feat.setStyle(getMarkerStyle(relato.tipo, { highlight }));
+      relatoSource.addFeature(feat);
+    });
+  }
+
+  function renderOnibusAtivos() {
+    busSource.clear();
+
+    incidentesAtivosCache.forEach(inc => {
+      if (!inc?.coordenada || inc.linha == null) return;
+
+      const coord = ol.proj.fromLonLat([inc.coordenada.lon, inc.coordenada.lat]);
+      const highlight = isLinhaSelecionada(inc.linha);
+      const rotation = calcularRotacaoOnibus(inc.coordenadas || []);
+
+      const feat = new ol.Feature(new ol.geom.Point(coord));
+      feat.setProperties({
+        featureType: 'onibus',
+        tipo: inc.tipo,
+        linha: inc.linha,
+        tipoLinha: inc.tipoLinha,
+        criadoEm: inc.criadoEm,
+        ultimaPosicaoTs: inc.coordenada.ts,
+        incidenteId: inc.id
+      });
+
+      feat.setStyle(getMarkerStyle('bus_monitorado', { highlight, isBus: true, rotation }));
+      busSource.addFeature(feat);
+    });
+  }
+
+  function atualizarBannerDaLinha() {
+    if (linhaSelecionada == null) {
+      hideAlertBanner();
+      return;
+    }
+
+    const relatosLinha = relatosCache.filter(r => isLinhaSelecionada(linhaDoRelato(r)));
+    const onibusLinha = incidentesAtivosCache.filter(i => isLinhaSelecionada(linhaDoIncidente(i)));
+
+    if (!relatosLinha.length && !onibusLinha.length) {
+      hideAlertBanner();
+      return;
+    }
+
+    const partes = [];
+    if (relatosLinha.length) {
+      partes.push(`${relatosLinha.length} denúncia${relatosLinha.length > 1 ? 's' : ''}`);
+    }
+    if (onibusLinha.length) {
+      partes.push(`${onibusLinha.length} ônibus monitorado${onibusLinha.length > 1 ? 's' : ''}`);
+    }
+
+    showAlertBanner(`Atenção: ${partes.join(' e ')} na linha ${linhaSelecionada}.`);
+  }
+
+  function aplicarContextoDaLinha(codigo) {
+    linhaSelecionada = codigo ? String(codigo).trim() : null;
+    renderRelatos();
+    renderOnibusAtivos();
+    atualizarBannerDaLinha();
+  }
+
+  async function carregarRelatos() {
+    try {
+      const resp = await fetch(RELATOS_URL + '?v=' + Date.now());
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+
+      relatosCache = await resp.json();
+      renderRelatos();
+      atualizarBannerDaLinha();
+    } catch (err) {
+      console.error('Erro ao carregar relatos:', err);
+      showStatus('Erro ao carregar relatos.', 4000);
+    }
+  }
+
+  async function carregarIncidentesAtivos() {
+    try {
+      const resp = await fetch(INCIDENTES_ATIVOS_URL + '?v=' + Date.now());
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+
+      incidentesAtivosCache = await resp.json();
+      renderOnibusAtivos();
+      atualizarBannerDaLinha();
+    } catch (err) {
+      console.error('Erro ao carregar incidentes ativos:', err);
+    }
+  }
+
+  todasRotasSource.on('change', () => {
+    if (todasRotasSource.getState() === 'loading') {
+      showStatus('Carregando rotas…', 0);
+    } else if (todasRotasSource.getState() === 'ready') {
+      statusEl.classList.remove('show');
+      map.getView().fit(todasRotasSource.getExtent(), {
+        padding: [40, 40, 40, 40],
+        maxZoom: 15
+      });
+    }
+  });
+
+  todasRotasSource.on('error', () => showStatus('Falha ao carregar rotas.', 5000));
+
+  document.getElementById('clear').onclick = () => {
+    resultadoSource.clear();
+    rotasLayer.setVisible(true);
+    document.getElementById('linha').value = '';
+    popupEl.style.display = 'none';
+    aplicarContextoDaLinha(null);
+    showStatus('Resultado limpo.');
+  };
+
+  document.getElementById('go').onclick = async () => {
+    const codigo = document.getElementById('linha').value.trim();
+    if (!codigo) {
+      showStatus('Informe o código da linha.');
+      return;
+    }
+
+    try {
+      showStatus('Buscando linha ' + codigo + '…', 0);
+      const resp = await fetch(`/api/rotas/buscar/${encodeURIComponent(codigo)}`);
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+
+      const json = await resp.json();
+
+      if (json.features?.length) {
+        const feats = new ol.format.GeoJSON().readFeatures(json, {
+          featureProjection: 'EPSG:3857'
+        });
+
+        resultadoSource.clear();
+        resultadoSource.addFeatures(feats);
+        rotasLayer.setVisible(false);
+        statusEl.classList.remove('show');
+
+        map.getView().fit(resultadoSource.getExtent(), {
+          padding: [40, 40, 40, 40],
+          maxZoom: 15
+        });
+
+        aplicarContextoDaLinha(codigo);
+        showStatus('Linha ' + codigo + ' exibida!');
+      } else {
+        resultadoSource.clear();
+        rotasLayer.setVisible(true);
+        aplicarContextoDaLinha(null);
+        showStatus('Nenhuma rota encontrada.', 3000);
+      }
+    } catch (err) {
+      console.error(err);
+      showStatus('Erro ao buscar linha.', 5000);
+    }
+  };
+
+  document.getElementById('linha').addEventListener('keyup', e => {
+    if (e.key === 'Enter') document.getElementById('go').click();
+  });
+
+  document.querySelectorAll('.sub-menu .nav-item').forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      document.getElementById('linha').value = link.textContent.trim().split('—')[0].trim();
+      document.getElementById('go').click();
+      closeAllSubMenus();
+    });
+  });
+
+  map.on('click', evt => {
+    const feature = map.forEachFeatureAtPixel(evt.pixel, feat => feat, {
+      layerFilter: layer => layer === relatoLayer || layer === busLayer
+    });
+
+    if (!feature) {
+      popupEl.style.display = 'none';
+      return;
+    }
+
+    const kind = feature.get('featureType');
+
+    if (kind === 'onibus') {
+      popupEl.innerHTML = `
+        <span class="popup-title">Ônibus monitorado</span>
+        <div><strong>Linha:</strong> ${feature.get('linha') ?? '—'}</div>
+        <div><strong>Tipo da ocorrência:</strong> ${(INCIDENT_ICON_DEFS[feature.get('tipo')]?.label || feature.get('tipo') || '—')}</div>
+        <div><strong>Tipo de linha:</strong> ${feature.get('tipoLinha') || '—'}</div>
+        <div><strong>Criado em:</strong> ${formatarData(feature.get('criadoEm'))}</div>
+        <div class="popup-desc"><strong>Último rastreio:</strong> ${formatarData(feature.get('ultimaPosicaoTs'))}</div>
+      `;
+    } else {
+      popupEl.innerHTML = `
+        <span class="popup-title">${INCIDENT_ICON_DEFS[feature.get('tipo')]?.label || 'Denúncia'}</span>
+        <div><strong>Horário:</strong> ${formatarData(feature.get('dataRelato'))}</div>
+        <div><strong>Bairro:</strong> ${feature.get('bairro') || '—'}</div>
+        <div><strong>Município:</strong> ${feature.get('municipio') || '—'}</div>
+        ${feature.get('linha') != null ? `<div><strong>Linha:</strong> ${feature.get('linha')}</div>` : ''}
+        <div class="popup-desc"><strong>Observações:</strong> ${feature.get('descricao') || 'Sem observações'}</div>
+      `;
+    }
+
+    popup.setPosition(evt.coordinate);
+    popupEl.style.display = 'block';
+  });
+
+  function atualizarUsuarioNoMapa(longitude, latitude) {
+    currentUserCoord = ol.proj.fromLonLat([longitude, latitude]);
+
+    if (!userFeature) {
+      userFeature = new ol.Feature(new ol.geom.Point(currentUserCoord));
+      userFeature.setStyle(createUserStyle());
+      userLocationSource.addFeature(userFeature);
+    } else {
+      userFeature.setGeometry(new ol.geom.Point(currentUserCoord));
+    }
+
+    if (firstLocationFix) {
+      map.getView().animate({
+        center: currentUserCoord,
+        zoom: 15,
+        duration: 900
+      });
+      firstLocationFix = false;
+      showStatus('Localização encontrada!');
+    }
+
+    atualizarDirecaoBotaoGps();
+  }
+
+  if (navigator.geolocation) {
+    navigator.geolocation.watchPosition(
+      pos => atualizarUsuarioNoMapa(pos.coords.longitude, pos.coords.latitude),
+      err => {
+        console.error(err);
+        showStatus('Localização não encontrada.', 3500);
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 5000,
+        timeout: 10000
+      }
+    );
+  } else {
+    showStatus('Geolocalização não suportada pelo navegador.', 4000);
+  }
+
+  gpsCenterBtn?.addEventListener('click', centerOnUser);
+  map.on('moveend', atualizarDirecaoBotaoGps);
+  window.addEventListener('resize', () => setTimeout(atualizarDirecaoBotaoGps, 80));
+
+  document.getElementById('toggle-btn')?.addEventListener('click', () => {
+    setTimeout(() => {
+      map.updateSize();
+      atualizarDirecaoBotaoGps();
+    }, 320);
+  });
+
+  document.getElementById('hamburger-btn')?.addEventListener('click', () => {
+    setTimeout(() => {
+      map.updateSize();
+      atualizarDirecaoBotaoGps();
+    }, 320);
+  });
+
+  document.getElementById('sidebar-overlay')?.addEventListener('click', () => {
+    setTimeout(() => {
+      map.updateSize();
+      atualizarDirecaoBotaoGps();
+    }, 320);
+  });
+
+  carregarRelatos();
+  carregarIncidentesAtivos();
+
+  setInterval(carregarRelatos, 15000);
+  setInterval(carregarIncidentesAtivos, 10000);
+</script>
+  
 </body>
 </html>
