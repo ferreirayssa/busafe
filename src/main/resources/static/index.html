@@ -148,12 +148,16 @@
 
   <main id="content">
   <div id="map"></div>
+  <button id="star-favorite" class="map-floating-btn favorite-hidden" type="button" aria-label="Favoritar rota">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+      <path d="M2.866 14.85c-.078.444.36.791.746.593l4.39-2.256 4.389 2.256c.386.198.824-.149.746-.592l-.83-4.73 3.522-3.356c.33-.314.16-.888-.282-.95l-4.898-.696L8.465.792a.513.513 0 0 0-.927 0L5.354 5.12l-4.898.696c-.441.062-.612.636-.283.95l3.523 3.356-.83 4.73zm4.905-2.767-3.686 1.894.694-3.957a.565.565 0 0 0-.163-.505L1.71 6.745l4.052-.576a.525.525 0 0 0 .393-.288L8 2.223l1.845 3.658a.525.525 0 0 0 .393.288l4.052.575-2.906 2.77a.565.565 0 0 0-.163.506l.694 3.957-3.686-1.894a.503.503 0 0 0-.461 0z"/>
+    </svg>
+  </button>
 
   <div id="map-legend">
     <div class="legend-title">Legenda</div>
     <div class="legend-item"><div class="legend-line" style="background:#812f9a;"></div> Rota</div>
     <div class="legend-item"><div class="legend-dot" style="background:#1976d2;"></div> Sua posição</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#e53935;"></div> Denúncia</div>
     <div class="legend-item"><div class="legend-dot" style="background:#0f766e;"></div> Ônibus monitorado</div>
   </div>
 
@@ -173,7 +177,6 @@
     </svg>
   </span> --> 
 </button>
-</main>
 
   <div id="toast-container"></div>
 
@@ -612,6 +615,8 @@
     showStatus('Resultado limpo.');
   };
 
+  const starBtn = document.getElementById('star-favorite');
+
   document.getElementById('go').onclick = async () => {
     const codigo = document.getElementById('linha').value.trim();
     if (!codigo) {
@@ -641,9 +646,13 @@
           maxZoom: 15
         });
 
+        starBtn.classList.remove('favorite-hidden');
+        starBtn.onclick = () => favoritarRotaNoBanco(codigo);
+
         aplicarContextoDaLinha(codigo);
         showStatus('Linha ' + codigo + ' exibida!');
       } else {
+        starBtn.classList.add('favorite-hidden');
         resultadoSource.clear();
         rotasLayer.setVisible(true);
         aplicarContextoDaLinha(null);
@@ -776,23 +785,56 @@
   setInterval(carregarRelatos, 15000);
   setInterval(carregarIncidentesAtivos, 10000);
 
-  async function favoritarRotaNoBanco(codigoRota) {
-    // Busca o ID do usuário que salvamos no localStorage no passo anterior
+  // Adicione este bloco ao final do seu <script>
+async function favoritarRotaNoBanco(codigoRota) {
+    // Busca usuário no localStorage
     const usuarioLocal = JSON.parse(localStorage.getItem('usuarioBuSafe'));
-    
+
+    // Se não achar o usuário = EXIBE MODAL
     if (!usuarioLocal || !usuarioLocal.id) {
-        alert("Você precisa estar logado para favoritar!");
+        exibirModalAviso();
         return;
     }
 
-    const response = await fetch(`http://localhost:8080/api/users/${usuarioLocal.id}/favoritar-rota/${codigoRota}`, {
-        method: 'POST'
-    });
+    try {
+        const response = await fetch(`http://localhost:8080/api/users/${usuarioLocal.id}/favoritar-rota/${codigoRota}`, {
+            method: 'POST'
+        });
 
-    if (response.ok) {
-        alert("Rota salva nos favoritos!");
+        if (response.ok) {
+            showStatus("⭐ Rota " + codigoRota + " favoritada!");
+        }
+    } catch (err) {
+        showStatus("Erro ao favoritar linha.");
     }
 }
+
+  function exibirModalAviso() {
+      let modal = document.getElementById('modal-aviso-login');
+      if (!modal) {
+          modal = document.createElement('div');
+          modal.id = 'modal-aviso-login';
+          modal.className = 'modal-overlay';
+          
+          modal.innerHTML = `
+              <div class="modal-content">
+                  <h3>Acesso Restrito</h3>
+                  <p>Para favoritar suas rotas frequentes, você precisa acessar sua conta.</p>
+                  <div class="modal-buttons">
+                      <button class="btn-secondary" onclick="this.closest('.modal-overlay').remove()">Agora não</button>
+                      <a href="html/login.html" class="btn-primary">Fazer Login</a>
+                  </div>
+              </div>
+          `;
+          document.body.appendChild(modal);
+      }
+  }
+// No seu evento document.getElementById('clear').onclick, adicione:
+document.getElementById('clear').onclick = () => {
+    // ... seu código de limpar ...
+    document.getElementById('star-favorite').classList.add('favorite-hidden');
+};
+
 </script>
   
 </body>

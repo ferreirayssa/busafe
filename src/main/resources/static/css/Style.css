@@ -944,3 +944,138 @@ body.light-mode .toast { background: #fff; }
   .plans-grid { grid-template-columns: 1fr; }
   .progress-step span { display: none; }
 }
+
+/* Posicionamento da Estrela (Abaixo do GPS no topo) */
+#star-favorite {
+  position: absolute;
+  right: 16px; 
+  top: 100px;  /* Abaixo do GPS (18px top + 66px height + gap) */
+  width: 66px; 
+  height: 66px;
+  
+  /* Adaptação ao Tema */
+  background: var(--hover-clr); /* Usa a cor de fundo do tema atual */
+  color: #ffc107;              /* Mantém a estrela amarela para destaque */
+  border: 1px solid var(--line-clr); /* Usa a borda do tema atual */
+  
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 13;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+#star-favorite:hover {
+  transform: translateY(-2px) scale(1.05);
+  background: var(--base-clr); /* Fica um pouco mais claro/escuro no hover */
+  border-color: var(--accent-clr);
+}
+
+/* Ajuste para o modo Light (opcional, se quiser uma sombra diferente) */
+body.light-mode #star-favorite {
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+
+/* Ajuste Responsivo para Mobile */
+@media (max-width: 768px) {
+  #star-favorite {
+    right: 12px;
+    top: 80px; /* Alinhado ao tamanho menor do GPS no mobile */
+    width: 58px;
+    height: 58px;
+  }
+}
+
+/* Estado oculto quando não há busca */
+.favorite-hidden {
+  display: none !important;
+}
+
+/* Modal de Aviso Adaptativo - Paleta BuSafe */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.7); 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 3000;
+  backdrop-filter: blur(5px);
+}
+
+.modal-content {
+  background-color: var(--base-clr); 
+  color: var(--text-clr);
+  padding: 30px;
+  border-radius: 14px;
+  /* Usando sua cor de destaque (Azul) e linha de borda */
+  border: 1px solid var(--line-clr); 
+  text-align: center;
+  max-width: 350px;
+  width: 90%;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+}
+
+.modal-content h3 {
+  margin-top: 0;
+  color: var(--text-clr);
+  font-weight: 600;
+}
+
+.modal-content p {
+  color: var(--secondary-text-clr);
+  margin: 15px 0 25px;
+  font-size: 0.9rem;
+}
+
+/* Container para alinhar os botões lado a lado */
+.modal-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+/* Botão de Login (Principal - Azul BuSafe) */
+.modal-content .btn-primary {
+  background: var(--accent-clr);
+  color: white;
+  text-decoration: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  transition: opacity 0.2s;
+}
+
+/* Botão de Fechar (Secundário - Segue o tema) */
+.modal-content .btn-secondary {
+  background: var(--hover-clr);
+  color: var(--text-clr);
+  border: 1px solid var(--line-clr);
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s;
+}
+
+.modal-content .btn-primary:hover,
+.modal-content .btn-secondary:hover {
+  opacity: 0.85;
+}
+
+/* Ajuste no modal para garantir que ele mude com o tema */
+.modal-content {
+  background-color: var(--base-clr) !important; /* Força o uso da variável do tema */
+  color: var(--text-clr) !important;
+  border: 1px solid var(--line-clr);
+  /* ... resto do estilo que já configuramos ... */
+}

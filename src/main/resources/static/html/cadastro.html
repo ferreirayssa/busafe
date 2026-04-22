@@ -109,23 +109,10 @@
       transition: all 0.3s ease;
     }
 
-    /* --- ESTILO PARA A BANDEIRA DO BRASIL FIXA --- */
     #phone {
-      /* Adiciona espaço na esquerda para a bandeira e o DDI fixa */
-      padding-left: 75px; 
-      
-      /* Insere o SVG da bandeira do Brasil como background */
-      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 504"><path fill="%23009b3a" d="M0 0h720v504H0z"/><path fill="%23fee335" d="M360 40L60 252l300 212 300-212z"/><circle fill="%23002776" cx="360" cy="252" r="132"/></svg>');
-      background-repeat: no-repeat;
-      
-      /* Posiciona a bandeira: esquerda centralizada verticalmente */
-      background-position: 12px center; 
-      
-      /* Define o tamanho da bandeira */
-      background-size: 24px auto; 
+      padding-left: 50px;
     }
 
-    /* Container para colocar o +55 fixo sobre o input */
     .phone-input-container {
       position: relative;
       width: 100%;
@@ -134,8 +121,8 @@
     /* Prefixo +55 fixo */
     .phone-prefix {
       position: absolute;
-      left: 42px; /* Posicionado após a bandeira */
-      top: 50%;
+      left: 15px; /* Posicionado após a bandeira */
+      top: 48%;
       transform: translateY(-50%);
       font-size: 0.95rem;
       color: var(--secondary-text-clr);
