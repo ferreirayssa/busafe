@@ -118,18 +118,16 @@
       width: 100%;
     }
 
-    /* Prefixo +55 fixo */
     .phone-prefix {
       position: absolute;
-      left: 15px; /* Posicionado após a bandeira */
+      left: 15px;
       top: 48%;
       transform: translateY(-50%);
       font-size: 0.95rem;
       color: var(--secondary-text-clr);
       font-weight: 500;
-      pointer-events: none; /* Não interfere no clique do input */
+      pointer-events: none;
     }
-    /* ------------------------------------------- */
 
     .form-group input:focus {
       outline: none;
@@ -211,6 +209,11 @@
     .logo-container { text-align: center; margin-bottom: 1rem; }
     .logo-container img { max-width: 100px; }
 
+    svg {
+      width: 20px;
+      fill: currentColor;
+    }
+
   </style>
 </head>
 
@@ -289,120 +292,118 @@
       controls: []
     });
 
-    // --- MÁSCARA E VALIDAÇÃO SIMPLES DO TELEFONE BRASILEIRO ---
+    // --- MÁSCARA TELEFONE ---
     const phoneInput = document.getElementById('phone');
-
-    function formatarTelefone(value) {
-      // Remove tudo que não for dígito
-      value = value.replace(/\D/g, '');
-      
-      if (value.length > 11) value = value.slice(0, 11); // Limita a 11 dígitos
-
-      // Aplica a máscara (00) 00000-0000
-      if (value.length > 6) {
-        return value.replace(/^(\d{2})(\d{5})(\d{4}).*/, '($1) $2-$3');
-      } else if (value.length > 2) {
-        return value.replace(/^(\d{2})(\d{0,5}).*/, '($1) $2');
-      } else {
-        return value.replace(/^(\d*).*/, '($1');
-      }
-    }
-
     phoneInput.addEventListener('input', (e) => {
-      e.target.value = formatarTelefone(e.target.value);
+      let value = e.target.value.replace(/\D/g, '');
+      if (value.length > 11) value = value.slice(0, 11);
+
+      if (value.length > 10) {
+        e.target.value = value.replace(/^(\d{2})(\d{5})(\d{4}).*/, '($1) $2-$3');
+      } else if (value.length > 5) {
+        e.target.value = value.replace(/^(\d{2})(\d{4})(\d{0,4}).*/, '($1) $2-$3');
+      } else if (value.length > 2) {
+        e.target.value = value.replace(/^(\d{2})(\d{0,5}).*/, '($1) $2');
+      } else {
+        e.target.value = value.replace(/^(\d*)/, '($1');
+      }
     });
 
     function validarTelefone(phone) {
       const soNumeros = phone.replace(/\D/g, '');
-      // Validação básica: checa se tem 10 (fixo) ou 11 (celular) dígitos
       return soNumeros.length >= 10 && soNumeros.length <= 11;
     }
-    // ---------------------------------------------------------
 
     // --- VALIDAÇÃO CPF ---
     function validarCPF(cpf) {
+      // Limpa pontos e traços antes de validar
       cpf = cpf.replace(/[^\d]/g, '');
+      
       if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false;
+
       let soma = 0, resto;
       for (let i = 1; i <= 9; i++) soma += parseInt(cpf.substring(i-1, i)) * (11 - i);
       resto = (soma * 10) % 11;
-      if (resto < 2) resto = 0; else resto = 11 - resto;
+      if (resto === 10 || resto === 11) resto = 0;
       if (resto !== parseInt(cpf.substring(9, 10))) return false;
+
       soma = 0;
       for (let i = 1; i <= 10; i++) soma += parseInt(cpf.substring(i-1, i)) * (12 - i);
       resto = (soma * 10) % 11;
-      if (resto < 2) resto = 0; else resto = 11 - resto;
+      if (resto === 10 || resto === 11) resto = 0;
       if (resto !== parseInt(cpf.substring(10, 11))) return false;
+
       return true;
     }
 
-    function formatarCPF(value) {
-      return value.replace(/\D/g, '').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-    }
+    // --- MÁSCARA CPF ---
+    const cpfInput = document.getElementById('cpf');
+    cpfInput.addEventListener('input', (e) => {
+      let value = e.target.value.replace(/\D/g, '');
+      value = value.replace(/(\d{3})(\d)/, '$1.$2');
+      value = value.replace(/(\d{3})(\d)/, '$1.$2');
+      value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+      e.target.value = value;
+      
+      // Remove o erro visual se o usuário corrigir enquanto digita
+      if (validarCPF(value)) {
+        document.getElementById('cpfError').classList.remove('show');
+      }
+    });
 
-    document.getElementById('cpf').addEventListener('input', (e) => { e.target.value = formatarCPF(e.target.value); });
+    // --- SUBMISSÃO DO FORMULÁRIO ---
+    document.getElementById('cadastroForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const cpfValue = document.getElementById('cpf').value;
+      const phoneValue = document.getElementById('phone').value;
+      const pass = document.getElementById('password').value;
+      const confirm = document.getElementById('confirmPassword').value;
+      const email = document.getElementById('email').value;
+      
+      let hasError = false;
 
-  // --- SUBMISSÃO DO FORMULÁRIO ---
-      document.getElementById('cadastroForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const cpf = document.getElementById('cpf').value;
-        const phone = document.getElementById('phone').value;
-        const pass = document.getElementById('password').value;
-        const confirm = document.getElementById('confirmPassword').value;
-        const email = document.getElementById('email').value; // Pegando o email
-        
-        let hasError = false;
+      // Valida CPF
+      if (!validarCPF(cpfValue)) {
+        document.getElementById('cpfError').classList.add('show');
+        hasError = true;
+      } else {
+        document.getElementById('cpfError').classList.remove('show');
+      }
 
-        // Valida Telefone
-        if (!validarTelefone(phone)) {
-          document.getElementById('phoneError').classList.add('show');
-          hasError = true;
-        } else {
-          document.getElementById('phoneError').classList.remove('show');
-        }
+      // Valida Telefone
+      if (!validarTelefone(phoneValue)) {
+        document.getElementById('phoneError').classList.add('show');
+        hasError = true;
+      } else {
+        document.getElementById('phoneError').classList.remove('show');
+      }
 
-        // Valida CPF
-        if (!validarCPF(cpf)) {
-          document.getElementById('cpfError').classList.add('show');
-          hasError = true;
-        } else {
-          document.getElementById('cpfError').classList.remove('show');
-        }
+      // Valida Senhas
+      if (pass !== confirm) {
+        document.getElementById('confirmPasswordError').classList.add('show');
+        hasError = true;
+      } else {
+        document.getElementById('confirmPasswordError').classList.remove('show');
+      }
 
-        // Valida Senhas
-        if (pass !== confirm) {
-          document.getElementById('confirmPasswordError').classList.add('show');
-          hasError = true;
-        } else {
-          document.getElementById('confirmPasswordError').classList.remove('show');
-        }
+      if (hasError) return;
 
-        if (hasError) return;
+      // SUCESSO
+      const dadosParaEnvio = {
+        email: email,
+        cpf: cpfValue.replace(/\D/g, ''),
+        telefone: '+55' + phoneValue.replace(/\D/g, ''), 
+        senha: pass
+      };
 
-        // --- SUCESSO E PERSISTÊNCIA ---
-        
-        // 1. Criamos o objeto com os dados
-        const dadosParaEnvio = {
-          email: email,
-          cpf: cpf.replace(/\D/g, ''),
-          telefone: '+55' + phone.replace(/\D/g, ''), 
-          senha: pass
-        };
-
-        // 2. SALVAMOS NO LOCALSTORAGE
-        // Transformamos o objeto em String (JSON.stringify) porque o storage só aceita texto
-        localStorage.setItem('usuarioCadastrado', JSON.stringify(dadosParaEnvio));
-
-        // 3. Feedback visual para o usuário
-        document.getElementById('successMessage').classList.add('show');
-        console.log("Dados persistidos no navegador:", dadosParaEnvio);
-
-        // 4. Opcional: Redirecionar para o login após um tempinho
-        setTimeout(() => {
-          window.location.href = 'login.html';
-        }, 2000);
-      });
+      localStorage.setItem('usuarioCadastrado', JSON.stringify(dadosParaEnvio));
+      document.getElementById('successMessage').classList.add('show');
+      
+      setTimeout(() => {
+        window.location.href = 'login.html';
+      }, 2000);
+    });
   </script>
 </body>
 </html>

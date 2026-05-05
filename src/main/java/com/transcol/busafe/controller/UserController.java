@@ -6,7 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import java.util.Optional;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -31,6 +32,36 @@ public class UserController {
         // O plano "FREE" já é inicializado na Model
         User novoUser = userRepository.save(user);
         return new ResponseEntity<>(novoUser, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody Map<String, String> body) {
+        String cpfEnviado = body.get("login"); // O seu JS envia como 'login'
+        String senhaEnviada = body.get("password");
+
+        // Busca o usuário pelo CPF
+        Optional<User> userOpt = userRepository.findByCpf(cpfEnviado);
+
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            
+            // Verifica se a senha coincide
+            // IMPORTANTE: Se você estiver usando criptografia, use passwordEncoder.matches()
+            if (user.getPassword().equals(senhaEnviada)) {
+                
+                // Retorna dados úteis para o front-end
+                Map<String, Object> response = new HashMap<>();
+                response.put("id", user.getId());
+                response.put("nome", user.getNome());
+                response.put("plano", user.getPlano());
+                response.put("token", "fake-jwt-token-" + user.getId()); // Token fictício para o JS não quebrar
+                
+                return ResponseEntity.ok(response);
+            }
+        }
+
+        // Se chegar aqui, ou o CPF não existe ou a senha está errada
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("CPF ou senha incorretos.");
     }
 
     // --- GESTÃO DE PLANO (Sobrescrever) ---
