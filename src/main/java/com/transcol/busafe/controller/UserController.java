@@ -5,62 +5,81 @@ import com.transcol.busafe.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder; // IMPORTANTE
 import org.springframework.web.bind.annotation.*;
 import java.util.Optional;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users")
-@CrossOrigin(origins = "*") // Permite integração com o seu front-end
+@CrossOrigin(origins = "*")
 public class UserController {
 
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder; // Injeta o encoder da sua SecurityConfig
+
     // --- CADASTRO ---
-    @PostMapping("/register")
-    public ResponseEntity<?> registrar(@RequestBody User user) {
+@PostMapping("/register")
+public ResponseEntity<?> registrar(@RequestBody User user) {
+    System.out.println("=== TENTATIVA DE REGISTRO ===");
+    System.out.println("CPF recebido: " + user.getCpf());
+    System.out.println("Email recebido: " + user.getEmail());
+
+    try {
+        // Verifica CPF
         if (userRepository.existsByCpf(user.getCpf())) {
+            System.out.println("BLOQUEADO: CPF já existe no banco.");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("CPF já cadastrado.");
         }
+
+        // Verifica Email
         if (userRepository.existsByEmail(user.getEmail())) {
+            System.out.println("BLOQUEADO: E-mail já existe no banco.");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("E-mail já cadastrado.");
         }
         
-        // O plano "FREE" já é inicializado na Model
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        
+        System.out.println("Salvando no MongoDB...");
         User novoUser = userRepository.save(user);
+        System.out.println("SUCESSO! Usuário salvo com ID: " + novoUser.getId());
+        
         return new ResponseEntity<>(novoUser, HttpStatus.CREATED);
+
+    } catch (Exception e) {
+        System.err.println("ERRO AO SALVAR: " + e.getMessage());
+        e.printStackTrace(); 
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro no servidor: " + e.getMessage());
     }
+}
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> body) {
-        String cpfEnviado = body.get("login"); // O seu JS envia como 'login'
+        String cpfEnviado = body.get("login"); 
         String senhaEnviada = body.get("password");
 
-        // Busca o usuário pelo CPF
         Optional<User> userOpt = userRepository.findByCpf(cpfEnviado);
 
         if (userOpt.isPresent()) {
             User user = userOpt.get();
             
-            // Verifica se a senha coincide
-            // IMPORTANTE: Se você estiver usando criptografia, use passwordEncoder.matches()
-            if (user.getPassword().equals(senhaEnviada)) {
+            // COMPARAÇÃO COM BCRYPT (matches)
+            if (passwordEncoder.matches(senhaEnviada, user.getPassword())) {
                 
-                // Retorna dados úteis para o front-end
                 Map<String, Object> response = new HashMap<>();
                 response.put("id", user.getId());
                 response.put("nome", user.getNome());
                 response.put("plano", user.getPlano());
-                response.put("token", "fake-jwt-token-" + user.getId()); // Token fictício para o JS não quebrar
+                response.put("token", "fake-jwt-token-" + user.getId());
                 
                 return ResponseEntity.ok(response);
             }
         }
 
-        // Se chegar aqui, ou o CPF não existe ou a senha está errada
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("CPF ou senha incorretos.");
     }
 

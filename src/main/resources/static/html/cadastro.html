@@ -316,23 +316,18 @@
 
     // --- VALIDAÇÃO CPF ---
     function validarCPF(cpf) {
-      // Limpa pontos e traços antes de validar
       cpf = cpf.replace(/[^\d]/g, '');
-      
       if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false;
-
       let soma = 0, resto;
       for (let i = 1; i <= 9; i++) soma += parseInt(cpf.substring(i-1, i)) * (11 - i);
       resto = (soma * 10) % 11;
       if (resto === 10 || resto === 11) resto = 0;
       if (resto !== parseInt(cpf.substring(9, 10))) return false;
-
       soma = 0;
       for (let i = 1; i <= 10; i++) soma += parseInt(cpf.substring(i-1, i)) * (12 - i);
       resto = (soma * 10) % 11;
       if (resto === 10 || resto === 11) resto = 0;
       if (resto !== parseInt(cpf.substring(10, 11))) return false;
-
       return true;
     }
 
@@ -344,15 +339,11 @@
       value = value.replace(/(\d{3})(\d)/, '$1.$2');
       value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
       e.target.value = value;
-      
-      // Remove o erro visual se o usuário corrigir enquanto digita
-      if (validarCPF(value)) {
-        document.getElementById('cpfError').classList.remove('show');
-      }
+      if (validarCPF(value)) document.getElementById('cpfError').classList.remove('show');
     });
 
-    // --- SUBMISSÃO DO FORMULÁRIO ---
-    document.getElementById('cadastroForm').addEventListener('submit', function(e) {
+    // --- SUBMISSÃO DO FORMULÁRIO CORRIGIDA ---
+    document.getElementById('cadastroForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       
       const cpfValue = document.getElementById('cpf').value;
@@ -363,46 +354,53 @@
       
       let hasError = false;
 
-      // Valida CPF
       if (!validarCPF(cpfValue)) {
         document.getElementById('cpfError').classList.add('show');
         hasError = true;
-      } else {
-        document.getElementById('cpfError').classList.remove('show');
       }
-
-      // Valida Telefone
       if (!validarTelefone(phoneValue)) {
         document.getElementById('phoneError').classList.add('show');
         hasError = true;
-      } else {
-        document.getElementById('phoneError').classList.remove('show');
       }
-
-      // Valida Senhas
       if (pass !== confirm) {
         document.getElementById('confirmPasswordError').classList.add('show');
         hasError = true;
-      } else {
-        document.getElementById('confirmPasswordError').classList.remove('show');
       }
 
       if (hasError) return;
 
-      // SUCESSO
+      // OBJETO MAPEADO PARA O JAVA (USER.JAVA)
       const dadosParaEnvio = {
         email: email,
         cpf: cpfValue.replace(/\D/g, ''),
-        telefone: '+55' + phoneValue.replace(/\D/g, ''), 
-        senha: pass
+        phone: '+55' + phoneValue.replace(/\D/g, ''), 
+        password: pass
       };
 
-      localStorage.setItem('usuarioCadastrado', JSON.stringify(dadosParaEnvio));
-      document.getElementById('successMessage').classList.add('show');
-      
-      setTimeout(() => {
-        window.location.href = 'login.html';
-      }, 2000);
+      const btn = document.querySelector('.cadastro-btn');
+      btn.innerText = 'Processando...';
+      btn.disabled = true;
+
+      try {
+        const response = await fetch('http://localhost:8080/api/users/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(dadosParaEnvio)
+        });
+
+        if (response.ok) {
+          document.getElementById('successMessage').classList.add('show');
+          setTimeout(() => { window.location.href = 'login.html'; }, 2000);
+        } else {
+          const msg = await response.text();
+          alert("Erro no cadastro: " + msg);
+        }
+      } catch (error) {
+        alert("Erro de conexão com o servidor Java na porta 8080.");
+      } finally {
+        btn.innerText = 'Cadastrar';
+        btn.disabled = false;
+      }
     });
   </script>
 </body>
