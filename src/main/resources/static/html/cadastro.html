@@ -242,6 +242,12 @@
 
       <form id="cadastroForm">
         <div class="form-group">
+          <label for="nome">Nome</label>
+          <input type="text" id="nome" name="nome" minlength="3" required>
+          <div class="error-message" id="nomeError">Nome deve ter no mínimo 3 letras.</div>
+        </div>
+
+        <div class="form-group">
           <label for="email">E-mail</label>
           <input type="email" id="email" name="email" required>
           <div class="error-message" id="emailError">E-mail inválido.</div>
@@ -346,6 +352,7 @@
     document.getElementById('cadastroForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       
+      const nomeValue = document.getElementById('nome').value;
       const cpfValue = document.getElementById('cpf').value;
       const phoneValue = document.getElementById('phone').value;
       const pass = document.getElementById('password').value;
@@ -353,6 +360,14 @@
       const email = document.getElementById('email').value;
       
       let hasError = false;
+
+      // Valida Nome (Mínimo 3 letras)
+      if (nomeValue.trim().length < 3) {
+        document.getElementById('nomeError').classList.add('show');
+        hasError = true;
+      } else {
+        document.getElementById('nomeError').classList.remove('show');
+      }
 
       if (!validarCPF(cpfValue)) {
         document.getElementById('cpfError').classList.add('show');
@@ -371,6 +386,7 @@
 
       // OBJETO MAPEADO PARA O JAVA (USER.JAVA)
       const dadosParaEnvio = {
+        nome: nomeValue,
         email: email,
         cpf: cpfValue.replace(/\D/g, ''),
         phone: '+55' + phoneValue.replace(/\D/g, ''), 
