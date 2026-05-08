@@ -1,7 +1,7 @@
 package com.transcol.busafe.controller;
 
 import com.transcol.busafe.model.User;
-import com.transcol.busafe.config.TokenService; // O import está certo!
+import com.transcol.busafe.config.TokenService;
 import com.transcol.busafe.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Optional;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
@@ -23,14 +24,12 @@ public class UserController {
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
 
-    // ESTA LINHA ABAIXO É A QUE ESTAVA FALTANDO:
     @Autowired
     private TokenService tokenService; 
 
     // --- CADASTRO ---
     @PostMapping("/register")
     public ResponseEntity<?> registrar(@RequestBody User user) {
-        // ... (seu código de registro permanece igual)
         try {
             if (userRepository.existsByCpf(user.getCpf())) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("CPF já cadastrado.");
@@ -46,6 +45,7 @@ public class UserController {
         }
     }
 
+    // --- LOGIN ---
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> body) {
         String cpfEnviado = body.get("login"); 
@@ -55,10 +55,7 @@ public class UserController {
 
         if (userOpt.isPresent()) {
             User user = userOpt.get();
-            
             if (passwordEncoder.matches(senhaEnviada, user.getPassword())) {
-
-                // Agora o Java vai reconhecer o tokenService abaixo:
                 String tokenReal = tokenService.gerarToken(user.getCpf());
                 
                 Map<String, Object> response = new HashMap<>();
@@ -71,45 +68,62 @@ public class UserController {
                 return ResponseEntity.ok(response);
             }
         }
-
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("CPF ou senha incorretos.");
     }
 
-    // --- FAVORITAR ROTA ---
-    @PostMapping("/{id}/rotas-fav")
-    public ResponseEntity<?> favoritarRota(@PathVariable String id, @RequestBody Map<String, String> body) {
-        String codigoRota = body.get("codigo"); // Ex: "505"
-        
-        return userRepository.findById(id).map(user -> {
-            // Verifica se a rota já não está nos favoritos para não duplicar
-            if (!user.getRotasFavoritas().contains(codigoRota)) {
-                user.getRotasFavoritas().add(codigoRota);
-                userRepository.save(user);
-                return ResponseEntity.ok(user.getRotasFavoritas()); // Retorna a lista atualizada
-            }
-            return ResponseEntity.badRequest().body("Rota já está nos favoritos.");
-        }).orElse(ResponseEntity.notFound().build());
+    // --- FAVORITAR ROTA (Via Token) ---
+    @PostMapping("/rotas-fav")
+    public ResponseEntity<?> favoritarRota(@RequestHeader("Authorization") String token, @RequestBody Map<String, String> body) {
+        try {
+            String jwt = token.replace("Bearer ", "");
+            String cpfUsuario = tokenService.getSubject(jwt); 
+
+            return userRepository.findByCpf(cpfUsuario).map(user -> {
+                String codigoRota = body.get("codigo");
+                if (!user.getRotasFavoritas().contains(codigoRota)) {
+                    user.getRotasFavoritas().add(codigoRota);
+                    userRepository.save(user);
+                    return ResponseEntity.ok("Rota " + codigoRota + " favoritada!");
+                }
+                return ResponseEntity.badRequest().body("Rota já favoritada.");
+            }).orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuário não encontrado."));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Sessão inválida.");
+        }
     }
 
-    // --- REMOVER ROTA FAVORITA ---
-    @DeleteMapping("/{id}/remover-rota/{codigo}")
-    public ResponseEntity<?> removerRota(@PathVariable String id, @PathVariable String codigo) {
-        return userRepository.findById(id).map(user -> {
-            if (user.getRotasFavoritas().contains(codigo)) {
-                user.getRotasFavoritas().remove(codigo);
-                userRepository.save(user);
-                return ResponseEntity.ok(user.getRotasFavoritas());
-            }
-            return ResponseEntity.badRequest().body("Rota não encontrada nos favoritos.");
-        }).orElse(ResponseEntity.notFound().build());
+    // --- BUSCAR APENAS FAVORITOS (Via Token) ---
+    @GetMapping("/rotas-fav")
+    public ResponseEntity<?> buscarFavoritos(@RequestHeader("Authorization") String token) {
+        try {
+            String jwt = token.replace("Bearer ", "");
+            String cpfUsuario = tokenService.getSubject(jwt);
+
+            return userRepository.findByCpf(cpfUsuario)
+                    .map(user -> ResponseEntity.ok(user.getRotasFavoritas()))
+                    .orElse(ResponseEntity.notFound().build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Sessão inválida.");
+        }
     }
 
-    // --- BUSCAR APENAS FAVORITOS ---
-    @GetMapping("/{id}/rotas-fav")
-    public ResponseEntity<?> buscarFavoritos(@PathVariable String id) {
-        return userRepository.findById(id)
-                .map(user -> ResponseEntity.ok(user.getRotasFavoritas()))
-                .orElse(ResponseEntity.notFound().build());
-    }
+    // --- REMOVER ROTA FAVORITA (Via Token) ---
+    @DeleteMapping("/rotas-fav/{codigo}")
+    public ResponseEntity<?> removerRota(@RequestHeader("Authorization") String token, @PathVariable String codigo) {
+        try {
+            String jwt = token.replace("Bearer ", "");
+            String cpfUsuario = tokenService.getSubject(jwt);
 
+            return userRepository.findByCpf(cpfUsuario).map(user -> {
+                if (user.getRotasFavoritas().contains(codigo)) {
+                    user.getRotasFavoritas().remove(codigo);
+                    userRepository.save(user);
+                    return ResponseEntity.ok(user.getRotasFavoritas());
+                }
+                return ResponseEntity.badRequest().body("Rota não encontrada nos favoritos.");
+            }).orElse(ResponseEntity.notFound().build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Sessão inválida.");
+        }
+    }
 }

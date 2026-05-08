@@ -1078,3 +1078,10 @@ body.light-mode #star-favorite {
     from { opacity: 0; transform: scale(0.9); }
     to { opacity: 1; transform: scale(1); }
 }
+
+.no-click {
+    pointer-events: none;
+    user-select: none;
+    font-style: italic;
+    font-size: 0.75rem !important;
+}
