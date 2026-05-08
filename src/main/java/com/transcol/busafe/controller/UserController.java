@@ -1,7 +1,9 @@
 package com.transcol.busafe.controller;
 
+import com.transcol.busafe.model.Rota;
 import com.transcol.busafe.model.User;
 import com.transcol.busafe.config.TokenService;
+import com.transcol.busafe.repository.RotaRepository;
 import com.transcol.busafe.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -26,6 +28,9 @@ public class UserController {
 
     @Autowired
     private TokenService tokenService; 
+    
+    @Autowired
+    private RotaRepository rotaRepository;
 
     // --- CADASTRO ---
     @PostMapping("/register")
@@ -74,22 +79,32 @@ public class UserController {
     // --- FAVORITAR ROTA (Via Token) ---
     @PostMapping("/rotas-fav")
     public ResponseEntity<?> favoritarRota(@RequestHeader("Authorization") String token, @RequestBody Map<String, String> body) {
-        try {
-            String jwt = token.replace("Bearer ", "");
-            String cpfUsuario = tokenService.getSubject(jwt); 
+        String codigoEnviado = body.get("codigo");
+        String jwt = token.replace("Bearer ", "");
+        String cpf = tokenService.getSubject(jwt);
 
-            return userRepository.findByCpf(cpfUsuario).map(user -> {
-                String codigoRota = body.get("codigo");
-                if (!user.getRotasFavoritas().contains(codigoRota)) {
-                    user.getRotasFavoritas().add(codigoRota);
-                    userRepository.save(user);
-                    return ResponseEntity.ok("Rota " + codigoRota + " favoritada!");
-                }
-                return ResponseEntity.badRequest().body("Rota já favoritada.");
-            }).orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuário não encontrado."));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Sessão inválida.");
+        User user = userRepository.findByCpf(cpf).orElse(null);
+        if (user == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuário não encontrado.");
+
+        // Busca a rota completa na coleção 'rota'
+        Rota rotaParaSalvar = rotaRepository.findFirstByLinhaTranscolOrderByIdAsc(codigoEnviado);
+        if (rotaParaSalvar == null) {
+            rotaParaSalvar = rotaRepository.findFirstByLinhaMunicipalOrderByIdAsc(codigoEnviado);
         }
+
+        if (rotaParaSalvar != null) {
+            // Verifica se já existe para não duplicar (compara pelo número da linha)
+            boolean jaExiste = user.getRotasFavoritas().stream()
+                    .anyMatch(r -> codigoEnviado.equals(r.getLinhaTranscol()) || codigoEnviado.equals(r.getLinhaMunicipal()));
+
+            if (!jaExiste) {
+                user.getRotasFavoritas().add(rotaParaSalvar); // Salva o objeto INTEIRO dentro do User
+                userRepository.save(user);
+                return ResponseEntity.ok("Linha " + codigoEnviado + " favoritada!");
+            }
+            return ResponseEntity.badRequest().body("Esta linha já está nos seus favoritos.");
+        }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Linha não encontrada no sistema.");
     }
 
     // --- BUSCAR APENAS FAVORITOS (Via Token) ---

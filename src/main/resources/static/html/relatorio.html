@@ -241,31 +241,52 @@ async function carregarMeusFavoritos() {
         if (response.ok) {
             const favoritos = await response.json();
             
-            // Limpa o conteúdo estático
+            // Limpa o conteúdo estático da div interna
             container.innerHTML = '';
 
-            if (favoritos.length === 0) {
+            if (!favoritos || favoritos.length === 0) {
                 container.innerHTML = '<span class="nav-item" style="font-size: 0.8rem; opacity: 0.5; padding-left: 2.6rem;">Nenhuma linha salva</span>';
                 return;
             }
 
-            // Injeta cada linha favorita
-            favoritos.forEach(codigo => {
+            // Injeta cada objeto Rota favorito
+            favoritos.forEach(rota => {
                 const link = document.createElement('a');
                 link.href = "#";
                 link.className = "nav-item";
-                // Mantendo o estilo de recuo do seu CSS original para sub-menus
                 link.style.paddingLeft = "2.6rem"; 
-                link.innerHTML = `<span>Linha ${codigo}</span>`;
+                
+                // Extraindo dados do objeto (Embedding)
+                // Usamos os nomes exatos dos campos do seu Rota.java
+                const numeroLinha = rota.linhaTranscol || rota.linhaMunicipal || "---";
+                const nomeLinha = rota.nome || "";
+
+                // Define o que aparece na tela (Texto, não o objeto)
+                link.innerHTML = `<span>Linha ${numeroLinha} - ${nomeLinha}</span>`;
                 
                 link.onclick = (e) => {
                     e.preventDefault();
-                    document.getElementById('linha').value = codigo;
                     
-                    // Opcional: fecha o menu lateral no mobile após clicar
+                    // Verifica se estamos no mapa.html ou alert.html
+                    const campoBusca = document.getElementById('linha') || document.getElementById('incidente-linha-busca');
+                    
+                    if (campoBusca) {
+                        campoBusca.value = numeroLinha; // Atribui apenas o número (string)
+                        
+                        // Dispara o botão de busca se for o mapa
+                        const btnGo = document.getElementById('go');
+                        if (btnGo) btnGo.click();
+                        
+                        // Dispara evento de input para o autocomplete do alert.html notar a mudança
+                        campoBusca.dispatchEvent(new Event('input'));
+                    }
+                    
+                    // Fecha o menu lateral no mobile após clicar
                     if (window.innerWidth <= 768) {
-                        document.getElementById('sidebar').classList.remove('mobile-open');
-                        document.getElementById('sidebar-overlay').classList.remove('show');
+                        const sidebar = document.getElementById('sidebar');
+                        const overlay = document.getElementById('sidebar-overlay');
+                        if(sidebar) sidebar.classList.remove('mobile-open');
+                        if(overlay) overlay.classList.remove('show');
                     }
                 };
                 

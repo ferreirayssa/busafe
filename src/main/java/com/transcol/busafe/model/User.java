@@ -2,6 +2,7 @@ package com.transcol.busafe.model;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 import org.springframework.data.mongodb.core.index.Indexed;
 import lombok.Data;
 import java.util.ArrayList;
@@ -29,17 +30,8 @@ public class User {
     // Atributo solicitado: inicia como FREE e pode ser sobrescrito
     private String plano = "FREE";
 
-    /**
-     * Relação Embedding para Favoritos:
-     * Armazena apenas o código/número da linha (ex: "505").
-     * Como sua RotaController já busca por código, isso facilita o carregamento.
-     */
-    private List<String> rotasFavoritas = new ArrayList<>();
+    @Field("Favoritos")
+    private List<Rota> rotasFavoritas = new ArrayList<>();
 
-    /**
-     * Relação Embedding para Relatos:
-     * Armazena os IDs dos relatos criados por este usuário.
-     * Isso permite que o backend saiba a autoria sem expor no front-end.
-     */
     private List<String> relatosIds = new ArrayList<>();
 }
