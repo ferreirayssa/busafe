@@ -1,841 +1,169 @@
 <!DOCTYPE html>
-<html lang="PT-BR">
+<html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BuSafe — Mapa</title>
-  <link rel="icon" href="./Logos/busafe.ico">
-  <meta name="theme-color" content="#11121a">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="BuSafe">
-  <link rel="apple-touch-icon" href="./Logos/Logo_3.png">
-  <link rel="stylesheet" href="css/Style.css">
-  <script src="js/scripts.js" defer></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@8.2.0/ol.css">
-  <script src="https://cdn.jsdelivr.net/npm/ol@8.2.0/dist/ol.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BuSafe - Sua segurança no Transcol</title>
+    <link rel="icon" type="image/x-icon" href="Logos/busafe.ico">
+    <style>
+        :root {
+            --primary: #10659c;
+            --secondary: #1375b7;
+            --dark: #0f1016;
+            --white: #ffffff;
+            --gray: #f4f4f4;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--white);
+            color: var(--dark);
+            scroll-behavior: smooth;
+        }
+
+        /* Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 10%;
+            background: var(--white);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo img { height: 50px; }
+
+        nav a {
+            text-decoration: none;
+            color: var(--dark);
+            margin-left: 25px;
+            font-weight: 500;
+            transition: 0.3s;
+        }
+
+        nav a:hover { color: var(--primary); }
+
+        .btn-login {
+            background: var(--primary);
+            color: white !important;
+            padding: 10px 25px;
+            border-radius: 5px;
+        }
+
+        /* Hero Section */
+        .hero {
+            display: flex;
+            align-items: center;
+            padding: 80px 10%;
+            background: linear-gradient(rgba(15, 16, 22, 0.7), rgba(15, 16, 22, 0.7)), url('prototipo/osm.png');
+            background-size: cover;
+            color: white;
+            min-height: 60vh;
+        }
+
+        .hero-content { max-width: 600px; }
+        .hero h1 { font-size: 3.5rem; margin-bottom: 20px; }
+        .hero p { font-size: 1.2rem; margin-bottom: 30px; opacity: 0.9; }
+
+        .btn-cta {
+            padding: 15px 40px;
+            background: var(--primary);
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            transition: 0.3s;
+        }
+
+        .btn-cta:hover { background: var(--secondary); transform: scale(1.05); }
+
+        /* Features */
+        .features {
+            padding: 80px 10%;
+            text-align: center;
+            background: var(--gray);
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-top: 50px;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+
+        .feature-card h3 { color: var(--primary); margin-bottom: 15px; }
+
+        footer {
+            padding: 40px;
+            text-align: center;
+            background: var(--dark);
+            color: white;
+            font-size: 0.9rem;
+        }
+    </style>
 </head>
 <body>
 
-  <button id="hamburger-btn" aria-label="Abrir menu">
-    <!-- bi-list -->
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-      <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
-    </svg>
-  </button>
-
-  <div id="sidebar-overlay"></div>
-
-  <nav id="sidebar">
-    <div class="sidebar-header">
-      <div class="sidebar-logo">
-        <img src="Logos/Logo_3.png" alt="BuSafe">
-      </div>
-      <button id="toggle-btn" aria-label="Recolher menu">
-        <!-- bi-chevron-double-left -->
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-double-left" viewBox="0 0 16 16">
-          <path fill-rule="evenodd" d="M8.354 1.646a.5.5 0 0 1 0 .708L2.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0"/>
-          <path fill-rule="evenodd" d="M12.354 1.646a.5.5 0 0 1 0 .708L6.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0"/>
-        </svg>
-      </button>
-    </div>
-
-    <div class="sidebar-search">
-      <form class="search-form" onsubmit="return false;">
-        <!-- bi-search -->
-        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 16 16">
-          <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.099zm-5.242 1.656a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/>
-        </svg>
-        <input type="search" id="linha" name="q" placeholder="Buscar linha... (ex: 506)">
-      </form>
-    </div>
-    <div class="search-controls">
-      <button id="go">Buscar</button>
-      <button id="clear">Limpar</button>
-    </div>
-
-    <div id="status"></div>
-
-    <div class="sidebar-nav">
-      <div class="nav-label">Navegação</div>
-
-      <li class="active" style="list-style:none;">
-        <a href="index.html" class="nav-item">
-          <!-- bi-map -->
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-globe-americas" viewBox="0 0 16 16">
-            <path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0M2.04 4.326c.325 1.329 2.532 2.54 3.717 3.19.48.263.793.434.743.484q-.121.12-.242.234c-.416.396-.787.749-.758 1.266.035.634.618.824 1.214 1.017.577.188 1.168.38 1.286.983.082.417-.075.988-.22 1.52-.215.782-.406 1.48.22 1.48 1.5-.5 3.798-3.186 4-5 .138-1.243-2-2-3.5-2.5-.478-.16-.755.081-.99.284-.172.15-.322.279-.51.216-.445-.148-2.5-2-1.5-2.5.78-.39.952-.171 1.227.182.078.099.163.208.273.318.609.304.662-.132.723-.633.039-.322.081-.671.277-.867.434-.434 1.265-.791 2.028-1.12.712-.306 1.365-.587 1.579-.88A7 7 0 1 1 2.04 4.327Z"/>
-          </svg>
-          <span>Mapa</span>
-        </a>
-      </li>
-
-      <a href="html/relatorio.html" class="nav-item">
-        <!-- bi-file-earmark-bar-graph -->
-        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" fill="currentColor" viewBox="0 0 16 16">
-          <path d="M10 13.5a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-6a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v6zm-2.5.5a.5.5 0 0 1-.5-.5v-4a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-.5.5h-1zm-3 0a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-1z"/>
-          <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
-        </svg>
-        <span>Relatório</span>
-        <span class="nav-badge">PRO</span>
-      </a>
-
-      <a href="html/planos.html" class="nav-item">
-        <!-- bi-gem -->
-        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" fill="currentColor" viewBox="0 0 16 16">
-          <path d="M3.1.7a.5.5 0 0 1 .4-.2h9a.5.5 0 0 1 .4.2l2.976 3.974c.149.185.156.45.01.644L8.4 15.3a.5.5 0 0 1-.8 0L.534 5.318a.5.5 0 0 1 .01-.644L3.1.7zm11.386 3.785-1.806-2.41-.776 2.413 2.582-.003zm-3.633.004.961-2.989H4.186l.963 2.995 5.704-.006zM5.47 5.495 8 13.366l2.532-7.876-5.062.005zm-1.371-.999-.78-2.422-1.818 2.425 2.598-.003zM1.499 5.5l5.113 6.817-2.192-6.82L1.5 5.5zm7.889 6.817 5.123-6.83-2.928.002-2.195 6.828z"/>
-        </svg>
-        <span>Planos</span>
-      </a>
-
-      <a href="html/cadastro.html" class="nav-item">
-        <!-- bi-person-plus -->
-        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" fill="currentColor" viewBox="0 0 16 16">
-          <path d="M6 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H1s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C9.516 10.68 8.288 10 6 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
-          <path fill-rule="evenodd" d="M13.5 5a.5.5 0 0 1 .5.5V7h1.5a.5.5 0 0 1 0 1H14v1.5a.5.5 0 0 1-1 0V8h-1.5a.5.5 0 0 1 0-1H13V5.5a.5.5 0 0 1 .5-.5z"/>
-        </svg>
-        <span>Cadastro</span>
-      </a>
-
-      <div class="nav-label">Linhas Frequentes</div>
-
-      <button class="nav-item" onclick="toggleSubMenu(this)">
-        <!-- bi-bus-front -->
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bus-front-fill" viewBox="0 0 16 16">
-          <path d="M16 7a1 1 0 0 1-1 1v3.5c0 .818-.393 1.544-1 2v2a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5V14H5v1.5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-2a2.5 2.5 0 0 1-1-2V8a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1V2.64C1 1.452 1.845.408 3.064.268A44 44 0 0 1 8 0c2.1 0 3.792.136 4.936.268C14.155.408 15 1.452 15 2.64V4a1 1 0 0 1 1 1zM3.552 3.22A43 43 0 0 1 8 3c1.837 0 3.353.107 4.448.22a.5.5 0 0 0 .104-.994A44 44 0 0 0 8 2c-1.876 0-3.426.109-4.552.226a.5.5 0 1 0 .104.994M8 4c-1.876 0-3.426.109-4.552.226A.5.5 0 0 0 3 4.723v3.554a.5.5 0 0 0 .448.497C4.574 8.891 6.124 9 8 9s3.426-.109 4.552-.226A.5.5 0 0 0 13 8.277V4.723a.5.5 0 0 0-.448-.497A44 44 0 0 0 8 4m-3 7a1 1 0 1 0-2 0 1 1 0 0 0 2 0m8 0a1 1 0 1 0-2 0 1 1 0 0 0 2 0m-7 0a1 1 0 0 0 1 1h2a1 1 0 1 0 0-2H7a1 1 0 0 0-1 1"/>
-        </svg>
-        <span>Ver linhas</span>
-        <!-- bi-chevron-down -->
-        <svg class="dropdown-arrow" xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
-          <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
-        </svg>
-      </button>
-      <div class="sub-menu">
-        <div>
-          <a href="#" class="nav-item">505 — Terminal Jardim América</a>
-          <a href="#" class="nav-item">591 — Campo Grande</a>
-          <a href="#" class="nav-item">506 — Terminal Vila Velha</a>
-          <a href="#" class="nav-item">515 — Bairro República</a>
+    <header>
+        <div class="logo">
+            <img src="Logos/Logo_3.png" alt="BuSafe Logo">
         </div>
-      </div>
+        <nav>
+            <a href="#sobre">Sobre</a>
+            <a href="#funcionalidades">Funcionalidades</a>
+            <a href="html/login.html" class="btn-login">Entrar</a>
+        </nav>
+    </header>
+
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Sua segurança não tira férias.</h1>
+            <p>Monitore suas rotas do Transcol em tempo real, receba alertas de segurança e viaje com tranquilidade todos os dias.</p>
+            <a href="html/cadastro.html" class="btn-cta">Começar Agora</a>
+        </div>
+    </section>
+
+    <section class="features" id="funcionalidades">
+        <h2>Por que escolher o BuSafe?</h2>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <h3>Mapa em Tempo Real</h3>
+                <p>Visualize as linhas do Transcol e saiba exatamente onde seu ônibus está.</p>
+            </div>
+            <div class="feature-card">
+                <h3>Relatos da Comunidade</h3>
+                <p>Acesse alertas de segurança feitos por outros passageiros em tempo real.</p>
+            </div>
+            <div class="feature-card">
+                <h3>Rotas Favoritas</h3>
+                <p>Salve suas linhas mais utilizadas e tenha acesso rápido às informações.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="sobre" style="padding: 80px 10%; text-align: center;">
+        <h2>Sobre o Projeto</h2>
+        <p style="max-width: 800px; margin: 0 auto; line-height: 1.6; color: var(--secondary-text-clr);">
+            O BuSafe nasceu para integrar tecnologia e segurança pública no transporte coletivo da Grande Vitória. 
+            Nosso objetivo é fornecer dados precisos para que cada cidadão capixaba possa planejar sua viagem com base na segurança das rotas.
+        </p>
+    </section>
+
+    <footer>
+        <p>&copy; 2026 BuSafe - Tecnologia para uma jornada mais segura.</p>
+    </footer>
 
-      <div class="nav-label">Preferências</div>
-
-      <a href="#" id="theme-btn" class="nav-item theme-toggle">
-        <!-- bi-moon-stars -->
-        <svg id="moon-icon" xmlns="http://www.w3.org/2000/svg" width="17" height="17" fill="currentColor" viewBox="0 0 16 16">
-          <path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z"/>
-          <path d="M10.794 3.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387a1.734 1.734 0 0 0-1.097 1.097l-.387 1.162a.217.217 0 0 1-.412 0l-.387-1.162A1.734 1.734 0 0 0 9.31 6.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387a1.734 1.734 0 0 0 1.097-1.097l.387-1.162zM13.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.156 1.156 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.156 1.156 0 0 0-.732-.732l-.774-.258a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732L13.863.1z"/>
-        </svg>
-        <!-- bi-sun -->
-        <svg id="sun-icon" xmlns="http://www.w3.org/2000/svg" width="17" height="17" fill="currentColor" viewBox="0 0 16 16">
-          <path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/>
-        </svg>
-        <span>Alterar Tema</span>
-      </a>
-    </div>
-
-    <div class="sidebar-footer">
-      <a href="html/alert.html" class="btn-report">
-        <!-- bi-exclamation-triangle -->
-        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" fill="currentColor" viewBox="0 0 16 16">
-          <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566z"/>
-          <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995z"/>
-        </svg>
-        <span>Reportar Incidente</span>
-        <div class="report-dot"></div>
-      </a>
-    </div>
-  </nav>
-
-  <main id="content">
-  <div id="map"></div>
-  <button id="star-favorite" class="map-floating-btn favorite-hidden" type="button" aria-label="Favoritar rota">
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-      <path d="M2.866 14.85c-.078.444.36.791.746.593l4.39-2.256 4.389 2.256c.386.198.824-.149.746-.592l-.83-4.73 3.522-3.356c.33-.314.16-.888-.282-.95l-4.898-.696L8.465.792a.513.513 0 0 0-.927 0L5.354 5.12l-4.898.696c-.441.062-.612.636-.283.95l3.523 3.356-.83 4.73zm4.905-2.767-3.686 1.894.694-3.957a.565.565 0 0 0-.163-.505L1.71 6.745l4.052-.576a.525.525 0 0 0 .393-.288L8 2.223l1.845 3.658a.525.525 0 0 0 .393.288l4.052.575-2.906 2.77a.565.565 0 0 0-.163.506l.694 3.957-3.686-1.894a.503.503 0 0 0-.461 0z"/>
-    </svg>
-  </button>
-
-  <div id="map-legend">
-    <div class="legend-title">Legenda</div>
-    <div class="legend-item"><div class="legend-line" style="background:#812f9a;"></div> Rota</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#1976d2;"></div> Sua posição</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#0f766e;"></div> Ônibus monitorado</div>
-  </div>
-
-  <div id="map-alert-banner" class="map-alert-banner hidden"></div>
-
-  <button id="gps-center-btn" class="map-floating-btn" type="button" aria-label="Centralizar GPS no mapa">
-  <span class="gps-compass-shell" aria-hidden="true">
-    <svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" fill="currentColor" class="bi bi-compass" viewBox="0 0 16 16">
-      <path d="M8 16.016a7.5 7.5 0 0 0 1.962-14.74A1 1 0 0 0 9 0H7a1 1 0 0 0-.962 1.276A7.5 7.5 0 0 0 8 16.016m6.5-7.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0"/>
-      <path d="m6.94 7.44 4.95-2.83-2.83 4.95-4.949 2.83 2.828-4.95z"/>
-    </svg>
-  </span>
-
-  <!-- <span id="gps-direction-arrow" class="gps-direction-arrow" aria-hidden="true">
-    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-      <path d="M8 1.2 11 7H8.9v7H7.1V7H5L8 1.2z"/>
-    </svg>
-  </span> --> 
-</button>
-
-  <div id="toast-container"></div>
-
-  <script>
-  const GEOJSON_URL = "/rotas/geojson";
-  const RELATOS_URL = "/relatos";
-  const INCIDENTES_ATIVOS_URL = "/api/incidentes-ativos";
-
-  const statusEl = document.getElementById('status');
-  const gpsCenterBtn = document.getElementById('gps-center-btn');
-  const gpsDirectionArrow = document.getElementById('gps-direction-arrow');
-  const alertBanner = document.getElementById('map-alert-banner');
-
-  function showStatus(msg, ms = 2500) {
-    statusEl.textContent = msg;
-    statusEl.classList.add('show');
-    if (ms) setTimeout(() => statusEl.classList.remove('show'), ms);
-  }
-
-  function showAlertBanner(msg) {
-    alertBanner.textContent = msg;
-    alertBanner.classList.remove('hidden');
-  }
-
-  function hideAlertBanner() {
-    alertBanner.textContent = '';
-    alertBanner.classList.add('hidden');
-  }
-
-  const base = new ol.layer.Tile({ source: new ol.source.OSM() });
-  const todasRotasSource = new ol.source.Vector({
-    url: GEOJSON_URL + "?v=" + Date.now(),
-    format: new ol.format.GeoJSON()
-  });
-
-  const styleBySentido = feature => {
-    const isVolta = /volta/i.test(String(feature.get('sentido') || ''));
-    return new ol.style.Style({
-      stroke: new ol.style.Stroke({
-        color: isVolta ? '#d32f2f' : '#2e7d32',
-        width: 3
-      })
-    });
-  };
-
-  const rotasLayer = new ol.layer.Vector({
-    source: todasRotasSource,
-    style: styleBySentido
-  });
-
-  const resultadoSource = new ol.source.Vector({ features: [] });
-  const resultadoLayer = new ol.layer.Vector({
-    source: resultadoSource,
-    style: new ol.style.Style({
-      stroke: new ol.style.Stroke({ color: '#812f9a', width: 4 })
-    })
-  });
-
-  const relatoSource = new ol.source.Vector({ features: [] });
-  const relatoLayer = new ol.layer.Vector({ source: relatoSource });
-
-  const busSource = new ol.source.Vector({ features: [] });
-  const busLayer = new ol.layer.Vector({ source: busSource });
-
-  const userLocationSource = new ol.source.Vector({ features: [] });
-  const userLocationLayer = new ol.layer.Vector({ source: userLocationSource });
-
-  const map = new ol.Map({
-    target: 'map',
-    layers: [base, rotasLayer, resultadoLayer, relatoLayer, busLayer, userLocationLayer],
-    view: new ol.View({
-      center: ol.proj.fromLonLat([-40.307, -20.318]),
-      zoom: 12
-    })
-  });
-
-  const popupEl = document.createElement('div');
-  popupEl.id = 'incident-popup';
-  popupEl.style.display = 'none';
-  document.body.appendChild(popupEl);
-
-  const popup = new ol.Overlay({
-    element: popupEl,
-    positioning: 'bottom-center',
-    offset: [0, -18],
-    stopEvent: false
-  });
-
-  map.addOverlay(popup);
-
-  let userFeature = null;
-  let currentUserCoord = null;
-  let firstLocationFix = true;
-  let linhaSelecionada = null;
-  let relatosCache = [];
-  let incidentesAtivosCache = [];
-
-  const INCIDENT_ICON_DEFS = {
-    assalto: {
-      color: '#e53935',
-      viewBox: '0 0 16 16',
-      path: 'M8 1.2l5.3 2v4.4c0 3.1-1.9 5.9-5.3 7.2-3.4-1.3-5.3-4.1-5.3-7.2V3.2L8 1.2zm0 3.1a.75.75 0 0 0-.75.75v3.1c0 .414.336.75.75.75s.75-.336.75-.75v-3.1A.75.75 0 0 0 8 4.3zm0 6.2a.9.9 0 1 0 0 1.8.9.9 0 0 0 0-1.8z',
-      label: 'Assalto'
-    },
-    assedio: {
-      color: '#ff9800',
-      viewBox: '0 0 16 16',
-      path: 'M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zM7.002 4a1 1 0 1 1 2 0l-.35 4.507a.65.65 0 0 1-1.3 0L7.002 4zm.998 8.5a1.1 1.1 0 1 1 0-2.2 1.1 1.1 0 0 1 0 2.2z',
-      label: 'Assédio'
-    },
-    violencia: {
-      color: '#9c27b0',
-      viewBox: '0 0 16 16',
-      path: 'M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zM7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995z',
-      label: 'Violência'
-    },
-    furto: {
-      color: '#2196f3',
-      viewBox: '0 0 16 16',
-      path: 'M0 4a2 2 0 0 1 2-2h1V1.5A1.5 1.5 0 0 1 4.5 0h7A1.5 1.5 0 0 1 13 1.5V2h1a2 2 0 0 1 2 2v1H0V4zm0 2h16v6a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V6zm11 3a1 1 0 1 0 0 2h2a1 1 0 1 0 0-2h-2z',
-      label: 'Furto'
-    },
-    onibus_parado_quebrado: {
-      color: '#ef6c00',
-      viewBox: '0 0 16 16',
-      path: 'M1 1a1 1 0 0 0-1 1v9a1.5 1.5 0 0 0 1 1.415V14.5a.5.5 0 0 0 1 0V13h10v1.5a.5.5 0 0 0 1 0v-2.085A1.5 1.5 0 0 0 14 11V2a1 1 0 0 0-1-1H1zm0 2h12v3H1V3zm1 5.5A1.5 1.5 0 1 1 2 11a1.5 1.5 0 0 1 0-2.5zM12 8.5A1.5 1.5 0 1 1 12 11a1.5 1.5 0 0 1 0-2.5z',
-      label: 'Ônibus parado/quebrado'
-    },
-    outro: {
-      color: '#9e9e9e',
-      viewBox: '0 0 16 16',
-      path: 'M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm-.93-5.412h1.858v1.536H7.07v-1.536zm1.854-1.503H7.117l-.04-.23c-.075-.43.01-.842.29-1.197.21-.267.499-.473.884-.708.575-.35.746-.545.746-.875 0-.37-.287-.64-.782-.64-.562 0-.852.297-.907.82H5.64c.044-1.506 1.12-2.36 2.754-2.36 1.543 0 2.588.78 2.588 2.013 0 .757-.39 1.245-1.216 1.717-.472.27-.657.449-.75.695-.062.164-.074.333-.03.58z',
-      label: 'Outro'
-    },
-    bus_monitorado: {
-      color: '#0f766e',
-      viewBox: '0 0 16 16',
-      path: 'M16 7a1 1 0 0 1-1 1v3.5c0 .818-.393 1.544-1 2v2a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5V14H5v1.5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-2a2.5 2.5 0 0 1-1-2V8a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1V2.64C1 1.452 1.845.408 3.064.268A44 44 0 0 1 8 0c2.1 0 3.792.136 4.936.268C14.155.408 15 1.452 15 2.64V4a1 1 0 0 1 1 1v2zM3 11a1 1 0 1 0 2 0 1 1 0 0 0-2 0zm8 0a1 1 0 1 0 2 0 1 1 0 0 0-2 0z',
-      label: 'Ônibus monitorado'
-    }
-  };
-
-  const markerCache = new Map();
-  const busMarkerCache = new Map();
-
-  function svgToDataUrl(svg) {
-    return 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
-  }
-
-  function createMarkerSvg(def, { highlight = false, isBus = false } = {}) {
-    const size = highlight ? 112 : 104;
-    const center = size / 2;
-
-    const haloRadius = highlight ? 44 : 40;
-    const haloOpacityStrong = highlight ? 0.72 : 0.60;
-    const haloOpacityMid = highlight ? 0.32 : 0.24;
-
-    const bubbleRadius = isBus ? 16 : 15;
-    const iconSize = isBus ? 20 : 18;
-
-    return `
-      <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-        <defs>
-          <radialGradient id="g" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stop-color="${def.color}" stop-opacity="${haloOpacityStrong}" />
-            <stop offset="38%" stop-color="${def.color}" stop-opacity="${haloOpacityMid}" />
-            <stop offset="72%" stop-color="${def.color}" stop-opacity="0.10" />
-            <stop offset="100%" stop-color="${def.color}" stop-opacity="0" />
-          </radialGradient>
-        </defs>
-
-        <circle cx="${center}" cy="${center}" r="${haloRadius}" fill="url(#g)" />
-
-        <circle
-          cx="${center}"
-          cy="${center}"
-          r="${bubbleRadius}"
-          fill="${def.color}"
-          stroke="#ffffff"
-          stroke-width="3.2"
-        />
-
-        <svg
-          x="${center - iconSize / 2}"
-          y="${center - iconSize / 2}"
-          width="${iconSize}"
-          height="${iconSize}"
-          viewBox="${def.viewBox}"
-        >
-          <path d="${def.path}" fill="#ffffff"/>
-        </svg>
-      </svg>
-    `;
-  }
-
-  function getMarkerStyle(type, { highlight = false, isBus = false, rotation = 0 } = {}) {
-    const def = INCIDENT_ICON_DEFS[type] || INCIDENT_ICON_DEFS.outro;
-    const cacheKey = `${type}-${highlight}-${isBus}`;
-
-    const cache = isBus ? busMarkerCache : markerCache;
-    if (!cache.has(cacheKey)) {
-      const svg = createMarkerSvg(def, { highlight, isBus });
-      cache.set(cacheKey, svgToDataUrl(svg));
-    }
-
-    const markerSize = highlight ? 112 : 104;
-
-    return new ol.style.Style({
-      image: new ol.style.Icon({
-        src: cache.get(cacheKey),
-        imgSize: [markerSize, markerSize],
-        anchor: [0.5, 0.5],
-        rotateWithView: true,
-        rotation
-      }),
-      zIndex: highlight ? 30 : (isBus ? 25 : 20)
-    });
-  }
-
-  function createUserStyle() {
-    return new ol.style.Style({
-      image: new ol.style.Circle({
-        radius: 8,
-        fill: new ol.style.Fill({ color: '#1976d2' }),
-        stroke: new ol.style.Stroke({ color: '#fff', width: 2 })
-      })
-    });
-  }
-
-  function formatarData(value) {
-    if (!value) return 'Horário não informado';
-
-    const d = new Date(value);
-    if (Number.isNaN(d.getTime())) return String(value);
-
-    return d.toLocaleString('pt-BR', {
-      dateStyle: 'short',
-      timeStyle: 'short'
-    });
-  }
-
-  function linhaDoRelato(relato) {
-    return relato.linhaTranscol ?? relato.linhaMunicipal ?? null;
-  }
-
-  function linhaDoIncidente(inc) {
-    return inc.linha ?? null;
-  }
-
-  function isLinhaSelecionada(linha) {
-    if (linhaSelecionada == null || linha == null) return false;
-    return String(linhaSelecionada).trim() === String(linha).trim();
-  }
-
-  function calcularRotacaoOnibus(coords) {
-    if (!coords || coords.length < 2) return 0;
-    const a = coords[coords.length - 2];
-    const b = coords[coords.length - 1];
-
-    const dx = b.lon - a.lon;
-    const dy = b.lat - a.lat;
-
-    if (!dx && !dy) return 0;
-
-    return Math.atan2(dx, dy);
-  }
-
-  function atualizarDirecaoBotaoGps() {
-    if (!currentUserCoord || !gpsDirectionArrow) return;
-
-    const pixel = map.getPixelFromCoordinate(currentUserCoord);
-    const size = map.getSize();
-    if (!pixel || !size) return;
-
-    const centerX = size[0] / 2;
-    const centerY = size[1] / 2;
-    const dx = pixel[0] - centerX;
-    const dy = pixel[1] - centerY;
-
-    const angle = Math.atan2(dx, -dy) * 180 / Math.PI;
-    gpsDirectionArrow.style.transform = `rotate(${angle}deg)`;
-  }
-
-  function centerOnUser() {
-    if (!currentUserCoord) {
-      showStatus('Localização ainda não disponível.');
-      return;
-    }
-
-    map.getView().animate({
-      center: currentUserCoord,
-      zoom: Math.max(map.getView().getZoom() || 15, 15),
-      duration: 700
-    });
-
-    popupEl.style.display = 'none';
-    atualizarDirecaoBotaoGps();
-  }
-
-  function renderRelatos() {
-    relatoSource.clear();
-
-    relatosCache.forEach(relato => {
-      if (relato.latitude == null || relato.longitude == null) return;
-
-      const linha = linhaDoRelato(relato);
-      const highlight = isLinhaSelecionada(linha);
-
-      const coord = ol.proj.fromLonLat([
-        Number(relato.longitude),
-        Number(relato.latitude)
-      ]);
-
-      const feat = new ol.Feature(new ol.geom.Point(coord));
-      feat.setProperties({
-        featureType: 'relato',
-        id: relato.id,
-        tipo: relato.tipo,
-        descricao: relato.descricao,
-        dataRelato: relato.dataRelato,
-        bairro: relato.bairro,
-        municipio: relato.municipio,
-        linha: linha
-      });
-
-      feat.setStyle(getMarkerStyle(relato.tipo, { highlight }));
-      relatoSource.addFeature(feat);
-    });
-  }
-
-  function renderOnibusAtivos() {
-    busSource.clear();
-
-    incidentesAtivosCache.forEach(inc => {
-      if (!inc?.coordenada || inc.linha == null) return;
-
-      const coord = ol.proj.fromLonLat([inc.coordenada.lon, inc.coordenada.lat]);
-      const highlight = isLinhaSelecionada(inc.linha);
-      const rotation = calcularRotacaoOnibus(inc.coordenadas || []);
-
-      const feat = new ol.Feature(new ol.geom.Point(coord));
-      feat.setProperties({
-        featureType: 'onibus',
-        tipo: inc.tipo,
-        linha: inc.linha,
-        tipoLinha: inc.tipoLinha,
-        criadoEm: inc.criadoEm,
-        ultimaPosicaoTs: inc.coordenada.ts,
-        incidenteId: inc.id
-      });
-
-      feat.setStyle(getMarkerStyle('bus_monitorado', { highlight, isBus: true, rotation }));
-      busSource.addFeature(feat);
-    });
-  }
-
-  function atualizarBannerDaLinha() {
-    if (linhaSelecionada == null) {
-      hideAlertBanner();
-      return;
-    }
-
-    const relatosLinha = relatosCache.filter(r => isLinhaSelecionada(linhaDoRelato(r)));
-    const onibusLinha = incidentesAtivosCache.filter(i => isLinhaSelecionada(linhaDoIncidente(i)));
-
-    if (!relatosLinha.length && !onibusLinha.length) {
-      hideAlertBanner();
-      return;
-    }
-
-    const partes = [];
-    if (relatosLinha.length) {
-      partes.push(`${relatosLinha.length} denúncia${relatosLinha.length > 1 ? 's' : ''}`);
-    }
-    if (onibusLinha.length) {
-      partes.push(`${onibusLinha.length} ônibus monitorado${onibusLinha.length > 1 ? 's' : ''}`);
-    }
-
-    showAlertBanner(`Atenção: ${partes.join(' e ')} na linha ${linhaSelecionada}.`);
-  }
-
-  function aplicarContextoDaLinha(codigo) {
-    linhaSelecionada = codigo ? String(codigo).trim() : null;
-    renderRelatos();
-    renderOnibusAtivos();
-    atualizarBannerDaLinha();
-  }
-
-  async function carregarRelatos() {
-    try {
-      const resp = await fetch(RELATOS_URL + '?v=' + Date.now());
-      if (!resp.ok) throw new Error('HTTP ' + resp.status);
-
-      relatosCache = await resp.json();
-      renderRelatos();
-      atualizarBannerDaLinha();
-    } catch (err) {
-      console.error('Erro ao carregar relatos:', err);
-      showStatus('Erro ao carregar relatos.', 4000);
-    }
-  }
-
-  async function carregarIncidentesAtivos() {
-    try {
-      const resp = await fetch(INCIDENTES_ATIVOS_URL + '?v=' + Date.now());
-      if (!resp.ok) throw new Error('HTTP ' + resp.status);
-
-      incidentesAtivosCache = await resp.json();
-      renderOnibusAtivos();
-      atualizarBannerDaLinha();
-    } catch (err) {
-      console.error('Erro ao carregar incidentes ativos:', err);
-    }
-  }
-
-  todasRotasSource.on('change', () => {
-    if (todasRotasSource.getState() === 'loading') {
-      showStatus('Carregando rotas…', 0);
-    } else if (todasRotasSource.getState() === 'ready') {
-      statusEl.classList.remove('show');
-      map.getView().fit(todasRotasSource.getExtent(), {
-        padding: [40, 40, 40, 40],
-        maxZoom: 15
-      });
-    }
-  });
-
-  todasRotasSource.on('error', () => showStatus('Falha ao carregar rotas.', 5000));
-
-  document.getElementById('clear').onclick = () => {
-    resultadoSource.clear();
-    rotasLayer.setVisible(true);
-    document.getElementById('linha').value = '';
-    popupEl.style.display = 'none';
-    aplicarContextoDaLinha(null);
-    showStatus('Resultado limpo.');
-  };
-
-  const starBtn = document.getElementById('star-favorite');
-
-  document.getElementById('go').onclick = async () => {
-    const codigo = document.getElementById('linha').value.trim();
-    if (!codigo) {
-      showStatus('Informe o código da linha.');
-      return;
-    }
-
-    try {
-      showStatus('Buscando linha ' + codigo + '…', 0);
-      const resp = await fetch(`/api/rotas/buscar/${encodeURIComponent(codigo)}`);
-      if (!resp.ok) throw new Error('HTTP ' + resp.status);
-
-      const json = await resp.json();
-
-      if (json.features?.length) {
-        const feats = new ol.format.GeoJSON().readFeatures(json, {
-          featureProjection: 'EPSG:3857'
-        });
-
-        resultadoSource.clear();
-        resultadoSource.addFeatures(feats);
-        rotasLayer.setVisible(false);
-        statusEl.classList.remove('show');
-
-        map.getView().fit(resultadoSource.getExtent(), {
-          padding: [40, 40, 40, 40],
-          maxZoom: 15
-        });
-
-        starBtn.classList.remove('favorite-hidden');
-        starBtn.onclick = () => favoritarRotaNoBanco(codigo);
-
-        aplicarContextoDaLinha(codigo);
-        showStatus('Linha ' + codigo + ' exibida!');
-      } else {
-        starBtn.classList.add('favorite-hidden');
-        resultadoSource.clear();
-        rotasLayer.setVisible(true);
-        aplicarContextoDaLinha(null);
-        showStatus('Nenhuma rota encontrada.', 3000);
-      }
-    } catch (err) {
-      console.error(err);
-      showStatus('Erro ao buscar linha.', 5000);
-    }
-  };
-
-  document.getElementById('linha').addEventListener('keyup', e => {
-    if (e.key === 'Enter') document.getElementById('go').click();
-  });
-
-  document.querySelectorAll('.sub-menu .nav-item').forEach(link => {
-    link.addEventListener('click', e => {
-      e.preventDefault();
-      document.getElementById('linha').value = link.textContent.trim().split('—')[0].trim();
-      document.getElementById('go').click();
-      closeAllSubMenus();
-    });
-  });
-
-  map.on('click', evt => {
-    const feature = map.forEachFeatureAtPixel(evt.pixel, feat => feat, {
-      layerFilter: layer => layer === relatoLayer || layer === busLayer
-    });
-
-    if (!feature) {
-      popupEl.style.display = 'none';
-      return;
-    }
-
-    const kind = feature.get('featureType');
-
-    if (kind === 'onibus') {
-      popupEl.innerHTML = `
-        <span class="popup-title">Ônibus monitorado</span>
-        <div><strong>Linha:</strong> ${feature.get('linha') ?? '—'}</div>
-        <div><strong>Tipo da ocorrência:</strong> ${(INCIDENT_ICON_DEFS[feature.get('tipo')]?.label || feature.get('tipo') || '—')}</div>
-        <div><strong>Tipo de linha:</strong> ${feature.get('tipoLinha') || '—'}</div>
-        <div><strong>Criado em:</strong> ${formatarData(feature.get('criadoEm'))}</div>
-        <div class="popup-desc"><strong>Último rastreio:</strong> ${formatarData(feature.get('ultimaPosicaoTs'))}</div>
-      `;
-    } else {
-      popupEl.innerHTML = `
-        <span class="popup-title">${INCIDENT_ICON_DEFS[feature.get('tipo')]?.label || 'Denúncia'}</span>
-        <div><strong>Horário:</strong> ${formatarData(feature.get('dataRelato'))}</div>
-        <div><strong>Bairro:</strong> ${feature.get('bairro') || '—'}</div>
-        <div><strong>Município:</strong> ${feature.get('municipio') || '—'}</div>
-        ${feature.get('linha') != null ? `<div><strong>Linha:</strong> ${feature.get('linha')}</div>` : ''}
-        <div class="popup-desc"><strong>Observações:</strong> ${feature.get('descricao') || 'Sem observações'}</div>
-      `;
-    }
-
-    popup.setPosition(evt.coordinate);
-    popupEl.style.display = 'block';
-  });
-
-  function atualizarUsuarioNoMapa(longitude, latitude) {
-    currentUserCoord = ol.proj.fromLonLat([longitude, latitude]);
-
-    if (!userFeature) {
-      userFeature = new ol.Feature(new ol.geom.Point(currentUserCoord));
-      userFeature.setStyle(createUserStyle());
-      userLocationSource.addFeature(userFeature);
-    } else {
-      userFeature.setGeometry(new ol.geom.Point(currentUserCoord));
-    }
-
-    if (firstLocationFix) {
-      map.getView().animate({
-        center: currentUserCoord,
-        zoom: 15,
-        duration: 900
-      });
-      firstLocationFix = false;
-      showStatus('Localização encontrada!');
-    }
-
-    atualizarDirecaoBotaoGps();
-  }
-
-  if (navigator.geolocation) {
-    navigator.geolocation.watchPosition(
-      pos => atualizarUsuarioNoMapa(pos.coords.longitude, pos.coords.latitude),
-      err => {
-        console.error(err);
-        showStatus('Localização não encontrada.', 3500);
-      },
-      {
-        enableHighAccuracy: true,
-        maximumAge: 5000,
-        timeout: 10000
-      }
-    );
-  } else {
-    showStatus('Geolocalização não suportada pelo navegador.', 4000);
-  }
-
-  gpsCenterBtn?.addEventListener('click', centerOnUser);
-  map.on('moveend', atualizarDirecaoBotaoGps);
-  window.addEventListener('resize', () => setTimeout(atualizarDirecaoBotaoGps, 80));
-
-  document.getElementById('toggle-btn')?.addEventListener('click', () => {
-    setTimeout(() => {
-      map.updateSize();
-      atualizarDirecaoBotaoGps();
-    }, 320);
-  });
-
-  document.getElementById('hamburger-btn')?.addEventListener('click', () => {
-    setTimeout(() => {
-      map.updateSize();
-      atualizarDirecaoBotaoGps();
-    }, 320);
-  });
-
-  document.getElementById('sidebar-overlay')?.addEventListener('click', () => {
-    setTimeout(() => {
-      map.updateSize();
-      atualizarDirecaoBotaoGps();
-    }, 320);
-  });
-
-  carregarRelatos();
-  carregarIncidentesAtivos();
-
-  setInterval(carregarRelatos, 15000);
-  setInterval(carregarIncidentesAtivos, 10000);
-
-  // Adicione este bloco ao final do seu <script>
-async function favoritarRotaNoBanco(codigoRota) {
-    // Busca usuário no localStorage
-    const usuarioLocal = JSON.parse(localStorage.getItem('usuarioBuSafe'));
-
-    // Se não achar o usuário = EXIBE MODAL
-    if (!usuarioLocal || !usuarioLocal.id) {
-        exibirModalAviso();
-        return;
-    }
-
-    try {
-        const response = await fetch(`http://localhost:8080/api/users/${usuarioLocal.id}/favoritar-rota/${codigoRota}`, {
-            method: 'POST'
-        });
-
-        if (response.ok) {
-            showStatus("⭐ Rota " + codigoRota + " favoritada!");
-        }
-    } catch (err) {
-        showStatus("Erro ao favoritar linha.");
-    }
-}
-
-  function exibirModalAviso() {
-      let modal = document.getElementById('modal-aviso-login');
-      if (!modal) {
-          modal = document.createElement('div');
-          modal.id = 'modal-aviso-login';
-          modal.className = 'modal-overlay';
-          
-          modal.innerHTML = `
-              <div class="modal-content">
-                  <h3>Acesso Restrito</h3>
-                  <p>Para favoritar suas rotas frequentes, você precisa acessar sua conta.</p>
-                  <div class="modal-buttons">
-                      <button class="btn-secondary" onclick="this.closest('.modal-overlay').remove()">Agora não</button>
-                      <a href="html/login.html" class="btn-primary">Fazer Login</a>
-                  </div>
-              </div>
-          `;
-          document.body.appendChild(modal);
-      }
-  }
-// No seu evento document.getElementById('clear').onclick, adicione:
-document.getElementById('clear').onclick = () => {
-    // ... seu código de limpar ...
-    document.getElementById('star-favorite').classList.add('favorite-hidden');
-};
-
-</script>
-  
 </body>
 </html>

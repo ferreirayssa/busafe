@@ -50,10 +50,6 @@ public class IncidenteAtivoController {
         return ok ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
     }
 
-    /**
-     * Lista todos os incidentes ativos com suas coordenadas.
-     * Chamado por polling do index.html.
-     */
     @GetMapping
     public List<Map<String, Object>> listarAtivos() {
         return service.listarAtivos();
