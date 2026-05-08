@@ -75,5 +75,41 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("CPF ou senha incorretos.");
     }
 
-    // ... (restante dos métodos)
+    // --- FAVORITAR ROTA ---
+    @PostMapping("/{id}/rotas-fav")
+    public ResponseEntity<?> favoritarRota(@PathVariable String id, @RequestBody Map<String, String> body) {
+        String codigoRota = body.get("codigo"); // Ex: "505"
+        
+        return userRepository.findById(id).map(user -> {
+            // Verifica se a rota já não está nos favoritos para não duplicar
+            if (!user.getRotasFavoritas().contains(codigoRota)) {
+                user.getRotasFavoritas().add(codigoRota);
+                userRepository.save(user);
+                return ResponseEntity.ok(user.getRotasFavoritas()); // Retorna a lista atualizada
+            }
+            return ResponseEntity.badRequest().body("Rota já está nos favoritos.");
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
+    // --- REMOVER ROTA FAVORITA ---
+    @DeleteMapping("/{id}/remover-rota/{codigo}")
+    public ResponseEntity<?> removerRota(@PathVariable String id, @PathVariable String codigo) {
+        return userRepository.findById(id).map(user -> {
+            if (user.getRotasFavoritas().contains(codigo)) {
+                user.getRotasFavoritas().remove(codigo);
+                userRepository.save(user);
+                return ResponseEntity.ok(user.getRotasFavoritas());
+            }
+            return ResponseEntity.badRequest().body("Rota não encontrada nos favoritos.");
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
+    // --- BUSCAR APENAS FAVORITOS ---
+    @GetMapping("/{id}/rotas-fav")
+    public ResponseEntity<?> buscarFavoritos(@PathVariable String id) {
+        return userRepository.findById(id)
+                .map(user -> ResponseEntity.ok(user.getRotasFavoritas()))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
 }

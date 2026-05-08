@@ -994,88 +994,87 @@ body.light-mode #star-favorite {
   display: none !important;
 }
 
-/* Modal de Aviso Adaptativo - Paleta BuSafe */
+.logout-link:hover {
+    color: #ef5350 !important; /* Cor de erro/alerta */
+    background-color: rgba(239, 83, 80, 0.1) !important;
+}
+
+.logout-link svg {
+    color: inherit;
+}
+
+/* ============================================================
+    MODAL (Respeitando Variáveis de Tema)
+   ============================================================ */
 .modal-overlay {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(0, 0, 0, 0.7); 
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 3000;
-  backdrop-filter: blur(5px);
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.75); /* Fundo escurecido */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    backdrop-filter: blur(5px);
 }
 
 .modal-content {
-  background-color: var(--base-clr); 
-  color: var(--text-clr);
-  padding: 30px;
-  border-radius: 14px;
-  /* Usando sua cor de destaque (Azul) e linha de borda */
-  border: 1px solid var(--line-clr); 
-  text-align: center;
-  max-width: 350px;
-  width: 90%;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+    background-color: var(--base-clr); /* Usa o fundo do tema atual */
+    color: var(--text-clr);           /* Usa a cor de texto do tema atual */
+    padding: 40px 30px;
+    border-radius: 16px;
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--line-clr); /* Borda dinâmica do tema */
+    animation: fadeIn 0.3s ease-out;
 }
 
-.modal-content h3 {
-  margin-top: 0;
-  color: var(--text-clr);
-  font-weight: 600;
-}
-
-.modal-content p {
-  color: var(--secondary-text-clr);
-  margin: 15px 0 25px;
-  font-size: 0.9rem;
-}
-
-/* Container para alinhar os botões lado a lado */
 .modal-buttons {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
+    display: flex;
+    gap: 12px;
+    margin-top: 25px;
+    justify-content: center;
 }
 
-/* Botão de Login (Principal - Azul BuSafe) */
-.modal-content .btn-primary {
-  background: var(--accent-clr);
-  color: white;
-  text-decoration: none;
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  transition: opacity 0.2s;
+.btn-modal {
+    padding: 12px 24px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s;
+    font-family: inherit;
 }
 
-/* Botão de Fechar (Secundário - Segue o tema) */
-.modal-content .btn-secondary {
-  background: var(--hover-clr);
-  color: var(--text-clr);
-  border: 1px solid var(--line-clr);
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-size: 0.85rem;
-  font-weight: 500;
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 0.2s;
+.btn-modal:active { transform: scale(0.95); }
+
+/* Botão Cancelar: Segue o estilo de hover/line do tema */
+.btn-modal-secondary { 
+    background-color: var(--hover-clr); 
+    color: var(--text-clr);
+    border: 1px solid var(--line-clr);
 }
 
-.modal-content .btn-primary:hover,
-.modal-content .btn-secondary:hover {
-  opacity: 0.85;
+.btn-modal-secondary:hover {
+    border-color: var(--secondary-text-clr);
 }
 
-/* Ajuste no modal para garantir que ele mude com o tema */
-.modal-content {
-  background-color: var(--base-clr) !important; /* Força o uso da variável do tema */
-  color: var(--text-clr) !important;
-  border: 1px solid var(--line-clr);
-  /* ... resto do estilo que já configuramos ... */
+/* Botão Sair: Mantém o vermelho de alerta padrão */
+.btn-modal-primary { 
+    background-color: #d32f2f; 
+    color: white; 
+}
+
+.btn-modal-primary:hover {
+    background-color:#ef5350 ;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
 }
