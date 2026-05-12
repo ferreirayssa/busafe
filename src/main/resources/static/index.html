@@ -41,12 +41,18 @@
             padding: 0;
         }
 
+        html { scroll-behavior: smooth; }
         body {
             font-family: 'Poppins', sans-serif;
             background-color: var(--white);
             color: var(--dark);
-            scroll-behavior: smooth;
             line-height: 1.6;
+            -webkit-text-size-adjust: 100%;
+            overflow-x: hidden;
+        }
+        section { scroll-margin-top: 90px; }
+        @media (prefers-reduced-motion: reduce) {
+            html { scroll-behavior: auto; }
         }
 
         /* Header */
@@ -413,6 +419,179 @@
         .legend-label { display: flex; align-items: center; gap: 15px; font-weight: 600; color: var(--dark); }
         .legend-color { width: 15px; height: 15px; border-radius: 50%; }
         .legend-value { font-weight: 700; color: var(--primary); font-size: 1.1rem; }
+
+        /* ========== Aprimoramentos visuais ========== */
+        .hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(circle at 20% 20%, rgba(24,103,157,0.45), transparent 55%),
+                radial-gradient(circle at 85% 75%, rgba(231,191,13,0.28), transparent 50%);
+            pointer-events: none;
+        }
+        .hero-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.25);
+            backdrop-filter: blur(8px);
+            color: #fff; padding: 8px 16px; border-radius: 30px;
+            font-size: 0.85rem; font-weight: 500; margin-bottom: 22px;
+        }
+        .hero-badge i { color: var(--accent); }
+        .hero-stats { display: flex; gap: 40px; margin-top: 50px; flex-wrap: wrap; }
+        .hero-stats .stat-num { font-size: 1.8rem; font-weight: 700; color: var(--accent); line-height: 1; }
+        .hero-stats .stat-label { font-size: 0.85rem; opacity: 0.85; margin-top: 4px; }
+        .section-header p { color: var(--gray); font-size: 1.05rem; margin-top: 18px; }
+
+        /* Testimonials */
+        .testimonials { padding: 100px 10%; background: linear-gradient(180deg, var(--off-white) 0%, #ffffff 100%); }
+        .rating-summary { display: flex; justify-content: center; align-items: center; gap: 30px; margin-bottom: 50px; flex-wrap: wrap; }
+        .rating-score { font-size: 3.5rem; font-weight: 700; color: var(--primary); line-height: 1; }
+        .rating-meta { text-align: left; }
+        .rating-meta .stars { color: var(--accent); font-size: 1.2rem; letter-spacing: 2px; margin-bottom: 6px; }
+        .rating-meta .count { color: var(--dark); font-size: 0.9rem; opacity: 0.75; }
+        .testimonial-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 30px; max-width: 1200px; margin: 0 auto; }
+        .testimonial-card {
+            background: #fff; border-radius: 20px; padding: 35px 30px 30px;
+            box-shadow: 0 8px 25px rgba(24,103,157,0.06);
+            border-top: 4px solid var(--accent);
+            position: relative; transition: var(--transition);
+        }
+        .testimonial-card:hover { transform: translateY(-6px); box-shadow: 0 18px 40px rgba(24,103,157,0.12); }
+        .testimonial-card .quote-mark { position: absolute; top: 18px; right: 22px; font-size: 2.5rem; color: var(--primary); opacity: 0.12; }
+        .testimonial-card .stars { color: var(--accent); margin-bottom: 14px; letter-spacing: 2px; }
+        .testimonial-card p.text { color: var(--dark); font-size: 0.97rem; line-height: 1.7; margin-bottom: 25px; }
+        .testimonial-author { display: flex; align-items: center; gap: 14px; border-top: 1px solid var(--off-white); padding-top: 20px; }
+        .author-avatar {
+            width: 48px; height: 48px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), #2989c4);
+            color: #fff; display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 1rem; flex-shrink: 0;
+        }
+        .author-info .name { font-weight: 600; color: var(--dark); font-size: 0.95rem; }
+        .author-info .role { font-size: 0.8rem; color: var(--gray); }
+        /* ========== Responsividade ========== */
+        @media (max-width: 992px) {
+            header,
+            .hero,
+            .mvv,
+            .data-sesp,
+            .map-section,
+            .features,
+            .pricing,
+            .testimonials,
+            .partners,
+            footer { padding-left: 5%; padding-right: 5%; }
+
+            .data-grid { grid-template-columns: 1fr; padding: 35px; gap: 30px; }
+            .section-header h2 { font-size: 2rem; }
+            .section-header { margin-bottom: 40px; }
+            section { scroll-margin-top: 70px; }
+        }
+
+        @media (max-width: 768px) {
+            header {
+                padding: 12px 5%;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            .logo img { height: 40px; }
+
+            nav {
+                display: flex;
+                width: 100%;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 6px 14px;
+            }
+            nav a {
+                margin-left: 0;
+                font-size: 0.85rem;
+            }
+            .btn-login {
+                margin-left: 0;
+                padding: 8px 18px;
+                font-size: 0.85rem;
+            }
+
+            .hero {
+                padding: 70px 5%;
+                min-height: 60vh;
+                text-align: center;
+                justify-content: center;
+            }
+            .hero-content { max-width: 100%; }
+            .hero h1 { font-size: 2.2rem; }
+            .hero p { font-size: 1rem; margin-bottom: 25px; }
+            .btn-cta { padding: 14px 32px; font-size: 1rem; }
+            .hero-badge { font-size: 0.78rem; padding: 6px 14px; }
+            .hero-stats {
+                gap: 25px;
+                margin-top: 35px;
+                justify-content: center;
+            }
+            .hero-stats .stat-num { font-size: 1.5rem; }
+
+            .section-header h2 { font-size: 1.7rem; }
+            .section-header p { font-size: 0.95rem; }
+
+            .mvv,
+            .data-sesp,
+            .map-section,
+            .features,
+            .pricing,
+            .testimonials { padding: 60px 5%; }
+
+            .mvv-container,
+            .feature-grid,
+            .pricing-grid,
+            .testimonial-grid { grid-template-columns: 1fr; gap: 20px; }
+
+            .data-grid { padding: 25px 20px; gap: 25px; }
+            .chart-container { max-width: 280px; }
+            .legend-item { padding: 12px 15px; }
+            .legend-item:hover { transform: none; }
+            .legend-value { font-size: 1rem; }
+
+            #map { height: 380px; }
+            .map-info {
+                grid-template-columns: repeat(2, 1fr);
+                padding: 18px;
+                gap: 12px;
+            }
+            .map-legend { font-size: 0.8rem; gap: 8px; }
+            .legend-icon { width: 30px; height: 30px; font-size: 0.8rem; }
+
+            .feature-card { padding: 30px 25px; }
+            .price-card { padding: 35px 25px; }
+            .price-card .price { font-size: 2.2rem; }
+
+            .rating-summary { gap: 18px; margin-bottom: 35px; }
+            .rating-score { font-size: 2.8rem; }
+            .testimonial-card { padding: 28px 22px 24px; }
+
+            .partners {
+                padding: 40px 5%;
+                gap: 30px;
+            }
+            .partners img { height: 40px; }
+
+            footer { padding: 40px 5% 25px; }
+            .footer-content {
+                grid-template-columns: 1fr;
+                gap: 25px;
+                text-align: center;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .hero h1 { font-size: 1.85rem; }
+            .section-header h2 { font-size: 1.5rem; }
+            .map-info { grid-template-columns: 1fr; }
+            nav a { font-size: 0.8rem; }
+            .hero-stats { gap: 18px; }
+        }
     </style>
 </head>
 <body>
@@ -426,6 +605,7 @@
             <a href="#dados">Dados</a>
             <a href="#mapa">Mapa</a>
             <a href="#funcionalidades">Funcionalidades</a>
+            <a href="#depoimentos">Avaliações</a>
             <a href="#planos">Planos</a>
             <a href="html/login.html" class="btn-login">Entrar</a>
         </nav>
@@ -433,9 +613,15 @@
 
     <section class="hero">
         <div class="hero-content">
+            <span class="hero-badge"><i class="fas fa-shield-halved"></i> Plataforma colaborativa de segurança urbana</span>
             <h1>Sua segurança não tira férias.</h1>
             <p>Monitore suas rotas do Transcol, receba alertas inteligentes e viaje com a tranquilidade que você merece.</p>
             <a href="html/cadastro.html" class="btn-cta">Começar Agora</a>
+            <div class="hero-stats">
+                <div><div class="stat-num">12k+</div><div class="stat-label">Usuários ativos</div></div>
+                <div><div class="stat-num">4,8★</div><div class="stat-label">Avaliação média</div></div>
+                <div><div class="stat-num">89,8%</div><div class="stat-label">Recomendam</div></div>
+            </div>
         </div>
     </section>
 
@@ -572,7 +758,7 @@
             </div>
             <div class="price-card featured">
                 <h3>Individual</h3>
-                <div class="price">R$ 14,90</div>
+                <div class="price">R$ 19,90</div>
                 <ul>
                     <li><i class="fas fa-check"></i> Alertas em tempo real</li>
                     <li><i class="fas fa-check"></i> Histórico de incidentes</li>
@@ -596,6 +782,47 @@
             </div>
         </div>
         <p style="margin-top: 40px; font-weight: 500; color: var(--primary);">89,8% dos nossos usuários recomendam o BuSafe.</p>
+    </section>
+
+
+    <section class="testimonials" id="depoimentos">
+        <div class="section-header">
+            <h2>O que dizem nossos usuários</h2>
+            <p>Histórias reais de quem viaja mais seguro com o BuSafe</p>
+        </div>
+        <div class="rating-summary">
+            <div class="rating-score">4,8</div>
+            <div class="rating-meta">
+                <div class="stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i></div>
+                <div class="count">Baseado em mais de 2.300 avaliações</div>
+            </div>
+        </div>
+        <div class="testimonial-grid">
+            <div class="testimonial-card">
+                <i class="fas fa-quote-right quote-mark"></i>
+                <div class="stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+                <p class="text">Uso o BuSafe todos os dias para ir trabalhar em Vitória. Os alertas da comunidade me ajudaram a evitar duas situações de risco no terminal. Recomendo demais!</p>
+                <div class="testimonial-author"><div class="author-avatar">MA</div><div class="author-info"><div class="name">Mariana Alves</div><div class="role">Estudante · Vila Velha</div></div></div>
+            </div>
+            <div class="testimonial-card">
+                <i class="fas fa-quote-right quote-mark"></i>
+                <div class="stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+                <p class="text">O mapa em tempo real é simplesmente incrível. Consigo planejar minha rota com antecedência e me sinto muito mais tranquilo voltando para casa à noite.</p>
+                <div class="testimonial-author"><div class="author-avatar">RC</div><div class="author-info"><div class="name">Rafael Carvalho</div><div class="role">Analista de TI · Serra</div></div></div>
+            </div>
+            <div class="testimonial-card">
+                <i class="fas fa-quote-right quote-mark"></i>
+                <div class="stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i></div>
+                <p class="text">Como mãe, fico mais segura sabendo que minha filha pode reportar qualquer ocorrência rapidinho. A interface é intuitiva e a comunidade é muito ativa.</p>
+                <div class="testimonial-author"><div class="author-avatar">JS</div><div class="author-info"><div class="name">Juliana Souza</div><div class="role">Professora · Cariacica</div></div></div>
+            </div>
+            <div class="testimonial-card">
+                <i class="fas fa-quote-right quote-mark"></i>
+                <div class="stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+                <p class="text">Iniciativa que faz a diferença na cidade. Os relatórios e o histórico ajudaram nossa empresa a orientar melhor os colaboradores que dependem do Transcol.</p>
+                <div class="testimonial-author"><div class="author-avatar">PL</div><div class="author-info"><div class="name">Paulo Lima</div><div class="role">Gestor de RH · Vitória</div></div></div>
+            </div>
+        </div>
     </section>
 
     <section class="partners">
@@ -628,6 +855,24 @@
     </footer>
 
     <script>
+
+        // Smooth scroll fluido com offset do header sticky
+        (function () {
+            const header = document.querySelector('header');
+            document.querySelectorAll('a[href^="#"]').forEach(link => {
+                link.addEventListener('click', function (e) {
+                    const id = this.getAttribute('href');
+                    if (!id || id === '#') return;
+                    const target = document.querySelector(id);
+                    if (!target) return;
+                    e.preventDefault();
+                    const offset = (header ? header.offsetHeight : 0) + 10;
+                    const top = target.getBoundingClientRect().top + window.pageYOffset - offset;
+                    window.scrollTo({ top, behavior: 'smooth' });
+                    history.replaceState(null, '', id);
+                });
+            });
+        })();
 
         // Chart.js - Pie Chart
         const ctx = document.getElementById('securityChart').getContext('2d');
