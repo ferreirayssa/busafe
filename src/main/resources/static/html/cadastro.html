@@ -27,7 +27,8 @@
       background: url('../prototipo/osm.png') no-repeat center center fixed;
       background-size: cover;
       font-family: Poppins, 'Segoe UI', sans-serif;
-      overflow: hidden;
+      /* Removido overflow: hidden para permitir rolagem na página inteira se necessário */
+      overflow-y: auto;
     }
 
     #map {
@@ -53,12 +54,26 @@
       position: relative; 
       z-index: 2;
       width: 100%;
-      max-width: 750px; /* Reduzi um pouco a largura máxima */
-      padding: 1rem;
+      max-width: 750px;
+      padding: 2rem 1rem; /* Aumentado o padding vertical para não encostar nas bordas */
       box-sizing: border-box;
       display: flex;
       flex-direction: column;
       align-items: center;
+      /* Adicionado para garantir que o conteúdo longo possa ser rolado */
+      max-height: 100vh;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--accent-clr) transparent;
+    }
+
+    /* Estilização da barra de rolagem para navegadores Webkit (Chrome, Safari) */
+    .cadastro-wrapper::-webkit-scrollbar {
+      width: 6px;
+    }
+    .cadastro-wrapper::-webkit-scrollbar-thumb {
+      background-color: var(--accent-clr);
+      border-radius: 10px;
     }
 
     .cadastro-container {
@@ -94,10 +109,9 @@
     }
 
     .form-group {
-      margin-bottom: 0.7rem; /* Reduzido para economizar espaço */
+      margin-bottom: 0.7rem;
     }
 
-  /* Ocupar as duas colunas nos elementos de largura total */
     .cadastro-btn, .success-message, .login-link {
       grid-column: span 2;
     }
@@ -111,7 +125,15 @@
         grid-column: span 1;
       }
       .cadastro-container {
-        padding: 1rem;
+        padding: 1.5rem 1rem;
+      }
+      .cadastro-wrapper {
+          padding: 1rem;
+          max-height: none; /* Em mobile, preferimos rolar o body */
+          overflow-y: visible;
+      }
+      body {
+          align-items: flex-start; /* Garante que o topo não suma em telas muito pequenas */
       }
     }
 
@@ -244,7 +266,7 @@
   <div class="overlay"></div>
   
   <div class="cadastro-wrapper">
-    <a href="../index.html" class="back-btn">
+    <a href="/" class="back-btn">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960">
         <path d="m313-440 196 196q12 12 11.5 28T508-188q-12 11-28 11.5T452-188L188-452q-6-6-8.5-13t-2.5-15q0-8 2.5-15t8.5-13l264-264q11-11 27.5-11t28.5 11q12 12 12 28.5T508-715L313-520h447q17 0 28.5 11.5T800-480q0 17-11.5 28.5T760-440H313Z"/>
       </svg>
@@ -351,6 +373,7 @@
       resto = (soma * 10) % 11;
       if (resto === 10 || resto === 11) resto = 0;
       if (resto !== parseInt(cpf.substring(9, 10))) return false;
+      
       soma = 0;
       for (let i = 1; i <= 10; i++) soma += parseInt(cpf.substring(i-1, i)) * (12 - i);
       resto = (soma * 10) % 11;
@@ -370,7 +393,7 @@
       if (validarCPF(value)) document.getElementById('cpfError').classList.remove('show');
     });
 
-    // --- SUBMISSÃO DO FORMULÁRIO CORRIGIDA ---
+    // --- SUBMISSÃO DO FORMULÁRIO ---
     document.getElementById('cadastroForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       
@@ -383,7 +406,6 @@
       
       let hasError = false;
 
-      // Valida Nome (Mínimo 3 letras)
       if (nomeValue.trim().length < 3) {
         document.getElementById('nomeError').classList.add('show');
         hasError = true;
@@ -406,7 +428,6 @@
 
       if (hasError) return;
 
-      // OBJETO MAPEADO PARA O JAVA (USER.JAVA)
       const dadosParaEnvio = {
         nome: nomeValue,
         email: email,

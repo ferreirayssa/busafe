@@ -25,4 +25,8 @@ public class UserService {
 
         return userRepository.save(user);
     }
+
+    public long allUsers() {
+        return userRepository.count();
+    }
 }

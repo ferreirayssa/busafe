@@ -5,6 +5,8 @@ import com.transcol.busafe.model.User;
 import com.transcol.busafe.config.TokenService;
 import com.transcol.busafe.repository.RotaRepository;
 import com.transcol.busafe.repository.UserRepository;
+import com.transcol.busafe.service.UserService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,6 +33,9 @@ public class UserController {
     
     @Autowired
     private RotaRepository rotaRepository;
+
+    @Autowired
+    private UserService userService;
 
     // --- CADASTRO ---
     @PostMapping("/register")

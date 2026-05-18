@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -32,7 +32,7 @@
             --color-quebrado: #64748b;   /* Cinza Azulado */
             --color-outro: #45505d;      /* Cinza Escuro */
             
-            --transition: all 0.3s ease;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         * {
@@ -71,12 +71,12 @@
 
         .logo img { height: 50px; }
 
-        nav {
+        nav.desktop-nav {
             display: flex;
             align-items: center;
         }
 
-        nav a {
+        nav.desktop-nav a {
             text-decoration: none;
             color: var(--dark);
             margin-left: 25px;
@@ -85,7 +85,7 @@
             font-size: 0.95rem;
         }
 
-        nav a:hover { color: var(--primary); }
+         nav.desktop-nav a:hover { color: var(--primary); }
 
         .btn-login {
             background: var(--primary);
@@ -94,6 +94,102 @@
             border-radius: 5px;
             margin-left: 30px;
             box-shadow: 0 4px 10px rgba(24, 103, 157, 0.2);
+        }
+
+        
+                /* Hamburger Button */
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            justify-content: space-around;
+            width: 30px;
+            height: 24px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            z-index: 1002;
+        }
+
+        .hamburger span {
+            width: 30px;
+            height: 3px;
+            background: var(--primary);
+            border-radius: 10px;
+            transition: var(--transition);
+            position: relative;
+            transform-origin: 1px;
+        }
+
+        /* Sidebar Overlay */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1001;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition);
+        }
+
+        .sidebar-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            right: -300px;
+            width: 300px;
+            height: 100%;
+            background: var(--white);
+            z-index: 1002;
+            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.1);
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            padding: 80px 30px 40px;
+        }
+
+        .sidebar.active {
+            right: 0;
+        }
+
+        .sidebar a {
+            text-decoration: none;
+            color: var(--dark);
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 25px;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .sidebar a i {
+            width: 20px;
+            color: var(--primary);
+        }
+
+        .sidebar a:hover {
+            color: var(--primary);
+            transform: translateX(10px);
+        }
+
+        .sidebar .btn-login-mobile {
+            margin-top: auto;
+            background: var(--primary);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            justify-content: center;
         }
 
         .btn-login:hover {
@@ -389,22 +485,45 @@
             nav { display: none; }
         }
 
-                /* Dados SESP - GRID LAYOUT */
-        .data-sesp { padding: 80px 10%; background: #fdfdfd; }
+        /* ==========================================================================
+        Dados SESP - GRID LAYOUT (Ajustado para Gráfico de Barras Amplo)
+        ========================================================================== */
+        .data-sesp { 
+            padding: 80px 10%; 
+            background: #fdfdfd; 
+        }
+
         .data-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 50px;
+            grid-template-columns: 1fr; 
+            justify-items: center;      
+            gap: 40px;
             align-items: center;
-            max-width: 1100px;
+            max-width: 1000px; /* Aumentado para dar mais amplitude ao gráfico */
             margin: 0 auto;
             background: white;
             padding: 50px;
             border-radius: 25px;
             box-shadow: 0 15px 40px rgba(0,0,0,0.05);
         }
-        .chart-container { position: relative; width: 100%; max-width: 400px; margin: 0 auto; }
-        .legend-container { display: flex; flex-direction: column; gap: 20px; }
+
+        /* O segredo da correção está aqui: */
+        .chart-container { 
+            position: relative; 
+            width: 100%; 
+            height: 450px;     /* Força uma altura confortável para leitura das barras */
+            max-width: 1000px; /* Expandido para que as barras e textos não fiquem espremidos */
+            margin: 0 auto; 
+        }
+
+        .legend-container { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Transforma em grid para ocupar bem o espaço inferior */
+            gap: 20px; 
+            width: 100%;
+            max-width: 1000px;
+        }
+
         .legend-item {
             display: flex;
             justify-content: space-between;
@@ -415,10 +534,48 @@
             transition: var(--transition);
             border-left: 5px solid transparent;
         }
-        .legend-item:hover { transform: translateX(10px); background: white; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
-        .legend-label { display: flex; align-items: center; gap: 15px; font-weight: 600; color: var(--dark); }
-        .legend-color { width: 15px; height: 15px; border-radius: 50%; }
-        .legend-value { font-weight: 700; color: var(--primary); font-size: 1.1rem; }
+
+        .legend-item:hover { 
+            transform: translateY(-3px); 
+            background: white; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05); 
+        }
+
+        .legend-label { 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            font-weight: 600; 
+            color: var(--dark); 
+        }
+
+        .legend-color { 
+            width: 15px; 
+            height: 15px; 
+            border-radius: 50%; 
+        }
+
+        .legend-value { 
+            font-weight: 700; 
+            color: var(--primary); 
+            font-size: 1.1rem; 
+        }
+
+                /* Map Section */
+        .map-section { padding: 100px 10%; background: var(--white); }
+        #map { height: 550px; width: 100%; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); z-index: 1; }
+
+        .map-info { margin-top: 30px; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; background: var(--off-white); padding: 25px; border-radius: 15px; }
+        .map-legend { display: flex; align-items: center; gap: 12px; font-size: 0.85rem; font-weight: 600; }
+        .legend-icon { width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.9rem; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+
+        /* Footer */
+        footer { padding: 60px 10% 30px; background: var(--dark); color: white; }
+
+        .footer-content { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 40px; }
+        .footer-bottom { padding-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); text-align: center; margin-top: 40px; }
+
+        /* Responsividade */
 
         /* ========== Aprimoramentos visuais ========== */
         .hero::before {
@@ -471,20 +628,32 @@
         }
         .author-info .name { font-weight: 600; color: var(--dark); font-size: 0.95rem; }
         .author-info .role { font-size: 0.8rem; color: var(--gray); }
+        
         /* ========== Responsividade ========== */
         @media (max-width: 992px) {
-            header,
+            header { padding: 15px 5%; }
+            nav.desktop-nav { display: none; }
+            .hamburger { display: flex; }
+            .hero { padding: 80px 5%; text-align: center; justify-content: center; }
+            .hero h1 { font-size: 2.5rem; }
+            .mvv, .data-sesp, .map-section { padding: 60px 5%; }
+
+            .data-grid { padding: 25px 20px; gap: 25px; }
+            .chart-container { max-width: 280px; }
+            .legend-item { padding: 12px 15px; }
+            .legend-item:hover { transform: none; }
+            .legend-value { font-size: 1rem; }
+        }
+
+        @media (max-width: 992px) {
             .hero,
             .mvv,
-            .data-sesp,
             .map-section,
             .features,
             .pricing,
             .testimonials,
             .partners,
             footer { padding-left: 5%; padding-right: 5%; }
-
-            .data-grid { grid-template-columns: 1fr; padding: 35px; gap: 30px; }
             .section-header h2 { font-size: 2rem; }
             .section-header { margin-bottom: 40px; }
             section { scroll-margin-top: 70px; }
@@ -537,6 +706,7 @@
             .section-header p { font-size: 0.95rem; }
 
             .mvv,
+            .data-grid { padding: 25px 20px; gap: 25px; }
             .data-sesp,
             .map-section,
             .features,
@@ -583,15 +753,54 @@
                 gap: 25px;
                 text-align: center;
             }
+
+            .chart-container { 
+            max-width: 100%; 
+            height: 350px; /* Um pouco menor no celular para caber na tela */
+            }
+
+            .legend-container {
+                grid-template-columns: 1fr; /* Volta a ser lista em telas pequenas */
+            }
+        }
+
+         @media (max-width: 600px) {
+            .hero h1 { font-size: 2rem; }
+            .map-info { grid-template-columns: 1fr 1fr; }
+            .data-sesp,
+            .data-grid { padding: 25px 20px; gap: 25px; }
+            .chart-container { 
+            max-width: 100%; 
+            height: 350px; /* Um pouco menor no celular para caber na tela */
+            }
+
+            .legend-container {
+                grid-template-columns: 1fr; /* Volta a ser lista em telas pequenas */
+            }
         }
 
         @media (max-width: 420px) {
+            .data-sesp,
+            .data-grid { padding: 25px 20px; gap: 25px; }
             .hero h1 { font-size: 1.85rem; }
             .section-header h2 { font-size: 1.5rem; }
             .map-info { grid-template-columns: 1fr; }
             nav a { font-size: 0.8rem; }
             .hero-stats { gap: 18px; }
+             .chart-container { 
+            max-width: 100%; 
+            height: 350px; /* Um pouco menor no celular para caber na tela */
+            }
+
+            .legend-container {
+            grid-template-columns: 1fr; /* Volta a ser lista em telas pequenas */
+            }
         }
+
+        /* Hamburger Animation */
+        .hamburger.active span:nth-child(1) { transform: rotate(45deg); }
+        .hamburger.active span:nth-child(2) { opacity: 0; }
+        .hamburger.active span:nth-child(3) { transform: rotate(-45deg); }
     </style>
 </head>
 <body>
@@ -600,7 +809,7 @@
         <div class="logo">
             <img src="Logos/Logo_3.png" alt="BuSafe Logo">
         </div>
-        <nav>
+        <nav class="desktop-nav">
             <a href="#sobre">Sobre</a>
             <a href="#dados">Dados</a>
             <a href="#mapa">Mapa</a>
@@ -609,7 +818,27 @@
             <a href="#planos">Planos</a>
             <a href="html/login.html" class="btn-login">Entrar</a>
         </nav>
+
+                <!-- Hamburger Button -->
+        <button class="hamburger" id="hamburger-btn">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
     </header>
+
+        <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+        <!-- Sidebar Menu -->
+    <div class="sidebar" id="sidebar">
+        <a href="#sobre">Sobre</a>
+        <a href="#dados">Dados</a>
+        <a href="#mapa">Mapa</a>
+        <a href="#funcionalidades">Funcionalidades</a>
+        <a href="#depoimentos">Avaliações</a>
+        <a href="#planos">Planos</a>
+        <a href="html/login.html" class="btn-login-mobile"><i class="fas fa-user"></i> Entrar</a>
+    </div>
 
     <section class="hero">
         <div class="hero-content">
@@ -618,7 +847,10 @@
             <p>Monitore suas rotas do Transcol, receba alertas inteligentes e viaje com a tranquilidade que você merece.</p>
             <a href="html/cadastro.html" class="btn-cta">Começar Agora</a>
             <div class="hero-stats">
-                <div><div class="stat-num">12k+</div><div class="stat-label">Usuários ativos</div></div>
+                <div>
+                    <div class="stat-num" th:text="${allUsers}">0</div>
+                    <div class="stat-label">Usuários ativos</div>
+                </div>
                 <div><div class="stat-num">4,8★</div><div class="stat-label">Avaliação média</div></div>
                 <div><div class="stat-num">89,8%</div><div class="stat-label">Recomendam</div></div>
             </div>
@@ -651,34 +883,18 @@
 
     <section class="data-sesp" id="dados">
         <div class="section-header">
-            <h2>Dados de Segurança SESP 2025</h2>
-            <p>Distribuição de ocorrências (Furtos/Roubos) na Grande Vitória</p>
+            <h2>Evolução de Segurança SESP</h2>
+            <p>Evolução temporal de ocorrências (Furtos/Roubos) na Grande Vitória</p>
         </div>
         <div class="data-grid">
             <div class="chart-container">
                 <canvas id="securityChart"></canvas>
             </div>
-            <div class="legend-container">
-                <div class="legend-item" style="border-left-color: #ef4444;">
-                    <div class="legend-label"><div class="legend-color" style="background: #ef4444;"></div> Serra</div>
-                    <div class="legend-value">1.240</div>
-                </div>
-                <div class="legend-item" style="border-left-color: #e7bf0d;">
-                    <div class="legend-label"><div class="legend-color" style="background: #e7bf0d;"></div> Vila Velha</div>
-                    <div class="legend-value">980</div>
-                </div>
-                <div class="legend-item" style="border-left-color: #18679d;">
-                    <div class="legend-label"><div class="legend-color" style="background: #18679d;"></div> Vitória</div>
-                    <div class="legend-value">750</div>
-                </div>
-                <div class="legend-item" style="border-left-color: #45505d;">
-                    <div class="legend-label"><div class="legend-color" style="background: #45505d;"></div> Cariacica</div>
-                    <div class="legend-value">620</div>
-                </div>
-            </div>
         </div>
             <p style="text-align: center; margin-top: 30px; font-size: 0.8rem; color: var(--gray);">
-            *Dados baseados no Observatório da Segurança Pública do Espírito Santo.
+                <a href="https://observatorio.sesp.es.gov.br/crimes-contra-o-patrimonio-no-estado-do-espirito-santo" style="color: var(--gray);">
+                   *Dados baseados no Observatório da Segurança Pública do Espírito Santo 🔗
+                </a>
             </p>
     </section>
 
@@ -791,43 +1007,38 @@
             <p>Histórias reais de quem viaja mais seguro com o BuSafe</p>
         </div>
         <div class="rating-summary">
-            <div class="rating-score">4,8</div>
+            <div class="rating-score">4,1</div>
             <div class="rating-meta">
-                <div class="stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i></div>
-                <div class="count">Baseado em mais de 2.300 avaliações</div>
+                <div class="stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fa-regular fa-star"></i></div>
+                <div class="count">Baseado em mais de 50 avaliações</div>
             </div>
         </div>
         <div class="testimonial-grid">
             <div class="testimonial-card">
                 <i class="fas fa-quote-right quote-mark"></i>
                 <div class="stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
-                <p class="text">Uso o BuSafe todos os dias para ir trabalhar em Vitória. Os alertas da comunidade me ajudaram a evitar duas situações de risco no terminal. Recomendo demais!</p>
-                <div class="testimonial-author"><div class="author-avatar">MA</div><div class="author-info"><div class="name">Mariana Alves</div><div class="role">Estudante · Vila Velha</div></div></div>
+                <p class="text">É uma proposta interessante principalmente para as pessoas que sofrem ou já sofreram algum tipo de violência no transporte, as vezes só pela segurança de ver uma rota mais segura já ajuda.</p>
+                <div class="testimonial-author"><div class="author-avatar">AS</div><div class="author-info"><div class="name">Arthur de Souza</div><div class="role">Estudante · Vila Velha</div></div></div>
             </div>
             <div class="testimonial-card">
                 <i class="fas fa-quote-right quote-mark"></i>
                 <div class="stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
-                <p class="text">O mapa em tempo real é simplesmente incrível. Consigo planejar minha rota com antecedência e me sinto muito mais tranquilo voltando para casa à noite.</p>
-                <div class="testimonial-author"><div class="author-avatar">RC</div><div class="author-info"><div class="name">Rafael Carvalho</div><div class="role">Analista de TI · Serra</div></div></div>
+                <p class="text">A ideia de oferecer mapa interativo, identificação de áreas de risco e relatos de outros usuários em tempo real torna o aplicativo muito relevante, principalmente para pessoas que dependem do transporte público e muitas vezes se sentem inseguras durante o trajeto.</p>
+                <div class="testimonial-author"><div class="author-avatar">JV</div><div class="author-info"><div class="name">João Victor</div><div class="role">Estudante de TI · Serra</div></div></div>
             </div>
             <div class="testimonial-card">
                 <i class="fas fa-quote-right quote-mark"></i>
                 <div class="stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i></div>
-                <p class="text">Como mãe, fico mais segura sabendo que minha filha pode reportar qualquer ocorrência rapidinho. A interface é intuitiva e a comunidade é muito ativa.</p>
-                <div class="testimonial-author"><div class="author-avatar">JS</div><div class="author-info"><div class="name">Juliana Souza</div><div class="role">Professora · Cariacica</div></div></div>
-            </div>
-            <div class="testimonial-card">
-                <i class="fas fa-quote-right quote-mark"></i>
-                <div class="stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
-                <p class="text">Iniciativa que faz a diferença na cidade. Os relatórios e o histórico ajudaram nossa empresa a orientar melhor os colaboradores que dependem do Transcol.</p>
-                <div class="testimonial-author"><div class="author-avatar">PL</div><div class="author-info"><div class="name">Paulo Lima</div><div class="role">Gestor de RH · Vitória</div></div></div>
+                <p class="text">Da proposta de garantir maior segurança pra mulheres poderem usar meios de transporte público.</p>
+                <div class="testimonial-author"><div class="author-avatar">YF</div><div class="author-info"><div class="name">Yahn de Freitas</div><div class="role">Trabalhador CLT · Cariacica</div></div></div>
             </div>
         </div>
     </section>
 
     <section class="partners">
         <img src="Logos/unisales.png" alt="UniSales" title="Apoio Acadêmico">
-        <img src="Logos/gov_es.png" alt="Governo ES" title="Dados SESP">
+     <!--- <img src="Logos/bus2.png" alt="Bus2">
+     <img src="Logos/gov_es.png" alt="Governo ES" title="Dados SESP"> -->
         <img src="Logos/Logo_3.png" alt="BuSafe">
     </section>
 
@@ -856,6 +1067,28 @@
 
     <script>
 
+    // Menu Toggle Logic
+        const hamburgerBtn = document.getElementById('hamburger-btn');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        const sidebarLinks = document.querySelectorAll('.sidebar a');
+
+        function toggleMenu() {
+            hamburgerBtn.classList.toggle('active');
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+            document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : 'auto';
+        }
+
+        hamburgerBtn.addEventListener('click', toggleMenu);
+        overlay.addEventListener('click', toggleMenu);
+
+        sidebarLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                if (sidebar.classList.contains('active')) toggleMenu();
+            });
+        });
+
         // Smooth scroll fluido com offset do header sticky
         (function () {
             const header = document.querySelector('header');
@@ -874,26 +1107,59 @@
             });
         })();
 
-        // Chart.js - Pie Chart
-        const ctx = document.getElementById('securityChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'pie',
-            data: {
-                labels: ['Serra', 'Vila Velha', 'Vitória', 'Cariacica'],
-                datasets: [{
-                    data: [1240, 980, 750, 620],
-                    backgroundColor: ['#ef4444', '#e7bf0d', '#18679d', '#45505d'],
-                    hoverOffset: 25,
+    // Chart.js - Gráfico de Barras Comparativo por Ano (Atualizado com os dados reais)
+    const ctx = document.getElementById('securityChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Serra', 'Vila Velha', 'Vitória', 'Cariacica'],
+            datasets: [
+                {
+                    label: '2023',
+                    data: [4514, 2579, 3667, 2929],
+                    backgroundColor: '#ef4444',
                     borderWidth: 0
-                }]
+                },
+                {
+                    label: '2024',
+                    data: [7158, 4496, 6581, 5102],
+                    backgroundColor: '#e7bf0d',
+                    borderWidth: 0
+                },
+                {
+                    label: '2026',
+                    data: [855, 796, 1181, 734],
+                    backgroundColor: '#18679d',
+                    borderWidth: 0
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true, // Ativado para identificar qual barra é de qual ano
+                    position: 'top',
+                    labels: {
+                        color: '#45505d'
+                    }
+                }
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                animation: { animateRotate: true, animateScale: true }
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Quantidade de Ocorrências'
+                    }
+                }
+            },
+            animation: {
+                animateScale: true
             }
-        });
+        }
+    });
 
         // Leaflet Map Configuration
         const map = L.map('map').setView([-20.3155, -40.3128], 13);

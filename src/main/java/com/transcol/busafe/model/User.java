@@ -33,5 +33,6 @@ public class User {
     @Field("Favoritos")
     private List<Rota> rotasFavoritas = new ArrayList<>();
 
-    private List<String> relatosIds = new ArrayList<>();
+    @Field("Relatos")
+    private List<String> relatos = new ArrayList<>();
 }
