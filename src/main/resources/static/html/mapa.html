@@ -393,6 +393,31 @@
     return d.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
   }
 
+  function hexToRgbParts(hex) {
+    const normalized = String(hex || '#45505d').replace('#', '');
+    const value = parseInt(normalized.length === 3
+      ? normalized.split('').map(ch => ch + ch).join('')
+      : normalized, 16);
+    if (Number.isNaN(value)) return '69, 80, 93';
+    return `${(value >> 16) & 255}, ${(value >> 8) & 255}, ${value & 255}`;
+  }
+
+  function popupThemeVars(type) {
+    const def = INCIDENT_ICON_DEFS[type] || INCIDENT_ICON_DEFS.outro;
+    return `--popup-accent:${def.color};--popup-accent-rgb:${hexToRgbParts(def.color)};`;
+  }
+
+  function popupIconMarkup(type) {
+    const def = INCIDENT_ICON_DEFS[type] || INCIDENT_ICON_DEFS.outro;
+    return `
+      <span class="popup-type-icon" aria-hidden="true">
+        <svg viewBox="${def.viewBox}">
+          <path d="${def.path}"></path>
+        </svg>
+      </span>
+    `;
+  }
+
   function linhaDoRelato(relato) { return relato.linhaTranscol ?? relato.linhaMunicipal ?? null; }
   function linhaDoIncidente(inc) { return inc.linha ?? null; }
   function isLinhaSelecionada(linha) {
@@ -562,25 +587,49 @@
     if (!feature) { popupEl.style.display = 'none'; popupEl.classList.remove('popup-visible'); return; }
     const kind = feature.get('featureType');
     if (kind === 'onibus') {
+      const tipo = feature.get('tipo');
       popupEl.innerHTML = `
-        <div class="popup-card">
-        <span class="popup-title">Ônibus monitorado</span>
-        <div><strong>Linha:</strong> ${feature.get('linha') ?? '—'}</div>
-        <div><strong>Tipo da ocorrência:</strong> ${(INCIDENT_ICON_DEFS[feature.get('tipo')]?.label || feature.get('tipo') || '—')}</div>
-        <div><strong>Tipo de linha:</strong> ${feature.get('tipoLinha') || '—'}</div>
-        <div><strong>Criado em:</strong> ${formatarData(feature.get('criadoEm'))}</div>
-        <div class="popup-desc"><strong>Último rastreio:</strong> ${formatarData(feature.get('ultimaPosicaoTs'))}</div>
+        <div class="popup-card" style="${popupThemeVars('bus_monitorado')}">
+          <div class="popup-header">
+            ${popupIconMarkup('bus_monitorado')}
+            <div class="popup-heading">
+              <span class="popup-eyebrow">Monitoramento ativo</span>
+              <span class="popup-title">Ônibus monitorado</span>
+            </div>
+          </div>
+          <div class="popup-details">
+            <div class="popup-row"><span>Linha</span><strong>${feature.get('linha') ?? '—'}</strong></div>
+            <div class="popup-row"><span>Ocorrência</span><strong>${(INCIDENT_ICON_DEFS[tipo]?.label || tipo || '—')}</strong></div>
+            <div class="popup-row"><span>Tipo</span><strong>${feature.get('tipoLinha') || '—'}</strong></div>
+            <div class="popup-row"><span>Criado em</span><strong>${formatarData(feature.get('criadoEm'))}</strong></div>
+          </div>
+          <div class="popup-desc">
+            <span>Último rastreio</span>
+            <strong>${formatarData(feature.get('ultimaPosicaoTs'))}</strong>
+          </div>
         </div>
       `;
     } else {
+      const tipo = feature.get('tipo');
       popupEl.innerHTML = `
-        <div class="popup-card">
-        <span class="popup-title">${INCIDENT_ICON_DEFS[feature.get('tipo')]?.label || 'Denúncia'}</span>
-        <div><strong>Horário:</strong> ${formatarData(feature.get('dataRelato'))}</div>
-        <div><strong>Bairro:</strong> ${feature.get('bairro') || '—'}</div>
-        <div><strong>Município:</strong> ${feature.get('municipio') || '—'}</div>
-        ${feature.get('linha') != null ? `<div><strong>Linha:</strong> ${feature.get('linha')}</div>` : ''}
-        <div class="popup-desc"><strong>Observações:</strong> ${feature.get('descricao') || 'Sem observações'}</div>
+        <div class="popup-card" style="${popupThemeVars(tipo)}">
+          <div class="popup-header">
+            ${popupIconMarkup(tipo)}
+            <div class="popup-heading">
+              <span class="popup-eyebrow">Relato registrado</span>
+              <span class="popup-title">${INCIDENT_ICON_DEFS[tipo]?.label || 'Denúncia'}</span>
+            </div>
+          </div>
+          <div class="popup-details">
+            <div class="popup-row"><span>Horário</span><strong>${formatarData(feature.get('dataRelato'))}</strong></div>
+            <div class="popup-row"><span>Bairro</span><strong>${feature.get('bairro') || '—'}</strong></div>
+            <div class="popup-row"><span>Município</span><strong>${feature.get('municipio') || '—'}</strong></div>
+            ${feature.get('linha') != null ? `<div class="popup-row"><span>Linha</span><strong>${feature.get('linha')}</strong></div>` : ''}
+          </div>
+          <div class="popup-desc">
+            <span>Observações</span>
+            <strong>${feature.get('descricao') || 'Sem observações'}</strong>
+          </div>
         </div>
       `;
     }
