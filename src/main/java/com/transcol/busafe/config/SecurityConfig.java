@@ -1,16 +1,23 @@
 package com.transcol.busafe.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.Customizer; // Importação necessária
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import jakarta.servlet.DispatcherType;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    @Autowired
+    private SecurityFilter securityFilter;
 
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
@@ -18,19 +25,24 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-            .csrf(csrf -> csrf.disable()) // Desabilita proteção contra CSRF (padrão para APIs REST)
-            .cors(Customizer.withDefaults()) // Ativa as configurações de CORS do Controller (@CrossOrigin)
-            .authorizeHttpRequests(auth -> auth
-                // Libera o acesso sem autenticação para login e cadastro
-                .requestMatchers("/api/users/login", "/api/users/register").permitAll()
-                // Libera os demais endpoints por enquanto (para teste)
-                .requestMatchers("/api/users/**").permitAll()
-                // Qualquer outra rota do sistema
-                .anyRequest().permitAll() 
-            );
-        
-        return http.build();
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        return http
+            .csrf(csrf -> csrf.disable()) // Desabilita CSRF para APIs REST
+            .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // API sem estado
+            .authorizeHttpRequests(req -> {
+            req.requestMatchers(HttpMethod.GET, "/").permitAll(); // Libera a sua Home
+
+                req.requestMatchers("/html/**", "/css/**", "/js/**", "/images/**", "/Logos/**", "/prototipo/**", "/error/**").permitAll();
+
+                req.requestMatchers(HttpMethod.POST, "/api/users/login").permitAll();
+                req.requestMatchers(HttpMethod.POST, "/api/users/register").permitAll();
+                req.requestMatchers(HttpMethod.POST, "/api/users/verify").permitAll();
+                req.requestMatchers(HttpMethod.PUT, "/api/users/reset-password").permitAll();
+                
+                // Rotas PRIVADAS (Qualquer outra requisição precisará do token válido)
+                req.anyRequest().authenticated();
+            })
+            .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
+            .build();
     }
 }
