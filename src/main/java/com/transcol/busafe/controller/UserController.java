@@ -103,7 +103,7 @@ public class UserController {
                     .anyMatch(r -> codigoEnviado.equals(r.getLinhaTranscol()) || codigoEnviado.equals(r.getLinhaMunicipal()));
 
             if (!jaExiste) {
-                user.getRotasFavoritas().add(rotaParaSalvar); // Salva o objeto INTEIRO dentro do User
+                user.getRotasFavoritas().add(rotaParaSalvar); 
                 userRepository.save(user);
                 return ResponseEntity.ok("Linha " + codigoEnviado + " favoritada!");
             }
@@ -112,7 +112,6 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Linha não encontrada no sistema.");
     }
 
-    // --- BUSCAR APENAS FAVORITOS (Via Token) ---
     @GetMapping("/rotas-fav")
     public ResponseEntity<?> buscarFavoritos(@RequestHeader("Authorization") String token) {
         try {
@@ -127,7 +126,6 @@ public class UserController {
         }
     }
 
-    // --- REMOVER ROTA FAVORITA (Via Token) ---
     @DeleteMapping("/rotas-fav/{codigo}")
     public ResponseEntity<?> removerRota(@RequestHeader("Authorization") String token, @PathVariable String codigo) {
         try {
@@ -145,5 +143,42 @@ public class UserController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Sessão inválida.");
         }
+    }
+
+    @PostMapping("/verify")
+    public ResponseEntity<?> verificarUsuario(@RequestBody Map<String, String> body) {
+        String cpfEnviado = body.get("cpf");
+        String emailEnviado = body.get("email");
+
+        Optional<User> userOpt = userRepository.findByCpf(cpfEnviado);
+
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            if (user.getEmail() != null && user.getEmail().equalsIgnoreCase(emailEnviado)) {
+                return ResponseEntity.ok("Usuário validado com sucesso.");
+            }
+        }
+        
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("CPF ou E-mail incorretos.");
+    }
+
+    @PutMapping("/reset-password")
+    public ResponseEntity<?> redefinirSenha(@RequestBody Map<String, String> body) {
+        String cpfEnviado = body.get("cpf");
+        String novaSenha = body.get("newPassword");
+
+        Optional<User> userOpt = userRepository.findByCpf(cpfEnviado);
+
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            
+            user.setPassword(passwordEncoder.encode(novaSenha));
+            
+            userRepository.save(user);
+            
+            return ResponseEntity.ok("Senha alterada com sucesso.");
+        }
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuário não encontrado.");
     }
 }
