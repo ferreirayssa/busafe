@@ -142,7 +142,7 @@
       <div class="legend-title">Legenda</div>
       <div class="legend-item"><div class="legend-line" style="background:#812f9a;"></div> Rota</div>
       <div class="legend-item"><div class="legend-dot" style="background:#1976d2;"></div> Sua posição</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#0f766e;"></div> Ônibus monitorado</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#10659c; border-radius: 4px;"></div> Ponto de ônibus</div>
     </div>
 
     <div id="map-alert-banner" class="map-alert-banner hidden"></div>
@@ -178,7 +178,6 @@
   <script>
   const GEOJSON_URL = "/rotas/geojson";
   const RELATOS_URL = "/relatos";
-  const INCIDENTES_ATIVOS_URL = "/api/incidentes-ativos";
 
   const statusEl = document.getElementById('status');
   const gpsCenterBtn = document.getElementById('gps-center-btn');
@@ -239,13 +238,43 @@
   const userLocationSource = new ol.source.Vector({ features: [] });
   const userLocationLayer = new ol.layer.Vector({ source: userLocationSource });
 
+  // --- Configuração da Camada de Pontos do MongoDB ---
+  const pontosSource = new ol.source.Vector({ features: [] });
+
+  const busIconSvg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+        <circle cx="16" cy="16" r="14" fill="#ffffff" stroke="#2b90d9" stroke-width="2.5" />
+        
+        <svg x="8" y="8" width="16" height="16" viewBox="0 0 16 16">
+          <path fill="#2b90d9" d="M16 7a1 1 0 0 1-1 1v3.5c0 .818-.393 1.544-1 2v2a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5V14H5v1.5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-2a2.5 2.5 0 0 1-1-2V8a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1V2.64C1 1.452 1.845.408 3.064.268A44 44 0 0 1 8 0c2.1 0 3.792.136 4.936.268C14.155.408 15 1.452 15 2.64V4a1 1 0 0 1 1 1zM3.552 3.22A43 43 0 0 1 8 3c1.837 0 3.353.107 4.448.22a.5.5 0 0 0 .104-.994A44 44 0 0 0 8 2c-1.876 0-3.426.109-4.552.226a.5.5 0 1 0 .104.994M8 4c-1.876 0-3.426.109-4.552.226A.5.5 0 0 0 3 4.723v3.554a.5.5 0 0 0 .448.497C4.574 8.891 6.124 9 8 9s3.426-.109 4.552-.226A.5.5 0 0 0 13 8.277V4.723a.5.5 0 0 0-.448-.497A44 44 0 0 0 8 4m-3 7a1 1 0 1 0-2 0 1 1 0 0 0 2 0m8 0a1 1 0 1 0-2 0 1 1 0 0 0 2 0m-7 0a1 1 0 0 0 1 1h2a1 1 0 1 0 0-2H7a1 1 0 0 0-1 1"/>
+        </svg>
+      </svg>
+    `;
+
+  const pontosLayer = new ol.layer.Vector({ 
+      source: pontosSource,
+      visible: false, 
+      style: new ol.style.Style({
+        image: new ol.style.Icon({
+          src: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(busIconSvg),
+          scale: 0.60,
+          anchor: [0.5, 0.5]
+        })
+      })
+    });
+
   const map = new ol.Map({
     target: 'map',
-    layers: [base, rotasLayer, resultadoLayer, relatoLayer, busLayer, userLocationLayer],
+    layers: [base, rotasLayer, resultadoLayer, relatoLayer, busLayer, pontosLayer, userLocationLayer],
     view: new ol.View({
       center: ol.proj.fromLonLat([-40.307, -20.318]),
-      zoom: 12
+      zoom: 13
     })
+  });
+
+  map.on('moveend', () => {
+      const zoom = map.getView().getZoom();
+      pontosLayer.setVisible(zoom > 13);
   });
 
   const popupEl = document.createElement('div');
@@ -267,57 +296,16 @@
   let firstLocationFix = true;
   let linhaSelecionada = null;
   let relatosCache = [];
-  let incidentesAtivosCache = [];
 
   const INCIDENT_ICON_DEFS = {
-    assalto: {
-      color: '#ef4444',
-      viewBox: '0 0 16 16',
-      path: 'M11 15a4 4 0 1 0 0-8 4 4 0 0 0 0 8m5-4a5 5 0 1 1-10 0 5 5 0 0 1 10 0M9.438 11.944c.047.596.518 1.06 1.363 1.116v.44h.375v-.443c.875-.061 1.386-.529 1.386-1.207 0-.618-.39-.936-1.09-1.1l-.296-.07v-1.2c.376.043.614.248.671.532h.658c-.047-.575-.54-1.024-1.329-1.073V8.5h-.375v.45c-.747.073-1.255.522-1.255 1.158 0 .562.378.92 1.007 1.066l.248.061v1.272c-.384-.058-.639-.27-.696-.563h-.668zm1.36-1.354c-.369-.085-.569-.26-.569-.522 0-.294.216-.514.572-.578v1.1zm.432.746c.449.104.655.272.655.569 0 .339-.257.571-.709.614v-1.195zM1 0a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h4.083q.088-.517.258-1H3a2 2 0 0 0-2-2V3a2 2 0 0 0 2-2h10a2 2 0 0 0 2 2v3.528c.38.34.717.728 1 1.154V1a1 1 0 0 0-1-1zM9.998 5.083 10 5a2 2 0 1 0-3.132 1.65 6 6 0 0 1 3.13-1.567',
-      label: 'Assalto'
-    },
-    assedio: {
-      color: '#f59e0b',
-      viewBox: '0 0 16 16',
-      path: 'M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.15.15 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.2.2 0 0 1-.054.06.1.1 0 0 1-.066.017H1.146a.1.1 0 0 1-.066-.017.2.2 0 0 1-.054-.06.18.18 0 0 1 .002-.183L7.884 2.073a.15.15 0 0 1 .054-.057m1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767zM7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z',
-      label: 'Assédio'
-    },
-    violencia: {
-      color: '#9333ea',
-      viewBox: '0 0 16 16',
-      path: 'M11 5a3 3 0 0 1-3 3 2.96 2.96 0 0 1-1.35-.32L3.52 4.55A3 3 0 1 1 11 5M2 13c0-2.45 2.3-4 6-4 .72 0 1.37.06 1.96.18L12.72 12A1.6 1.6 0 0 1 13 13c0 1-1 1-1 1H3s-1 0-1-1M1.3 1.05 14.95 14.7l-.9.9L.4 1.95l.9-.9z',
-      label: 'Violência'
-    },
-    furto: {
-      color: '#3b82f6',
-      viewBox: '0 0 16 16',
-      path: 'M6.5 1A1.5 1.5 0 0 0 5 2.5V3H1.5A1.5 1.5 0 0 0 0 4.5v1.384l7.614 2.03a1.5 1.5 0 0 0 .772 0L16 5.884V4.5A1.5 1.5 0 0 0 14.5 3H11v-.5A1.5 1.5 0 0 0 9.5 1zm0 1h3a.5.5 0 0 1 .5.5V3H6v-.5a.5.5 0 0 1 .5-.5M0 12.5A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5V6.85L8.129 8.947a.5.5 0 0 1-.258 0L0 6.85z',
-      label: 'Furto'
-    },
-    onibus_parado_quebrado: {
-      color: '#64748b',
-      viewBox: '0 0 16 16',
-      path: 'M1 1a1 1 0 0 0-1 1v9a1.5 1.5 0 0 0 1 1.415V14.5a.5.5 0 0 0 1 0V13h10v1.5a.5.5 0 0 0 1 0v-2.085A1.5 1.5 0 0 0 14 11V2a1 1 0 0 0-1-1H1zm0 2h12v3H1V3zm1 5.5A1.5 1.5 0 1 1 2 11a1.5 1.5 0 0 1 0-2.5zM12 8.5A1.5 1.5 0 1 1 12 11a1.5 1.5 0 0 1 0-2.5z',
-      label: 'Ônibus parado/quebrado'
-    },
-    quebrado: {
-      color: '#64748b',
-      viewBox: '0 0 16 16',
-      path: 'M1 1a1 1 0 0 0-1 1v9a1.5 1.5 0 0 0 1 1.415V14.5a.5.5 0 0 0 1 0V13h10v1.5a.5.5 0 0 0 1 0v-2.085A1.5 1.5 0 0 0 14 11V2a1 1 0 0 0-1-1H1zm0 2h12v3H1V3zm1 5.5A1.5 1.5 0 1 1 2 11a1.5 1.5 0 0 1 0-2.5zM12 8.5A1.5 1.5 0 1 1 12 11a1.5 1.5 0 0 1 0-2.5z',
-      label: 'Ônibus parado/quebrado'
-    },
-    outro: {
-      color: '#45505d',
-      viewBox: '0 0 16 16',
-      path: 'M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm-.93-5.412h1.858v1.536H7.07v-1.536zm1.854-1.503H7.117l-.04-.23c-.075-.43.01-.842.29-1.197.21-.267.499-.473.884-.708.575-.35.746-.545.746-.875 0-.37-.287-.64-.782-.64-.562 0-.852.297-.907.82H5.64c.044-1.506 1.12-2.36 2.754-2.36 1.543 0 2.588.78 2.588 2.013 0 .757-.39 1.245-1.216 1.717-.472.27-.657.449-.75.695-.062.164-.074.333-.03.58z',
-      label: 'Outro'
-    },
-    bus_monitorado: {
-      color: '#0f766e',
-      viewBox: '0 0 16 16',
-      path: 'M16 7a1 1 0 0 1-1 1v3.5c0 .818-.393 1.544-1 2v2a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5V14H5v1.5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-2a2.5 2.5 0 0 1-1-2V8a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1V2.64C1 1.452 1.845.408 3.064.268A44 44 0 0 1 8 0c2.1 0 3.792.136 4.936.268C14.155.408 15 1.452 15 2.64V4a1 1 0 0 1 1 1v2zM3 11a1 1 0 1 0 2 0 1 1 0 0 0-2 0zm8 0a1 1 0 1 0 2 0 1 1 0 0 0-2 0z',
-      label: 'Ônibus monitorado'
-    }
+    assalto: { color: '#ef4444', viewBox: '0 0 16 16', path: 'M11 15a4 4 0 1 0 0-8 4 4 0 0 0 0 8m5-4a5 5 0 1 1-10 0 5 5 0 0 1 10 0M9.438 11.944c.047.596.518 1.06 1.363 1.116v.44h.375v-.443c.875-.061 1.386-.529 1.386-1.207 0-.618-.39-.936-1.09-1.1l-.296-.07v-1.2c.376.043.614.248.671.532h.658c-.047-.575-.54-1.024-1.329-1.073V8.5h-.375v.45c-.747.073-1.255.522-1.255 1.158 0 .562.378.92 1.007 1.066l.248.061v1.272c-.384-.058-.639-.27-.696-.563h-.668zm1.36-1.354c-.369-.085-.569-.26-.569-.522 0-.294.216-.514.572-.578v1.1zm.432.746c.449.104.655.272.655.569 0 .339-.257.571-.709.614v-1.195zM1 0a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h4.083q.088-.517.258-1H3a2 2 0 0 0-2-2V3a2 2 0 0 0 2-2h10a2 2 0 0 0 2 2v3.528c.38.34.717.728 1 1.154V1a1 1 0 0 0-1-1zM9.998 5.083 10 5a2 2 0 1 0-3.132 1.65 6 6 0 0 1 3.13-1.567', label: 'Assalto' },
+    assedio: { color: '#f59e0b', viewBox: '0 0 16 16', path: 'M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.15.15 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.2.2 0 0 1-.054.06.1.1 0 0 1-.066.017H1.146a.1.1 0 0 1-.066-.017.2.2 0 0 1-.054-.06.18.18 0 0 1 .002-.183L7.884 2.073a.15.15 0 0 1 .054-.057m1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767zM7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z', label: 'Assédio' },
+    violencia: { color: '#9333ea', viewBox: '0 0 16 16', path: 'M11 5a3 3 0 0 1-3 3 2.96 2.96 0 0 1-1.35-.32L3.52 4.55A3 3 0 1 1 11 5M2 13c0-2.45 2.3-4 6-4 .72 0 1.37.06 1.96.18L12.72 12A1.6 1.6 0 0 1 13 13c0 1-1 1-1 1H3s-1 0-1-1M1.3 1.05 14.95 14.7l-.9.9L.4 1.95l.9-.9z', label: 'Violência' },
+    furto: { color: '#3b82f6', viewBox: '0 0 16 16', path: 'M6.5 1A1.5 1.5 0 0 0 5 2.5V3H1.5A1.5 1.5 0 0 0 0 4.5v1.384l7.614 2.03a1.5 1.5 0 0 0 .772 0L16 5.884V4.5A1.5 1.5 0 0 0 14.5 3H11v-.5A1.5 1.5 0 0 0 9.5 1zm0 1h3a.5.5 0 0 1 .5.5V3H6v-.5a.5.5 0 0 1 .5-.5M0 12.5A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5V6.85L8.129 8.947a.5.5 0 0 1-.258 0L0 6.85z', label: 'Furto' },
+    onibus_parado_quebrado: { color: '#64748b', viewBox: '0 0 16 16', path: 'M1 1a1 1 0 0 0-1 1v9a1.5 1.5 0 0 0 1 1.415V14.5a.5.5 0 0 0 1 0V13h10v1.5a.5.5 0 0 0 1 0v-2.085A1.5 1.5 0 0 0 14 11V2a1 1 0 0 0-1-1H1zm0 2h12v3H1V3zm1 5.5A1.5 1.5 0 1 1 2 11a1.5 1.5 0 0 1 0-2.5zM12 8.5A1.5 1.5 0 1 1 12 11a1.5 1.5 0 0 1 0-2.5z', label: 'Ônibus parado/quebrado' },
+    quebrado: { color: '#64748b', viewBox: '0 0 16 16', path: 'M1 1a1 1 0 0 0-1 1v9a1.5 1.5 0 0 0 1 1.415V14.5a.5.5 0 0 0 1 0V13h10v1.5a.5.5 0 0 0 1 0v-2.085A1.5 1.5 0 0 0 14 11V2a1 1 0 0 0-1-1H1zm0 2h12v3H1V3zm1 5.5A1.5 1.5 0 1 1 2 11a1.5 1.5 0 0 1 0-2.5zM12 8.5A1.5 1.5 0 1 1 12 11a1.5 1.5 0 0 1 0-2.5z', label: 'Ônibus parado/quebrado' },
+    outro: { color: '#45505d', viewBox: '0 0 16 16', path: 'M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm-.93-5.412h1.858v1.536H7.07v-1.536zm1.854-1.503H7.117l-.04-.23c-.075-.43.01-.842.29-1.197.21-.267.499-.473.884-.708.575-.35.746-.545.746-.875 0-.37-.287-.64-.782-.64-.562 0-.852.297-.907.82H5.64c.044-1.506 1.12-2.36 2.754-2.36 1.543 0 2.588.78 2.588 2.013 0 .757-.39 1.245-1.216 1.717-.472.27-.657.449-.75.695-.062.164-.074.333-.03.58z', label: 'Outro' },
+    bus_monitorado: { color: '#0f766e', viewBox: '0 0 16 16', path: 'M16 7a1 1 0 0 1-1 1v3.5c0 .818-.393 1.544-1 2v2a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5V14H5v1.5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-2a2.5 2.5 0 0 1-1-2V8a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1V2.64C1 1.452 1.845.408 3.064.268A44 44 0 0 1 8 0c2.1 0 3.792.136 4.936.268C14.155.408 15 1.452 15 2.64V4a1 1 0 0 1 1 1v2zM3 11a1 1 0 1 0 2 0 1 1 0 0 0-2 0zm8 0a1 1 0 1 0 2 0 1 1 0 0 0-2 0z', label: 'Ônibus monitorado' }
   };
 
   const markerCache = new Map();
@@ -469,24 +457,9 @@
     });
   }
 
-  function renderOnibusAtivos() {
-    busSource.clear();
-    incidentesAtivosCache.forEach(inc => {
-      if (!inc?.coordenada || inc.linha == null) return;
-      const coord = ol.proj.fromLonLat([inc.coordenada.lon, inc.coordenada.lat]);
-      const highlight = isLinhaSelecionada(inc.linha);
-      const rotation = calcularRotacaoOnibus(inc.coordenadas || []);
-      const feat = new ol.Feature(new ol.geom.Point(coord));
-      feat.setProperties({ featureType: 'onibus', tipo: inc.tipo, linha: inc.linha, tipoLinha: inc.tipoLinha, criadoEm: inc.criadoEm, ultimaPosicaoTs: inc.coordenada.ts, incidenteId: inc.id });
-      feat.setStyle(getMarkerStyle('bus_monitorado', { highlight, isBus: true, rotation }));
-      busSource.addFeature(feat);
-    });
-  }
-
   function atualizarBannerDaLinha() {
     if (linhaSelecionada == null) { hideAlertBanner(); return; }
     const relatosLinha = relatosCache.filter(r => isLinhaSelecionada(linhaDoRelato(r)));
-    const onibusLinha = incidentesAtivosCache.filter(i => isLinhaSelecionada(linhaDoIncidente(i)));
     if (!relatosLinha.length && !onibusLinha.length) { hideAlertBanner(); return; }
     const partes = [];
     if (relatosLinha.length) { partes.push(`${relatosLinha.length} denúncia${relatosLinha.length > 1 ? 's' : ''}`); }
@@ -497,7 +470,6 @@
   function aplicarContextoDaLinha(codigo) {
     linhaSelecionada = codigo ? String(codigo).trim() : null;
     renderRelatos();
-    renderOnibusAtivos();
     atualizarBannerDaLinha();
   }
 
@@ -509,16 +481,6 @@
       renderRelatos();
       atualizarBannerDaLinha();
     } catch (err) { console.error('Erro ao carregar relatos:', err); showStatus('Erro ao carregar relatos.', 4000); }
-  }
-
-  async function carregarIncidentesAtivos() {
-    try {
-      const resp = await fetch(INCIDENTES_ATIVOS_URL + '?v=' + Date.now());
-      if (!resp.ok) throw new Error('HTTP ' + resp.status);
-      incidentesAtivosCache = await resp.json();
-      renderOnibusAtivos();
-      atualizarBannerDaLinha();
-    } catch (err) { console.error('Erro ao carregar incidentes ativos:', err); }
   }
 
   todasRotasSource.on('change', () => {
@@ -582,11 +544,56 @@
     });
   });
 
-  map.on('click', evt => {
-    const feature = map.forEachFeatureAtPixel(evt.pixel, feat => feat, { layerFilter: layer => layer === relatoLayer || layer === busLayer });
+  function buscarLinha(codigo) {
+    document.getElementById('linha').value = codigo;
+    document.getElementById('go').click();
+  }
+
+  // --- LÓGICA DE CLIQUE CORRIGIDA ---
+  map.on('click', async evt => {
+    const feature = map.forEachFeatureAtPixel(evt.pixel, feat => feat, { layerFilter: layer => layer === relatoLayer || layer === busLayer || layer === pontosLayer });
+    
     if (!feature) { popupEl.style.display = 'none'; popupEl.classList.remove('popup-visible'); return; }
+    
     const kind = feature.get('featureType');
-    if (kind === 'onibus') {
+    
+    if (kind === 'ponto') {
+      const coord = ol.proj.toLonLat(evt.coordinate);
+      const info = await buscarInfoPonto(coord[0], coord[1]);
+      
+      if (info) {
+        // Validação segura para evitar falha se o ponto ainda não tiver linhas mapeadas
+        let linhasInterativas = 'Nenhuma informação';
+        if (info.linhas && info.linhas.length > 0) {
+            linhasInterativas = info.linhas.map(l => `<a href="#" style="color: #10659c; text-decoration: underline;" onclick="buscarLinha('${l}')">${l}</a>`).join(', ');
+        }
+                           
+        popupEl.innerHTML = `
+          <div class="popup-card" style="--popup-accent:#10659c;--popup-accent-rgb:16,101,156;">
+            <div class="popup-header">
+              <span class="popup-type-icon" aria-hidden="true">
+                <svg viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/>
+                </svg>
+              </span>
+              <div class="popup-heading">
+                <span class="popup-eyebrow">Parada de Ônibus</span>
+                <span class="popup-title">${info.nome || 'Ponto sem nome'}</span>
+              </div>
+            </div>
+            <div class="popup-details">
+              <div class="popup-row"><span>Linhas</span><strong>${linhasInterativas}</strong></div>
+            </div>
+          </div>
+        `;
+        popup.setPosition(evt.coordinate);
+        popupEl.style.display = 'block';
+        popupEl.classList.remove('popup-visible');
+        void popupEl.offsetWidth;
+        popupEl.classList.add('popup-visible');
+      }
+    } 
+    else if (kind === 'onibus') {
       const tipo = feature.get('tipo');
       popupEl.innerHTML = `
         <div class="popup-card" style="${popupThemeVars('bus_monitorado')}">
@@ -609,7 +616,14 @@
           </div>
         </div>
       `;
-    } else {
+      popup.setPosition(evt.coordinate);
+      popupEl.style.display = 'block';
+      popupEl.classList.remove('popup-visible');
+      void popupEl.offsetWidth;
+      popupEl.classList.add('popup-visible');
+    } 
+    else {
+      // ERRO CORRIGIDO AQUI: A variável 'info.linhas' foi removida, pois ela pertence aos pontos e quebrava o click dos relatos!
       const tipo = feature.get('tipo');
       popupEl.innerHTML = `
         <div class="popup-card" style="${popupThemeVars(tipo)}">
@@ -632,13 +646,14 @@
           </div>
         </div>
       `;
+      popup.setPosition(evt.coordinate);
+      popupEl.style.display = 'block';
+      popupEl.classList.remove('popup-visible');
+      void popupEl.offsetWidth;
+      popupEl.classList.add('popup-visible');
     }
-    popup.setPosition(evt.coordinate);
-    popupEl.style.display = 'block';
-    popupEl.classList.remove('popup-visible');
-    void popupEl.offsetWidth;
-    popupEl.classList.add('popup-visible');
   });
+  // --------------------------------------------------------------------------
 
   function atualizarUsuarioNoMapa(longitude, latitude) {
     currentUserCoord = ol.proj.fromLonLat([longitude, latitude]);
@@ -672,19 +687,14 @@
   document.getElementById('hamburger-btn')?.addEventListener('click', resizeMap);
   document.getElementById('sidebar-overlay')?.addEventListener('click', resizeMap);
 
-async function favoritarRotaNoBanco(codigoRota) {
+  async function favoritarRotaNoBanco(codigoRota) {
     const token = localStorage.getItem('token');
-
-    // 1. Verifica se existe um token (usuário está logado)
     if (!token) {
         showStatus("Erro: Você precisa estar logado para favoritar.");
         return;
     }
-
     try {
         showStatus("Salvando linha " + codigoRota + "...");
-
-        // 2. Faz o POST para o endpoint que identifica o usuário pelo Token
         const response = await fetch('/api/users/rotas-fav', {
             method: 'POST',
             headers: {
@@ -693,16 +703,12 @@ async function favoritarRotaNoBanco(codigoRota) {
             },
             body: JSON.stringify({ codigo: codigoRota })
         });
-
         if (response.ok) {
             showStatus("⭐ Rota " + codigoRota + " salva com sucesso!");
-            
-            // 3. ATUALIZA A SIDEBAR: Chama a função que reconstrói o menu "Linhas Frequentes"
             if (typeof carregarMeusFavoritos === "function") {
                 carregarMeusFavoritos();
             }
         } else {
-            // Caso o Java retorne erro (ex: rota já favoritada)
             const erroMsg = await response.text();
             showStatus(erroMsg || "Erro ao favoritar rota.");
         }
@@ -710,64 +716,41 @@ async function favoritarRotaNoBanco(codigoRota) {
         console.error("Erro na requisição:", err);
         showStatus("Erro de conexão com o servidor.");
     }
-}
+  }
 
-async function carregarMeusFavoritos() {
+  async function carregarMeusFavoritos() {
     const token = localStorage.getItem('token');
     const container = document.getElementById('lista-favoritos-sidebar');
-    
     if (!token || !container) return;
-
     try {
         const response = await fetch('/api/users/rotas-fav', {
             method: 'GET',
             headers: { 'Authorization': 'Bearer ' + token }
         });
-
         if (response.ok) {
             const favoritos = await response.json();
-            
-            // Limpa o conteúdo estático da div interna
             container.innerHTML = '';
-
             if (!favoritos || favoritos.length === 0) {
                 container.innerHTML = '<span class="nav-item" style="font-size: 0.8rem; opacity: 0.5; padding-left: 2.6rem;">Nenhuma linha salva</span>';
                 return;
             }
-
-            // Injeta cada objeto Rota favorito
             favoritos.forEach(rota => {
                 const link = document.createElement('a');
                 link.href = "#";
                 link.className = "nav-item";
                 link.style.paddingLeft = "2.6rem"; 
-                
-                // Extraindo dados do objeto (Embedding)
-                // Usamos os nomes exatos dos campos do seu Rota.java
                 const numeroLinha = rota.linhaTranscol || rota.linhaMunicipal || "---";
                 const nomeLinha = rota.nome || "";
-
-                // Define o que aparece na tela (Texto, não o objeto)
                 link.innerHTML = `<span>Linha ${numeroLinha} - ${nomeLinha}</span>`;
-                
                 link.onclick = (e) => {
                     e.preventDefault();
-                    
-                    // Verifica se estamos no mapa.html ou alert.html
                     const campoBusca = document.getElementById('linha') || document.getElementById('incidente-linha-busca');
-                    
                     if (campoBusca) {
-                        campoBusca.value = numeroLinha; // Atribui apenas o número (string)
-                        
-                        // Dispara o botão de busca se for o mapa
+                        campoBusca.value = numeroLinha; 
                         const btnGo = document.getElementById('go');
                         if (btnGo) btnGo.click();
-                        
-                        // Dispara evento de input para o autocomplete do alert.html notar a mudança
                         campoBusca.dispatchEvent(new Event('input'));
                     }
-                    
-                    // Fecha o menu lateral no mobile após clicar
                     if (window.innerWidth <= 768) {
                         const sidebar = document.getElementById('sidebar');
                         const overlay = document.getElementById('sidebar-overlay');
@@ -775,19 +758,14 @@ async function carregarMeusFavoritos() {
                         if(overlay) overlay.classList.remove('show');
                     }
                 };
-                
                 container.appendChild(link);
             });
         }
-    } catch (err) {
-        console.error("Erro ao carregar favoritos:", err);
-    }
-}
+    } catch (err) { console.error("Erro ao carregar favoritos:", err); }
+  }
 
-// Chame a função ao carregar o DOM
-document.addEventListener('DOMContentLoaded', carregarMeusFavoritos);
+  document.addEventListener('DOMContentLoaded', carregarMeusFavoritos);
 
-  // --- FUNÇÕES DE LOGOUT E MODAL ---
   function fazerLogout(event) {
       event.preventDefault();
       document.getElementById('modal-logout').style.display = 'flex';
@@ -802,10 +780,42 @@ document.addEventListener('DOMContentLoaded', carregarMeusFavoritos);
       window.location.href = "/"; 
   }
 
+  async function buscarInfoPonto(lon, lat) {
+    try {
+        const response = await fetch(`/api/pontos/info?lat=${lat}&lon=${lon}`);
+        if (!response.ok) return null;
+        return await response.json();
+    } catch (err) {
+        console.error("Erro ao buscar dados do ponto:", err);
+        return null;
+    }
+  }
+
+  async function carregarPontosDoBanco() {
+      try {
+          const response = await fetch('/api/pontos/todos');
+          if (response.ok) {
+              const pontos = await response.json();
+              const features = pontos.map(p => {
+                  const coord = ol.proj.fromLonLat([p.localizacao.x, p.localizacao.y]);
+                  const feature = new ol.Feature(new ol.geom.Point(coord));
+                  
+                  feature.setProperties({ featureType: 'ponto', nome: p.nome });
+                  return feature;
+              });
+              pontosSource.addFeatures(features);
+              console.log(`✅ ${features.length} pontos de ônibus carregados!`);
+          }
+      } catch (e) {
+          console.error("Erro ao carregar pontos do banco:", e);
+      }
+  }
+
   carregarRelatos();
-  carregarIncidentesAtivos();
+  carregarPontosDoBanco(); 
+  
   setInterval(carregarRelatos, 15000);
-  setInterval(carregarIncidentesAtivos, 10000);
+
   </script>
 </body>
 </html>

@@ -27,6 +27,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
+            .cors(cors -> cors.configure(http))
             .csrf(csrf -> csrf.disable()) // Desabilita CSRF para APIs REST
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // API sem estado
             .authorizeHttpRequests(req -> {
@@ -38,11 +39,26 @@ public class SecurityConfig {
                 req.requestMatchers(HttpMethod.POST, "/api/users/register").permitAll();
                 req.requestMatchers(HttpMethod.POST, "/api/users/verify").permitAll();
                 req.requestMatchers(HttpMethod.PUT, "/api/users/reset-password").permitAll();
+
+                // --- ADICIONE ESTAS LINHAS DE VOLTA ---
+                req.requestMatchers(HttpMethod.GET, "/api/pontos/**").permitAll();
+                req.requestMatchers(HttpMethod.GET, "/api/rotas/**").permitAll();
                 
                 // Rotas PRIVADAS (Qualquer outra requisição precisará do token válido)
                 req.anyRequest().authenticated();
             })
             .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
             .build();
+    }
+
+    @Bean
+    public org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource() {
+        var configuration = new org.springframework.web.cors.CorsConfiguration();
+        configuration.setAllowedOrigins(java.util.List.of("*"));
+        configuration.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(java.util.List.of("Authorization", "Content-Type"));
+        var source = new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 }

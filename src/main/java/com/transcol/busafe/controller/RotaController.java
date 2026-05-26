@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.transcol.busafe.model.Rota;
 import com.transcol.busafe.repository.RotaRepository;
+import com.transcol.busafe.model.PontoOnibus;
 
 @RestController
 
@@ -41,34 +42,44 @@ public class RotaController {
 
             List<Map<String, Object>> features = new ArrayList<>();
             
-            for (Rota rota : rotas) {
-                // Em vez de consultar o pontoRepo, pegamos direto da rota
-                var pts = rota.getPontoRota();
-                
-                if (pts == null || pts.isEmpty()) continue;
-
-                // Mapeia as coordenadas para o formato GeoJSON [longitude, latitude]
-                var coords = pts.stream()
-                        .sorted((p1, p2) -> p1.getOrdem().compareTo(p2.getOrdem())) // Garante a ordem do trajeto
-                        .map(p -> List.of(p.getLon(), p.getLat()))
-                        .toList();
-
-                Map<String, Object> props = new HashMap<>();
-                if (rota.getLinhaTranscol() != null) props.put("linha_transcol", rota.getLinhaTranscol());
-                if (rota.getLinhaMunicipal() != null) props.put("linha_municipal", rota.getLinhaMunicipal());
-                if (rota.getSentido() != null) props.put("sentido", rota.getSentido());
-                if (rota.getNome() != null) props.put("nome", rota.getNome());
-
-                Map<String, Object> feature = new HashMap<>();
-                feature.put("type", "Feature");
-                feature.put("properties", props);
-                feature.put("geometry", Map.of(
-                        "type", "LineString",
-                        "coordinates", coords
-                ));
-
-                features.add(feature);
+        for (Rota rota : rotas) {
+            var pts = rota.getPontos();
+            
+            // Log de segurança
+            if (pts == null || pts.isEmpty()) {
+                System.out.println("DEBUG: Rota " + rota.getLinhaTranscol() + " está sem pontos.");
+                continue;
             }
+
+            // Mapeamento filtrado: ignora pontos com coordenadas nulas
+            var coords = pts.stream()
+                .filter(p -> p.getLon() != null && p.getLat() != null) // Filtra nulos
+                .sorted((p1, p2) -> {
+                    if (p1.getOrdem() == null) return 1;
+                    if (p2.getOrdem() == null) return -1;
+                    return p1.getOrdem().compareTo(p2.getOrdem());
+                })
+                .map(p -> List.of(p.getLon(), p.getLat()))
+                .collect(Collectors.toList());
+
+            if (coords.isEmpty()) continue; // Se após o filtro não sobrou nada, pula
+
+            Map<String, Object> props = new HashMap<>();
+            props.put("linha_transcol", rota.getLinhaTranscol() != null ? rota.getLinhaTranscol() : "");
+            props.put("linha_municipal", rota.getLinhaMunicipal() != null ? rota.getLinhaMunicipal() : "");
+            props.put("sentido", rota.getSentido() != null ? rota.getSentido() : "");
+            props.put("nome", rota.getNome() != null ? rota.getNome() : "");
+
+            Map<String, Object> feature = new HashMap<>();
+            feature.put("type", "Feature");
+            feature.put("properties", props);
+            feature.put("geometry", Map.of(
+                    "type", "LineString",
+                    "coordinates", coords
+            ));
+
+            features.add(feature);
+        }
 
             return Map.of("type", "FeatureCollection", "features", features);
 

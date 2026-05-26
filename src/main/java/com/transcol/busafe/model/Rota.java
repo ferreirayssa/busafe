@@ -6,6 +6,18 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+@Setter
+
 @Document(collection = "rota") // Define a coleção no MongoDB
 public class Rota {
 
@@ -25,24 +37,5 @@ public class Rota {
     // Relacionamento por composição (Embebed Document)
     // Isso mapeia o array "pontoRota" que está no seu JSON
     @Field("pontos")
-    private List<PontoRota> pontoRota;
-
-    // Getters e Setters
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
-
-    public String getLinhaTranscol() { return linhaTranscol; }
-    public void setLinhaTranscol(String v) { this.linhaTranscol = v; }
-
-    public String getLinhaMunicipal() { return linhaMunicipal; }
-    public void setLinhaMunicipal(String v) { this.linhaMunicipal = v; }
-
-    public String getSentido() { return sentido; }
-    public void setSentido(String v) { this.sentido = v; }
-
-    public String getNome() { return nome; }
-    public void setNome(String v) { this.nome = v; }
-
-    public List<PontoRota> getPontoRota() { return pontoRota; }
-    public void setPontoRota(List<PontoRota> pontoRota) { this.pontoRota = pontoRota; }
+    private List<PontoRota> Pontos;
 }

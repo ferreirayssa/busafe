@@ -91,4 +91,21 @@ if (themeBtn) {
     setTheme(next);
     localStorage.setItem('theme', next);
   });
+
+  async function fetchAuth(url, options = {}) {
+      const token = localStorage.getItem('token');
+      
+      // Configura os headers padrão
+      const headers = {
+          'Content-Type': 'application/json',
+          ...options.headers
+      };
+
+      // Adiciona o token se ele existir
+      if (token) {
+          headers['Authorization'] = 'Bearer ' + token;
+      }
+
+      return await fetch(url, { ...options, headers });
+  }
 }
