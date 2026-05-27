@@ -176,7 +176,7 @@
   <div id="toast-container"></div>
 
   <script>
-  const GEOJSON_URL = "/rotas/geojson";
+  const GEOJSON_URL = "";
   const RELATOS_URL = "/relatos";
 
   const statusEl = document.getElementById('status');
@@ -202,23 +202,48 @@
 
   const base = new ol.layer.Tile({ source: new ol.source.OSM() });
 
-  const todasRotasSource = new ol.source.Vector({
+const todasRotasSource = new ol.source.Vector({
     format: new ol.format.GeoJSON(),
     
     loader: async function(extent, resolution, projection, success, failure) {
       try {
         const url = GEOJSON_URL + "?v=" + Date.now();
+        const token = localStorage.getItem('token');
         
-        const response = await fetchAuth(url);
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Authorization': token ? `Bearer ${token}` : '' 
+            }
+        });
         
         if (!response.ok) {
           throw new Error('Erro ao buscar GeoJSON: HTTP ' + response.status);
         }
 
-        const dadosGeoJson = await response.json();
+        const dadosRecebidos = await response.json();
+        
+        // 1. Vamos olhar no console do navegador o que está vindo de verdade
+        console.log("Dados recebidos da API de rotas:", dadosRecebidos);
+
+        let geoJsonParaOMapa = dadosRecebidos;
+
+        // 2. ESCUDO 1: Se o Java enviou uma Array direta, nós embalamos num FeatureCollection
+        if (Array.isArray(dadosRecebidos)) {
+            geoJsonParaOMapa = {
+                type: "FeatureCollection",
+                features: dadosRecebidos
+            };
+        } 
+        // 3. ESCUDO 2: Se não for um GeoJSON válido (faltou o 'type'), nós paramos antes de dar erro na tela
+        else if (!geoJsonParaOMapa || !geoJsonParaOMapa.type) {
+            console.error("A API não retornou um GeoJSON válido. Cancelando renderização.");
+            if (failure) failure();
+            return;
+        }
 
         const format = todasRotasSource.getFormat();
-        const features = format.readFeatures(dadosGeoJson, {
+        const features = format.readFeatures(geoJsonParaOMapa, {
           featureProjection: projection 
         });
 

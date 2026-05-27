@@ -47,7 +47,6 @@ function toggleSubMenu(button) {
     button.classList.add('rotate');
   }
 
-  // se sidebar fechada, abre ela
   if (sidebar.classList.contains('close')) {
     sidebar.classList.remove('close');
   }
@@ -60,7 +59,6 @@ function closeAllSubMenus() {
   });
 }
 
-/* ---------- busca: abre sidebar ao clicar ícone ---------- */
 const searchForm = document.querySelector('.search-form');
 if (searchForm) {
   const searchInput = searchForm.querySelector('input[type="search"]');
@@ -76,7 +74,6 @@ if (searchForm) {
   });
 }
 
-/* ---------- tema claro / escuro ---------- */
 function setTheme(theme) {
   document.body.classList.toggle('light-mode', theme === 'light');
 }
@@ -91,21 +88,4 @@ if (themeBtn) {
     setTheme(next);
     localStorage.setItem('theme', next);
   });
-
-  async function fetchAuth(url, options = {}) {
-      const token = localStorage.getItem('token');
-      
-      // Configura os headers padrão
-      const headers = {
-          'Content-Type': 'application/json',
-          ...options.headers
-      };
-
-      // Adiciona o token se ele existir
-      if (token) {
-          headers['Authorization'] = 'Bearer ' + token;
-      }
-
-      return await fetch(url, { ...options, headers });
-  }
 }
