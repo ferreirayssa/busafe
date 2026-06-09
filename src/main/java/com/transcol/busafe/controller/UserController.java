@@ -12,10 +12,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
-import java.util.Optional;
+
 import java.util.HashMap;
 import java.util.Map;
-import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/users")
@@ -41,15 +41,13 @@ public class UserController {
     @PostMapping("/register")
     public ResponseEntity<?> registrar(@RequestBody User user) {
         try {
-            if (userRepository.existsByCpf(user.getCpf())) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("CPF já cadastrado.");
-            }
-            if (userRepository.existsByEmail(user.getEmail())) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("E-mail já cadastrado.");
-            }
-            user.setPassword(passwordEncoder.encode(user.getPassword()));
-            User novoUser = userRepository.save(user);
+            // Agora delegamos TUDO para o UserService, que vai aplicar as regras de negócio (PF/PJ/Contas Vinculadas)
+            User novoUser = userService.salvarUsuario(user);
             return new ResponseEntity<>(novoUser, HttpStatus.CREATED);
+            
+        } catch (IllegalArgumentException e) {
+            // Captura os erros de negócio (CPF duplicado, CNPJ vazio, erro de subconta, etc)
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro: " + e.getMessage());
         }
@@ -58,19 +56,23 @@ public class UserController {
     // --- LOGIN ---
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> body) {
-        String cpfEnviado = body.get("login"); 
+        String loginEnviado = body.get("login"); // Pode ser CPF, CNPJ ou Email
         String senhaEnviada = body.get("password");
 
-        Optional<User> userOpt = userRepository.findByCpf(cpfEnviado);
+        // Busca o usuário por qualquer um dos identificadores
+        Optional<User> userOpt = userRepository.findByEmailOrCpfOrCnpj(loginEnviado, loginEnviado, loginEnviado); // erro aqui
 
         if (userOpt.isPresent()) {
             User user = userOpt.get();
             if (passwordEncoder.matches(senhaEnviada, user.getPassword())) {
-                String tokenReal = tokenService.gerarToken(user.getCpf());
+                
+                // MUDANÇA IMPORTANTE: Gerar o token usando o E-MAIL (pois PJ não tem CPF)
+                String tokenReal = tokenService.gerarToken(user.getEmail());
                 
                 Map<String, Object> response = new HashMap<>();
                 response.put("id", user.getId());
                 response.put("nome", user.getNome());
+                response.put("tipoUsuario", user.getTipoUsuario());
                 response.put("plano", user.getPlano());
                 response.put("token", tokenReal);
                 response.put("rotasFavoritas", user.getRotasFavoritas());
@@ -78,7 +80,7 @@ public class UserController {
                 return ResponseEntity.ok(response);
             }
         }
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("CPF ou senha incorretos.");
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Login ou senha incorretos.");
     }
 
     // --- FAVORITAR ROTA (Via Token) ---
@@ -86,19 +88,19 @@ public class UserController {
     public ResponseEntity<?> favoritarRota(@RequestHeader("Authorization") String token, @RequestBody Map<String, String> body) {
         String codigoEnviado = body.get("codigo");
         String jwt = token.replace("Bearer ", "");
-        String cpf = tokenService.getSubject(jwt);
+        
+        // Agora o subject é o e-mail
+        String emailUsuario = tokenService.getSubject(jwt);
 
-        User user = userRepository.findByCpf(cpf).orElse(null);
+        User user = userRepository.findByEmail(emailUsuario).orElse(null);
         if (user == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuário não encontrado.");
 
-        // Busca a rota completa na coleção 'rota'
         Rota rotaParaSalvar = rotaRepository.findFirstByLinhaTranscolOrderByIdAsc(codigoEnviado);
         if (rotaParaSalvar == null) {
             rotaParaSalvar = rotaRepository.findFirstByLinhaMunicipalOrderByIdAsc(codigoEnviado);
         }
 
         if (rotaParaSalvar != null) {
-            // Verifica se já existe para não duplicar (compara pelo número da linha)
             boolean jaExiste = user.getRotasFavoritas().stream()
                     .anyMatch(r -> codigoEnviado.equals(r.getLinhaTranscol()) || codigoEnviado.equals(r.getLinhaMunicipal()));
 
@@ -112,13 +114,14 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Linha não encontrada no sistema.");
     }
 
+    // --- BUSCAR FAVORITOS ---
     @GetMapping("/rotas-fav")
     public ResponseEntity<?> buscarFavoritos(@RequestHeader("Authorization") String token) {
         try {
             String jwt = token.replace("Bearer ", "");
-            String cpfUsuario = tokenService.getSubject(jwt);
+            String emailUsuario = tokenService.getSubject(jwt);
 
-            return userRepository.findByCpf(cpfUsuario)
+            return userRepository.findByEmail(emailUsuario)
                     .map(user -> ResponseEntity.ok(user.getRotasFavoritas()))
                     .orElse(ResponseEntity.notFound().build());
         } catch (Exception e) {
@@ -126,15 +129,19 @@ public class UserController {
         }
     }
 
+    // --- REMOVER FAVORITOS ---
     @DeleteMapping("/rotas-fav/{codigo}")
     public ResponseEntity<?> removerRota(@RequestHeader("Authorization") String token, @PathVariable String codigo) {
         try {
             String jwt = token.replace("Bearer ", "");
-            String cpfUsuario = tokenService.getSubject(jwt);
+            String emailUsuario = tokenService.getSubject(jwt);
 
-            return userRepository.findByCpf(cpfUsuario).map(user -> {
-                if (user.getRotasFavoritas().contains(codigo)) {
-                    user.getRotasFavoritas().remove(codigo);
+            return userRepository.findByEmail(emailUsuario).map(user -> {
+                boolean removido = user.getRotasFavoritas().removeIf(r -> 
+                    codigo.equals(r.getLinhaTranscol()) || codigo.equals(r.getLinhaMunicipal())
+                );
+
+                if (removido) {
                     userRepository.save(user);
                     return ResponseEntity.ok(user.getRotasFavoritas());
                 }
@@ -145,12 +152,13 @@ public class UserController {
         }
     }
 
+    // --- VERIFICAR USUÁRIO ---
     @PostMapping("/verify")
     public ResponseEntity<?> verificarUsuario(@RequestBody Map<String, String> body) {
-        String cpfEnviado = body.get("cpf");
+        String loginEnviado = body.get("documento"); // Pode ser CPF ou CNPJ
         String emailEnviado = body.get("email");
 
-        Optional<User> userOpt = userRepository.findByCpf(cpfEnviado);
+        Optional<User> userOpt = userRepository.findByEmailOrCpfOrCnpj(emailEnviado, loginEnviado, loginEnviado);
 
         if (userOpt.isPresent()) {
             User user = userOpt.get();
@@ -159,23 +167,22 @@ public class UserController {
             }
         }
         
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("CPF ou E-mail incorretos.");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Dados incorretos.");
     }
 
+    // --- REDEFINIR SENHA ---
     @PutMapping("/reset-password")
     public ResponseEntity<?> redefinirSenha(@RequestBody Map<String, String> body) {
-        String cpfEnviado = body.get("cpf");
+        String loginEnviado = body.get("documento");
+        String emailEnviado = body.get("email");
         String novaSenha = body.get("newPassword");
 
-        Optional<User> userOpt = userRepository.findByCpf(cpfEnviado);
+        Optional<User> userOpt = userRepository.findByEmailOrCpfOrCnpj(emailEnviado, loginEnviado, loginEnviado);
 
         if (userOpt.isPresent()) {
             User user = userOpt.get();
-            
             user.setPassword(passwordEncoder.encode(novaSenha));
-            
             userRepository.save(user);
-            
             return ResponseEntity.ok("Senha alterada com sucesso.");
         }
 

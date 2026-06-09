@@ -27,23 +27,28 @@ public class SecurityFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        String token = recuperarToken(request);
-        
-        if (token != null) {
-            // Se o token for inválido ou expirado, o tokenService deve lançar exceção ou retornar null
-            String cpfUsuario = tokenService.getSubject(token);
+        try {
+            String token = recuperarToken(request);
             
-            if (cpfUsuario != null) {
-                Optional<User> userOpt = userRepository.findByCpf(cpfUsuario);
+            if (token != null) {
+                // ATUALIZADO: Agora extraímos o E-MAIL de dentro do token, e não mais o CPF
+                String emailUsuario = tokenService.getSubject(token);
                 
-                if (userOpt.isPresent()) {
-                    User user = userOpt.get();
-                    // Cria o contexto de autenticação para o Spring Security
-                    // Utilizamos Collections.emptyList() caso você não tenha sistema de Roles (ADMIN, USER)
-                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(user, null, Collections.emptyList());
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                if (emailUsuario != null) {
+                    // ATUALIZADO: Buscamos o usuário no banco pelo E-MAIL
+                    Optional<User> userOpt = userRepository.findByEmail(emailUsuario);
+                    
+                    if (userOpt.isPresent()) {
+                        User user = userOpt.get();
+                        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(user, null, Collections.emptyList());
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                    }
                 }
             }
+        } catch (Exception e) {
+            // Se o token estiver expirado ou a assinatura for inválida (SignatureException), 
+            // limpamos o contexto. O Spring retornará 403 naturalmente e de forma limpa.
+            SecurityContextHolder.clearContext();
         }
         
         filterChain.doFilter(request, response);

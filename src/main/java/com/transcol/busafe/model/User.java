@@ -4,6 +4,8 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 import org.springframework.data.mongodb.core.index.Indexed;
+import com.transcol.busafe.model.enums.TipoUsuario;
+import com.transcol.busafe.model.enums.Role;
 import lombok.Data;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,15 +22,25 @@ public class User {
     @Indexed(unique = true)
     private String email;
 
-    @Indexed(unique = true)
+    @Indexed(unique = true, sparse = true)
     private String cpf;
 
-    private String phone; // Campo que recebe o DDI + número do seu front-end
+    @Indexed(unique = true, sparse = true)
+    private String cnpj;
+
+    private TipoUsuario tipoUsuario = TipoUsuario.PESSOA_FISICA; //erro aqui
+
+    private String phone;
 
     private String password;
 
-    // Atributo solicitado: inicia como FREE e pode ser sobrescrito
     private String plano = "FREE";
+
+    private String contaPaiId; 
+
+    private List<String> contasVinculadasIds = new ArrayList<>();
+
+    private Role role = Role.USER; //erro aqui
 
     @Field("Favoritos")
     private List<Rota> rotasFavoritas = new ArrayList<>();

@@ -33,7 +33,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(req -> {
             req.requestMatchers(HttpMethod.GET, "/").permitAll(); // Libera a sua Home
 
-                req.requestMatchers("/html/**", "/css/**", "/js/**", "/images/**", "/Logos/**", "/prototipo/**", "/error/**").permitAll();
+                req.requestMatchers("/html/**", "/css/**", "/js/**", "/images/**", "/Logos/**", "/prototipo/**", "/error/**", "/components/**").permitAll();
 
                 req.requestMatchers(HttpMethod.POST, "/api/users/login").permitAll();
                 req.requestMatchers(HttpMethod.POST, "/api/users/register").permitAll();
