@@ -3,7 +3,7 @@
    ============================================================ */
 
 document.addEventListener("DOMContentLoaded", () => {
-    // 1. Busca o arquivo HTML do sidebar (Liberado no seu SecurityConfig)
+    // 1. Busca o arquivo HTML do sidebar
     fetch('/html/components/sidebar.html') 
         .then(response => {
             if (!response.ok) throw new Error('Erro ao carregar o sidebar: HTTP ' + response.status);
@@ -36,42 +36,70 @@ function inicializarSidebar() {
 }
 
 // ============================================================
-// CONTROLE DE ACESSO POR PERFIL (TipoUsuario Enum)
+// CONTROLE DE ACESSO POR PERFIL (ATUALIZADO)
 // ============================================================
 function controlarAcessoPorPerfil() {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-
-    try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        const tipoUsuario = payload.tipoUsuario; // "PESSOA_FISICA" ou "PESSOA_JURIDICA"
-        const plano = payload.plano; // "FREE", "INDIVIDUAL", "EMPRESARIAL"
-
-        // Menu Vinculados (apenas PESSOA_JURIDICA)
-        const menuVinculados = document.getElementById('menu-vinculados');
-        if (menuVinculados) {
-            if (tipoUsuario === 'PESSOA_JURIDICA') {
-                menuVinculados.style.display = 'flex';
-            } else {
-                menuVinculados.style.display = 'none';
+    // Primeiro tenta pegar do localStorage direto
+    let tipoUsuario = localStorage.getItem('tipoUsuario');
+    let plano = localStorage.getItem('plano');
+    
+    // Se não tiver no localStorage, tenta decodificar do token JWT
+    if (!tipoUsuario || !plano) {
+        const token = localStorage.getItem('token');
+        if (token) {
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                tipoUsuario = payload.tipoUsuario;
+                plano = payload.plano;
+                
+                // Salva para próximas consultas
+                if (tipoUsuario) localStorage.setItem('tipoUsuario', tipoUsuario);
+                if (plano) localStorage.setItem('plano', plano);
+            } catch (error) {
+                console.error('❌ Erro ao decodificar token:', error);
+                return;
             }
+        } else {
+            return;
         }
+    }
 
-        // Menu Relatórios (oculto apenas para PESSOA_FISICA com plano FREE)
-        const menuRelatorios = document.getElementById('menu-relatorios');
-        if (menuRelatorios) {
-            if (tipoUsuario === 'PESSOA_FISICA' && plano === 'FREE') {
-                menuRelatorios.style.display = 'none';
-            } else {
-                menuRelatorios.style.display = 'flex';
-            }
+    console.log('🔍 Perfil detectado:', { tipoUsuario, plano });
+
+    // Menu Vinculados (apenas PESSOA_JURIDICA)
+    const menuVinculados = document.getElementById('menu-vinculados');
+    if (menuVinculados) {
+        if (tipoUsuario === 'PESSOA_JURIDICA') {
+            menuVinculados.style.display = 'block';
+            console.log('✅ Menu Vinculados: VISÍVEL');
+        } else {
+            menuVinculados.style.display = 'none';
+            console.log('❌ Menu Vinculados: OCULTO');
         }
+    }
 
-    } catch (error) {
-        console.error('Erro ao decodificar token:', error);
-        // Token inválido ou expirado
-        localStorage.clear();
-        window.location.href = '/login';
+    // Menu Relatórios (oculto para PESSOA_FISICA com FREE)
+    const menuRelatorios = document.getElementById('menu-relatorios');
+    if (menuRelatorios) {
+        if (tipoUsuario === 'PESSOA_FISICA' && plano === 'FREE') {
+            menuRelatorios.style.display = 'none';
+            console.log('❌ Menu Relatórios: OCULTO (FREE)');
+        } else {
+            menuRelatorios.style.display = 'block';
+            console.log('✅ Menu Relatórios: VISÍVEL');
+        }
+    }
+
+    // Menu Planos (oculto para quem tem plano pago)
+    const menuPlanos = document.getElementById('menu-planos');
+    if (menuPlanos) {
+        if (plano === 'INDIVIDUAL' || plano === 'EMPRESARIAL') {
+            menuPlanos.style.display = 'none';
+            console.log('❌ Menu Planos: OCULTO (plano pago)');
+        } else {
+            menuPlanos.style.display = 'block';
+            console.log('✅ Menu Planos: VISÍVEL');
+        }
     }
 }
 
@@ -87,7 +115,6 @@ async function carregarFavoritosSidebar() {
     }
     
     try {
-        // Requisição apontando diretamente para o seu servidor Spring Boot
         const response = await fetch('http://localhost:8080/api/users/rotas-fav', {
             method: 'GET',
             headers: { 'Authorization': 'Bearer ' + token }
@@ -115,7 +142,6 @@ async function carregarFavoritosSidebar() {
                 link.onclick = (e) => {
                     e.preventDefault();
                     
-                    // Se o usuário já estiver na tela do mapa, executa a busca direto na tela
                     if (window.location.pathname.includes('mapa.html') || window.location.pathname === '/') {
                         const campoBusca = document.getElementById('linha');
                         if (campoBusca) {
@@ -124,7 +150,6 @@ async function carregarFavoritosSidebar() {
                             if (btnGo) btnGo.click();
                         }
                         
-                        // Fecha a barra lateral automaticamente se o usuário estiver no celular
                         if (window.innerWidth <= 768) {
                             const sidebar = document.getElementById('sidebar');
                             const overlay = document.getElementById('sidebar-overlay');
@@ -132,7 +157,6 @@ async function carregarFavoritosSidebar() {
                             if (overlay) overlay.classList.remove('show');
                         }
                     } else {
-                        // Se estiver em outra tela (ex: relatórios), redireciona passando o parâmetro
                         window.location.href = `mapa.html?linha=${numeroLinha}`;
                     }
                 };
@@ -146,7 +170,7 @@ async function carregarFavoritosSidebar() {
     }
 }
 
-// --- FUNÇÕES DE LOGOUT (Acionadas pelos cliques do Sidebar) ---
+// --- FUNÇÕES DE LOGOUT ---
 
 function fazerLogout(event) {
     event.preventDefault();

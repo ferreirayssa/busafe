@@ -63,8 +63,8 @@ public class UserController {
         Optional<User> userOpt = userRepository.findByEmailOrCpfOrCnpj(loginEnviado, loginEnviado, loginEnviado); // erro aqui
 
         if (userOpt.isPresent()) {
-            User user = userOpt.get();
-            if (passwordEncoder.matches(senhaEnviada, user.getPassword())) {
+                User user = userOpt.get();
+                if (passwordEncoder.matches(senhaEnviada, user.getPassword())) {
                 
                 // MUDANÇA IMPORTANTE: Gerar o token usando o E-MAIL (pois PJ não tem CPF)
                 String tokenReal = tokenService.gerarToken(user.getEmail());
@@ -72,8 +72,9 @@ public class UserController {
                 Map<String, Object> response = new HashMap<>();
                 response.put("id", user.getId());
                 response.put("nome", user.getNome());
-                response.put("tipoUsuario", user.getTipoUsuario());
-                response.put("plano", user.getPlano());
+                response.put("email", user.getEmail());
+                response.put("tipoUsuario", user.getTipoUsuario().name());
+                response.put("plano", user.getPlano().name());
                 response.put("token", tokenReal);
                 response.put("rotasFavoritas", user.getRotasFavoritas());
                 

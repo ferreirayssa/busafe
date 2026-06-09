@@ -385,7 +385,7 @@
       
       try {
         // Alinhando a URL para seguir o padrão http://localhost:8080 caso necessário no seu dev server
-        const response = await fetch('http://localhost:8080/api/users/login', {
+        const response = await fetch('/api/users/login', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
