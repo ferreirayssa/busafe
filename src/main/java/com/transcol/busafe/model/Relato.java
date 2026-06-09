@@ -11,12 +11,12 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder // Adicional útil para criar relatos rapidamente
+@Builder
 @Document(collection = "relato")
 public class Relato {
 
     @Id
-    private String id; // Alterado para String para o ObjectId do MongoDB
+    private String id;
 
     private String descricao;
 
@@ -27,7 +27,7 @@ public class Relato {
     private Double longitude;
 
     @Field("dataRelato")
-    private LocalDateTime dataRelato = LocalDateTime.now(); // Inicializa com a data atual por padrão
+    private LocalDateTime dataRelato = LocalDateTime.now();
 
     private String bairro;
 
@@ -38,6 +38,10 @@ public class Relato {
 
     @Field("linhaTranscol")
     private Integer linhaTranscol;
+    
+    // ADICIONE ESTE CAMPO:
+    @Field("usuarioId")
+    private String usuarioId; // ID do usuário que fez o relato
     
     @Override
     public boolean equals(Object o) {

@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.transcol.busafe.model.Relato;
 import com.transcol.busafe.repository.RelatoRepository;
 
-
 @RestController
 @CrossOrigin(origins = "*")
 @RequestMapping("/relatos")
@@ -30,8 +29,6 @@ public class RelatoController {
     // Criar um novo relato (POST)
     @PostMapping
     public ResponseEntity<Relato> criarRelato(@RequestBody Relato relato) {
-        // Como definimos a dataRelato = LocalDateTime.now() na Model, 
-        // ela será salva automaticamente se não for enviada no JSON.
         Relato novoRelato = relatoRepo.save(relato);
         return new ResponseEntity<>(novoRelato, HttpStatus.CREATED);
     }
@@ -42,9 +39,43 @@ public class RelatoController {
         return relatoRepo.findAll();
     }
 
-    // Buscar relatos por linha (GET)
+    // Buscar relatos por linha Transcol (GET)
     @GetMapping("/linha/{numero}")
-    public List<Relato> buscarPorLinha(@PathVariable Integer numero) {
-        return relatoRepo.findByLinhaTranscol(numero);
+    public ResponseEntity<List<Relato>> buscarPorLinha(@PathVariable Integer numero) {
+        List<Relato> relatos = relatoRepo.findByLinhaTranscol(numero);
+        if (relatos.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(relatos);
+    }
+
+    // Buscar relatos por linha Municipal
+    @GetMapping("/municipal/{numero}")
+    public ResponseEntity<List<Relato>> buscarPorLinhaMunicipal(@PathVariable Integer numero) {
+        List<Relato> relatos = relatoRepo.findByLinhaMunicipal(numero);
+        if (relatos.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(relatos);
+    }
+
+    // Buscar relatos por tipo
+    @GetMapping("/tipo/{tipo}")
+    public ResponseEntity<List<Relato>> buscarPorTipo(@PathVariable String tipo) {
+        List<Relato> relatos = relatoRepo.findByTipo(tipo);
+        if (relatos.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(relatos);
+    }
+
+    // Buscar relatos por município
+    @GetMapping("/municipio/{municipio}")
+    public ResponseEntity<List<Relato>> buscarPorMunicipio(@PathVariable String municipio) {
+        List<Relato> relatos = relatoRepo.findByMunicipio(municipio);
+        if (relatos.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(relatos);
     }
 }

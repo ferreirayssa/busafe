@@ -1,0 +1,165 @@
+package com.transcol.busafe.controller;
+
+import com.transcol.busafe.model.User;
+import com.transcol.busafe.model.enums.TipoUsuario;
+import com.transcol.busafe.config.TokenService;
+import com.transcol.busafe.repository.UserRepository;
+import com.transcol.busafe.service.UserService;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@RestController
+@RequestMapping("/api/vinculados")
+@CrossOrigin(origins = "*")
+public class VinculadosController {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private TokenService tokenService;
+
+    @Autowired
+    private UserService userService;
+
+    // --- LISTAR VINCULADOS ---
+    @GetMapping
+    public ResponseEntity<?> listarVinculados(@RequestHeader("Authorization") String token) {
+        try {
+            String jwt = token.replace("Bearer ", "");
+            String emailUsuario = tokenService.getSubject(jwt);
+
+            User usuarioLogado = userRepository.findByEmail(emailUsuario).orElse(null);
+            
+            if (usuarioLogado == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuário não encontrado.");
+            }
+
+            // Verifica se é PESSOA_JURIDICA
+            if (usuarioLogado.getTipoUsuario() != TipoUsuario.PESSOA_JURIDICA) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Acesso permitido apenas para Pessoa Jurídica.");
+            }
+
+            // Busca todos os vinculados ao CNPJ
+            List<User> vinculados = userRepository.listarPorCnpj(usuarioLogado.getCnpj());
+            
+            // Remove o próprio usuário PJ da lista (se estiver)
+            vinculados = vinculados.stream()
+                    .filter(u -> !u.getId().equals(usuarioLogado.getId()))
+                    .collect(Collectors.toList());
+
+            List<Map<String, Object>> resposta = vinculados.stream().map(v -> {
+                Map<String, Object> map = new HashMap<>();
+                map.put("id", v.getId());
+                map.put("nome", v.getNome());
+                map.put("email", v.getEmail());
+                map.put("cpf", v.getCpf());
+                map.put("plano", v.getPlano().name());
+                map.put("ativo", v.isAtivo());
+                return map;
+            }).collect(Collectors.toList());
+
+            return ResponseEntity.ok(resposta);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Erro ao carregar vinculados: " + e.getMessage());
+        }
+    }
+
+    // --- ADICIONAR VINCULADO ---
+    @PostMapping
+    public ResponseEntity<?> adicionarVinculado(@RequestHeader("Authorization") String token, 
+                                                 @RequestBody Map<String, String> body) {
+        try {
+            String jwt = token.replace("Bearer ", "");
+            String emailUsuario = tokenService.getSubject(jwt);
+
+            User usuarioLogado = userRepository.findByEmail(emailUsuario).orElse(null);
+            
+            if (usuarioLogado == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuário não encontrado.");
+            }
+
+            // Verifica se é PESSOA_JURIDICA
+            if (usuarioLogado.getTipoUsuario() != TipoUsuario.PESSOA_JURIDICA) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Apenas Pessoa Jurídica pode adicionar vinculados.");
+            }
+
+            // Cria o novo usuário vinculado
+            User novoVinculado = new User();
+            novoVinculado.setNome(body.get("nome"));
+            novoVinculado.setEmail(body.get("email"));
+            novoVinculado.setCpf(body.get("cpf"));
+            novoVinculado.setPassword(body.get("password"));
+            novoVinculado.setTipoUsuario(TipoUsuario.PESSOA_FISICA);
+            novoVinculado.setPlano(usuarioLogado.getPlano()); // Herda o plano da PJ
+            novoVinculado.setCnpj(usuarioLogado.getCnpj()); // Vincula ao CNPJ
+            novoVinculado.setEmpresaId(usuarioLogado.getId()); // ID da empresa
+            novoVinculado.setAtivo(true);
+
+            User salvo = userService.salvarUsuarioVinculado(novoVinculado);
+            
+            Map<String, Object> resposta = new HashMap<>();
+            resposta.put("id", salvo.getId());
+            resposta.put("nome", salvo.getNome());
+            resposta.put("email", salvo.getEmail());
+            resposta.put("cpf", salvo.getCpf());
+            resposta.put("mensagem", "Vinculado adicionado com sucesso!");
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(resposta);
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao adicionar vinculado: " + e.getMessage());
+        }
+    }
+
+    // --- REMOVER VINCULADO ---
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> removerVinculado(@RequestHeader("Authorization") String token, 
+                                               @PathVariable String id) {
+        try {
+            String jwt = token.replace("Bearer ", "");
+            String emailUsuario = tokenService.getSubject(jwt);
+
+            User usuarioLogado = userRepository.findByEmail(emailUsuario).orElse(null);
+            
+            if (usuarioLogado == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuário não encontrado.");
+            }
+
+            if (usuarioLogado.getTipoUsuario() != TipoUsuario.PESSOA_JURIDICA) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Acesso negado.");
+            }
+
+             User vinculado = userRepository.findById(id).orElse(null);
+            
+            if (vinculado == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Vinculado não encontrado.");
+            }
+
+            // Verifica se o vinculado pertence à mesma empresa
+            if (!usuarioLogado.getCnpj().equals(vinculado.getCnpj())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Este usuário não pertence à sua empresa.");
+            }
+
+            // Soft delete (desativa)
+            vinculado.setAtivo(false);
+            userRepository.save(vinculado);
+
+            return ResponseEntity.ok("Vinculado removido com sucesso.");
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao remover vinculado: " + e.getMessage());
+        }
+    }
+}

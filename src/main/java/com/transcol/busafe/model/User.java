@@ -1,50 +1,76 @@
 package com.transcol.busafe.model;
 
+import com.transcol.busafe.model.enums.Plano;
+import com.transcol.busafe.model.enums.TipoUsuario;
+import lombok.*;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
-import org.springframework.data.mongodb.core.index.Indexed;
-import com.transcol.busafe.model.enums.TipoUsuario;
-import com.transcol.busafe.model.enums.Role;
-import lombok.Data;
+
 import java.util.ArrayList;
 import java.util.List;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Document(collection = "users")
-@Data
 public class User {
 
     @Id
-    private String id;
+    private String id; // MongoDB usa String
 
     private String nome;
 
     @Indexed(unique = true)
     private String email;
 
-    @Indexed(unique = true, sparse = true)
-    private String cpf;
-
-    @Indexed(unique = true, sparse = true)
-    private String cnpj;
-
-    private TipoUsuario tipoUsuario = TipoUsuario.PESSOA_FISICA; //erro aqui
-
-    private String phone;
-
     private String password;
 
-    private String plano = "FREE";
+    @Indexed(unique = true, sparse = true) // sparse: ignora null
+    private String cpf;
 
-    private String contaPaiId; 
+    @Indexed(unique = true, sparse = true) // sparse: ignora null
+    private String cnpj;
 
-    private List<String> contasVinculadasIds = new ArrayList<>();
+    @Field("tipoUsuario")
+    private TipoUsuario tipoUsuario; // Enum: PESSOA_FISICA, PESSOA_JURIDICA
 
-    private Role role = Role.USER; //erro aqui
+    @Field("plano")
+    private Plano plano; // Enum: FREE, INDIVIDUAL, EMPRESARIAL
 
-    @Field("Favoritos")
+    @Field("ativo")
+    private boolean ativo = true; // CORRIGIDO: Campo adicionado
+
+    @Field("contaPaiId")
+    private String contaPaiId; // ID da empresa (para vinculados)
+
+    @Field("empresaId")
+    private String empresaId; // CORRIGIDO: Campo adicionado
+
+    @Field("contasVinculadasIds")
+    private List<String> contasVinculadasIds = new ArrayList<>(); // IDs dos vinculados (para PJ)
+
+    @Field("rotasFavoritas")
     private List<Rota> rotasFavoritas = new ArrayList<>();
 
-    @Field("Relatos")
-    private List<String> relatos = new ArrayList<>();
+    // Métodos auxiliares
+    public boolean isAtivo() {
+        return ativo;
+    }
+
+    public void setAtivo(boolean ativo) {
+        this.ativo = ativo;
+    }
+
+    // Para compatibilidade com código que usa setEmpresaId
+    public void setEmpresaId(String empresaId) {
+        this.empresaId = empresaId;
+    }
+
+    public String getEmpresaId() {
+        return empresaId;
+    }
 }

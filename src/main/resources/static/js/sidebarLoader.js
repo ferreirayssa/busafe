@@ -23,12 +23,55 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function inicializarSidebar() {
-    // 1. Carrega os favoritos do usuário logado
+    // 1. Controle de acesso por perfil (TipoUsuario)
+    controlarAcessoPorPerfil();
+
+    // 2. Carrega os favoritos do usuário logado
     carregarFavoritosSidebar();
 
-    // 2. Aciona a responsividade, cliques e tema que estão no scripts.js
+    // 3. Aciona a responsividade, cliques e tema que estão no scripts.js
     if (typeof inicializarBotoesSidebar === "function") {
         inicializarBotoesSidebar();
+    }
+}
+
+// ============================================================
+// CONTROLE DE ACESSO POR PERFIL (TipoUsuario Enum)
+// ============================================================
+function controlarAcessoPorPerfil() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const tipoUsuario = payload.tipoUsuario; // "PESSOA_FISICA" ou "PESSOA_JURIDICA"
+        const plano = payload.plano; // "FREE", "INDIVIDUAL", "EMPRESARIAL"
+
+        // Menu Vinculados (apenas PESSOA_JURIDICA)
+        const menuVinculados = document.getElementById('menu-vinculados');
+        if (menuVinculados) {
+            if (tipoUsuario === 'PESSOA_JURIDICA') {
+                menuVinculados.style.display = 'flex';
+            } else {
+                menuVinculados.style.display = 'none';
+            }
+        }
+
+        // Menu Relatórios (oculto apenas para PESSOA_FISICA com plano FREE)
+        const menuRelatorios = document.getElementById('menu-relatorios');
+        if (menuRelatorios) {
+            if (tipoUsuario === 'PESSOA_FISICA' && plano === 'FREE') {
+                menuRelatorios.style.display = 'none';
+            } else {
+                menuRelatorios.style.display = 'flex';
+            }
+        }
+
+    } catch (error) {
+        console.error('Erro ao decodificar token:', error);
+        // Token inválido ou expirado
+        localStorage.clear();
+        window.location.href = '/login';
     }
 }
 
