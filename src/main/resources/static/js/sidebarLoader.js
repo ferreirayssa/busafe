@@ -115,7 +115,7 @@ async function carregarFavoritosSidebar() {
     }
     
     try {
-        const response = await fetch('http://localhost:8080/api/users/rotas-fav', {
+        const response = await fetch('/api/users/rotas-fav', {
             method: 'GET',
             headers: { 'Authorization': 'Bearer ' + token }
         });

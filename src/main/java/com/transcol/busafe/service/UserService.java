@@ -52,6 +52,11 @@ public class UserService {
     @Transactional
     public User salvarUsuarioVinculado(User user) {
         
+        System.out.println("🔍 Salvando vinculado: " + user.getNome());
+        System.out.println("   Email: " + user.getEmail());
+        System.out.println("   CPF: " + user.getCpf());
+        System.out.println("   ContaPaiId: " + user.getContaPaiId());
+        
         if (!TipoUsuario.PESSOA_FISICA.equals(user.getTipoUsuario())) {
             throw new IllegalArgumentException("Apenas contas de Pessoa Física (PF) podem ser vinculadas a uma Empresa.");
         }
@@ -61,18 +66,6 @@ public class UserService {
 
         if (!TipoUsuario.PESSOA_JURIDICA.equals(contaPai.getTipoUsuario())) {
             throw new IllegalArgumentException("O vínculo só pode ser feito com uma conta de Empresa (PJ).");
-        }
-
-        if (contaPai.getContasVinculadasIds() != null) {
-            boolean cpfJaVinculado = contaPai.getContasVinculadasIds().stream()
-                    .anyMatch(id -> {
-                        Optional<User> vinculado = userRepository.findById(id);
-                        return vinculado.isPresent() && user.getCpf().equals(vinculado.get().getCpf());
-                    });
-            
-            if (cpfJaVinculado) {
-                throw new IllegalArgumentException("CPF já está vinculado a esta empresa.");
-            }
         }
 
         user.setCnpj(contaPai.getCnpj());

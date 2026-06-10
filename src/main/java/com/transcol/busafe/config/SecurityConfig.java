@@ -1,64 +1,93 @@
 package com.transcol.busafe.config;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import jakarta.servlet.DispatcherType;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Autowired
-    private SecurityFilter securityFilter;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    @Bean
-    public BCryptPasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        return http
-            .cors(cors -> cors.configure(http))
-            .csrf(csrf -> csrf.disable()) // Desabilita CSRF para APIs REST
-            .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // API sem estado
-            .authorizeHttpRequests(req -> {
-            req.requestMatchers(HttpMethod.GET, "/").permitAll(); // Libera a sua Home
-
-                req.requestMatchers("/html/**", "/css/**", "/js/**", "/images/**", "/Logos/**", "/prototipo/**", "/error/**", "/components/**").permitAll();
-
-                req.requestMatchers(HttpMethod.POST, "/api/users/login").permitAll();
-                req.requestMatchers(HttpMethod.POST, "/api/users/register").permitAll();
-                req.requestMatchers(HttpMethod.POST, "/api/users/verify").permitAll();
-                req.requestMatchers(HttpMethod.PUT, "/api/users/reset-password").permitAll();
-
-                // --- ADICIONE ESTAS LINHAS DE VOLTA ---
-                req.requestMatchers(HttpMethod.GET, "/api/pontos/**").permitAll();
-                req.requestMatchers(HttpMethod.GET, "/api/rotas/**").permitAll();
+        http
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .csrf(csrf -> csrf.disable())
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                // Rotas públicas (sem token)
+                .requestMatchers(
+                    "/api/users/login",
+                    "/api/users/register",
+                    "/api/users/verify",
+                    "/api/users/reset-password",
+                    "/",
+                    "/index.html",
+                    "/login.html",
+                    "/cadastro.html",
+                    "/change.html",
+                    "/css/**",
+                    "/js/**",
+                    "/Logos/**",
+                    "/prototipo/**",
+                    "/html/**",
+                    "/favicon.ico"
+                ).permitAll()
                 
-                // Rotas PRIVADAS (Qualquer outra requisição precisará do token válido)
-                req.anyRequest().authenticated();
-            })
-            .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
-            .build();
+                // Rotas que precisam de autenticação
+                .requestMatchers(
+                    "/api/users/me",
+                    "/api/users/rotas-fav/**",
+                    "/api/vinculados/**",
+                    "/api/relatorios/**",
+                    "/relatos/**",
+                    "/mapa.html",
+                    "/planos.html",
+                    "/alert.html",
+                    "/vinculados.html",
+                    "/relatorios.html"
+                ).authenticated()
+                
+                // Qualquer outra rota
+                .anyRequest().permitAll()
+            )
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        
+        return http.build();
     }
 
     @Bean
-    public org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource() {
-        var configuration = new org.springframework.web.cors.CorsConfiguration();
-        configuration.setAllowedOrigins(java.util.List.of("*"));
-        configuration.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(java.util.List.of("Authorization", "Content-Type"));
-        var source = new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of("*"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setExposedHeaders(List.of("Authorization"));
+        
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
+    }
+
+    @Bean
+    public BCryptPasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 }
