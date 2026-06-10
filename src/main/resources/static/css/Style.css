@@ -1359,3 +1359,29 @@ body.light-mode * {
 #content::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.15);
 }
+
+/* Animações para o toast */
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.toast {
+    animation: slideInRight 0.3s ease;
+}
+
+/* Botão de rota ativo */
+#route-osrm-btn.active {
+    background: linear-gradient(135deg, #e74c3c, #c0392b) !important;
+    box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.5) !important;
+}
+
+#route-osrm-btn:hover {
+    transform: scale(1.05);
+}
