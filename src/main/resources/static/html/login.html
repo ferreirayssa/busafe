@@ -393,16 +393,33 @@
           body: JSON.stringify(dados)
         });
         
-        if (response.ok) {
-          const data = await response.json();
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Salva o token
+        localStorage.setItem('token', data.token);
+        
+        // Salva o tipo de usuário
+        if (data.tipoUsuario) {
+          localStorage.setItem('tipoUsuario', data.tipoUsuario);
+        }
+
+        if (data.tipoUsuario === 'PF' || data.tipoUsuario === 'PESSOA_FISICA') {
+          localStorage.setItem('userId', data.id);
+          localStorage.setItem('userCpf', data.cpf);
+          localStorage.setItem('userNome', data.nome);
+        }
+        
+        if (data.tipoUsuario === 'PJ' || data.tipoUsuario === 'PESSOA_JURIDICA') {
+          localStorage.setItem('empresaId', data.id);
+          localStorage.setItem('empresaCnpj', data.cnpj);
+          localStorage.setItem('empresaPlano', data.plano);
+          localStorage.setItem('empresaNome', data.nome);
           
-          // Salva dados no localStorage (incluindo o tipoUsuario que mapeamos no back-end)
-          localStorage.setItem('token', data.token);
-          if (data.tipoUsuario) {
-             localStorage.setItem('tipoUsuario', data.tipoUsuario);
-          }
-          
-          window.location.href = 'mapa.html';
+        }
+
+         window.location.href = 'mapa.html';
+
         } else {
           errorMessage.textContent = isEmpresa 
             ? 'E-mail ou senha incorretos. Tente novamente.' 

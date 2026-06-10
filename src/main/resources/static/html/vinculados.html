@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>BuSafe - Vinculados</title>
     <link rel="icon" href="../Logos/busafe.ico">
     <link rel="apple-touch-icon" href="../Logos/Logo_3.png">
@@ -13,14 +13,32 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- CSS Principal -->
     <link rel="stylesheet" href="../css/Style.css">
+    <!-- Scripts -->
+    <script src="../js/scripts.js"></script>
     
     <style>
+        /* Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--base-clr);
+            color: var(--text-clr);
+            overflow-x: hidden;
+        }
+
+        /* Container principal */
         .vinculados-container {
             padding: 2rem;
             max-width: 1000px;
             margin: 2rem auto;
         }
 
+        /* Header */
         .vinculados-header {
             display: flex;
             justify-content: space-between;
@@ -43,6 +61,7 @@
             font-size: 1.5rem;
         }
 
+        /* Botão Adicionar */
         .btn-adicionar {
             background: linear-gradient(135deg, var(--accent-clr), #2989c4);
             color: white;
@@ -65,6 +84,7 @@
             box-shadow: 0 6px 20px rgba(16, 101, 156, 0.3);
         }
 
+        /* Stats Cards */
         .stats-cards {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -73,11 +93,16 @@
         }
 
         .stat-card {
-            background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
-            border: 1px solid rgba(255,255,255,0.08);
+            background: var(--hover-clr);
+            border: 1px solid var(--line-clr);
             border-radius: 12px;
             padding: 1.5rem;
             text-align: center;
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
         }
 
         .stat-card .stat-value {
@@ -92,10 +117,11 @@
             margin-top: 0.5rem;
         }
 
+        /* Tabela - Desktop */
         .vinculados-table {
             width: 100%;
-            background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
-            border: 1px solid rgba(255,255,255,0.08);
+            background: var(--base-clr);
+            border: 1px solid var(--line-clr);
             border-radius: 12px;
             overflow: hidden;
         }
@@ -104,31 +130,33 @@
             display: grid;
             grid-template-columns: 2fr 2fr 1.5fr 1fr 1fr;
             padding: 1rem 1.5rem;
-            background: rgba(16, 101, 156, 0.1);
+            background: var(--hover-clr);
             font-weight: 600;
             font-size: 0.85rem;
             color: var(--secondary-text-clr);
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--line-clr);
         }
 
         .table-row {
             display: grid;
             grid-template-columns: 2fr 2fr 1.5fr 1fr 1fr;
             padding: 1rem 1.5rem;
-            border-bottom: 1px solid rgba(255,255,255,0.04);
+            border-bottom: 1px solid var(--line-clr);
             align-items: center;
             transition: background 0.2s;
         }
 
         .table-row:hover {
-            background: rgba(255,255,255,0.02);
+            background: var(--hover-clr);
         }
 
         .table-row:last-child {
             border-bottom: none;
         }
 
+        /* User Info */
         .user-info {
             display: flex;
             align-items: center;
@@ -155,15 +183,18 @@
         }
 
         .user-email {
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             color: var(--secondary-text-clr);
+            word-break: break-all;
         }
 
+        /* Badges */
         .badge {
             padding: 4px 12px;
             border-radius: 20px;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: 600;
+            display: inline-block;
         }
 
         .badge-active {
@@ -181,28 +212,28 @@
             color: var(--accent-clr);
         }
 
+        /* Botão Ação */
         .btn-action {
             background: none;
-            border: 1px solid rgba(255,255,255,0.1);
-            color: var(--secondary-text-clr);
+            border: 1px solid rgba(239, 83, 80, 0.3);
+            color: #ef5350;
             padding: 6px 12px;
             border-radius: 6px;
             cursor: pointer;
             transition: all 0.2s;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .btn-action:hover {
             background: rgba(239, 83, 80, 0.1);
             border-color: #ef5350;
-            color: #ef5350;
         }
 
-        .btn-action i {
-            margin-right: 4px;
-        }
-
+        /* Empty State */
         .empty-state {
             text-align: center;
             padding: 4rem 2rem;
@@ -218,6 +249,199 @@
         .empty-state p {
             font-size: 1.1rem;
             margin-bottom: 0.5rem;
+        }
+
+        .empty-state span {
+            font-size: 0.9rem;
+        }
+
+        /* Mensagens */
+        .error-message, .success-message {
+            padding: 0.8rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: none;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        .error-message.show {
+            display: block;
+            background: rgba(239, 83, 80, 0.1);
+            border: 1px solid #ef5350;
+            color: #ef5350;
+        }
+
+        .success-message.show {
+            display: block;
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid #4CAF50;
+            color: #4CAF50;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .loading i {
+            font-size: 2rem;
+            color: var(--accent-clr);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* ============================================
+           RESPONSIVIDADE MOBILE MELHORADA
+        ============================================ */
+        
+        /* Tablet e Mobile */
+        @media (max-width: 768px) {
+            .vinculados-container {
+                padding: 1rem;
+                margin: 1rem;
+                margin-top: 72px;
+                width: calc(100% - 2rem);
+            }
+
+            .vinculados-header h1 {
+                font-size: 1.4rem;
+            }
+
+            .btn-adicionar span {
+                display: none;
+            }
+
+            .btn-adicionar i {
+                margin: 0;
+                font-size: 1.2rem;
+            }
+
+            .stats-cards {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+            }
+
+            .stat-card {
+                padding: 1rem;
+            }
+
+            .stat-card .stat-value {
+                font-size: 1.5rem;
+            }
+
+            /* Esconder cabeçalho da tabela no mobile */
+            .table-header {
+                display: none;
+            }
+
+            /* Cards no mobile */
+            .table-row {
+                display: block;
+                padding: 1rem;
+                margin-bottom: 1rem;
+                border: 1px solid var(--line-clr);
+                border-radius: 12px;
+                background: var(--hover-clr);
+            }
+
+            .table-row > span {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 0.75rem;
+                padding: 0.5rem;
+                border-bottom: 1px dashed var(--line-clr);
+            }
+
+            .table-row > span:last-child {
+                border-bottom: none;
+                margin-bottom: 0;
+            }
+
+            .table-row > span::before {
+                content: attr(data-label);
+                font-weight: 600;
+                color: var(--accent-clr);
+                font-size: 0.75rem;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            /* User info no mobile */
+            .user-info {
+                flex: 1;
+            }
+
+            .user-avatar {
+                width: 36px;
+                height: 36px;
+                font-size: 0.8rem;
+            }
+
+            .user-name {
+                font-size: 0.9rem;
+            }
+
+            .user-email {
+                font-size: 0.7rem;
+            }
+
+            /* Badges no mobile */
+            .badge {
+                padding: 3px 10px;
+                font-size: 0.7rem;
+            }
+
+            /* Botão ação no mobile */
+            .btn-action {
+                padding: 8px 16px;
+                font-size: 0.8rem;
+                width: auto;
+                justify-content: center;
+            }
+        }
+
+        /* Mobile pequeno */
+        @media (max-width: 480px) {
+            .vinculados-container {
+                padding: 0.75rem;
+                margin: 0.75rem;
+                margin-top: 65px;
+                width: calc(100% - 1.5rem);
+            }
+
+            .vinculados-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn-adicionar {
+                justify-content: center;
+            }
+
+            .table-row {
+                padding: 0.875rem;
+            }
+
+            .table-row > span {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .table-row > span::before {
+                margin-bottom: 0.25rem;
+            }
+
+            .user-info {
+                width: 100%;
+            }
         }
 
         /* Modal */
@@ -242,6 +466,8 @@
             padding: 2rem;
             width: 90%;
             max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
         }
 
@@ -264,7 +490,7 @@
             color: var(--text-clr);
             font-weight: 500;
             font-size: 0.9rem;
-            text-align: left; /* ✅ Texto alinhado à esquerda */
+            text-align: left;
         }
 
         .form-group input {
@@ -278,7 +504,7 @@
             font-size: 0.95rem;
             box-sizing: border-box;
             transition: all 0.2s;
-            text-align: left; /* ✅ Texto alinhado à esquerda */
+            text-align: left;
         }
 
         .form-group input:focus {
@@ -333,60 +559,17 @@
             transform: none;
         }
 
-        .error-message {
-            background: rgba(239, 83, 80, 0.1);
-            border: 1px solid #ef5350;
-            color: #ef5350;
-            padding: 0.8rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-            display: none;
-            font-size: 0.9rem;
-        }
-
-        .error-message.show {
-            display: block;
-        }
-
-        .success-message {
-            background: rgba(76, 175, 80, 0.1);
-            border: 1px solid #4CAF50;
-            color: #4CAF50;
-            padding: 0.8rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-            display: none;
-            font-size: 0.9rem;
-        }
-
-        .success-message.show {
-            display: block;
-        }
-
-        @media (max-width: 768px) {
-            .vinculados-container {
-                padding: 1rem;
-                margin: 1rem;
-                margin-top: 72px;
-                width: calc(100% - 2rem);
+        @media (max-width: 480px) {
+            .modal-content {
+                padding: 1.2rem;
             }
-
-            .table-header,
-            .table-row {
-                grid-template-columns: 2fr 1.5fr 1fr;
-                font-size: 0.8rem;
-                padding: 0.8rem 1rem;
+            
+            .modal-buttons {
+                flex-direction: column;
             }
-
-            .table-header span:nth-child(3),
-            .table-row span:nth-child(3),
-            .table-header span:nth-child(5),
-            .table-row span:nth-child(5) {
-                display: none;
-            }
-
-            .vinculados-header h1 {
-                font-size: 1.4rem;
+            
+            .modal-buttons button {
+                width: 100%;
             }
         }
     </style>
@@ -404,7 +587,7 @@
                 </h1>
                 <button class="btn-adicionar" onclick="abrirModalAdicionar()">
                     <i class="fas fa-plus"></i>
-                    Adicionar Vinculado
+                    <span>Adicionar Vinculado</span>
                 </button>
             </div>
 
@@ -427,6 +610,12 @@
             <!-- Mensagens -->
             <div class="error-message" id="errorMessage"></div>
             <div class="success-message" id="successMessage"></div>
+
+            <!-- Loading -->
+            <div id="loading" class="loading" style="display: none;">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Carregando...</p>
+            </div>
 
             <!-- Tabela -->
             <div class="vinculados-table">
@@ -486,23 +675,6 @@
         </div>
     </div>
 
-    <!-- Modal de Logout -->
-    <div id="modal-logout" class="modal-overlay" style="display: none;">
-        <div class="modal-content">
-            <div style="color: #10659c; margin-bottom: 15px; margin-top: 10px; text-align: center;">
-                <i class="fas fa-question-circle" style="font-size: 40px;"></i>
-            </div>
-            <h3 style="text-align: center;">Sair da conta?</h3>
-            <p style="text-align: center;">Você precisará fazer login novamente para acessar seus favoritos e relatórios.</p>
-            <div class="modal-buttons" style="justify-content: center;">
-                <button class="btn-cancelar" onclick="fecharModalLogout()">Cancelar</button>
-                <button class="btn-salvar" onclick="confirmarSair()" style="background: #ef5350;">Sair agora</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="toast-container"></div>
-
     <script src="../js/sidebarLoader.js"></script>
     <script>
         // ============================================================
@@ -515,6 +687,8 @@
                 window.location.href = 'login.html';
                 return;
             }
+
+            mostrarLoading(true);
 
             try {
                 const response = await fetch('/api/vinculados', {
@@ -531,17 +705,21 @@
                 if (!response.ok) throw new Error('Erro ao carregar vinculados');
 
                 const vinculados = await response.json();
+                console.log('Vinculados carregados:', vinculados);
+                
                 renderizarVinculados(vinculados);
                 atualizarStats(vinculados);
 
             } catch (error) {
                 console.error('Erro:', error);
                 mostrarErro('Erro ao carregar lista de vinculados.');
+            } finally {
+                mostrarLoading(false);
             }
         }
 
         // ============================================================
-        // RENDERIZAR LISTA
+        // RENDERIZAR LISTA (COM DATA-LABEL PARA MOBILE)
         // ============================================================
         function renderizarVinculados(vinculados) {
             const container = document.getElementById('listaVinculados');
@@ -556,71 +734,69 @@
                 return;
             }
 
-            container.innerHTML = vinculados.map(v => `
-                <div class="table-row">
-                    <div class="user-info">
-                        <div class="user-avatar">${v.nome.charAt(0).toUpperCase()}</div>
-                        <div>
-                            <div class="user-name">${v.nome}</div>
-                            <div class="user-email">${v.email}</div>
-                        </div>
+            container.innerHTML = vinculados.map(v => {
+                const nome = v.nome || 'Usuário sem nome';
+                const email = v.email || 'sem@email.com';
+                const cpf = v.cpf || '00000000000';
+                const plano = v.plano || 'N/A';
+                const ativo = v.ativo !== undefined ? v.ativo : true;
+                const id = v.id || '';
+                const primeiraLetra = nome.charAt(0).toUpperCase();
+                
+                return `
+                    <div class="table-row">
+                        <span data-label="Usuário">
+                            <div class="user-info">
+                                <div class="user-avatar">${primeiraLetra}</div>
+                                <div>
+                                    <div class="user-name">${escapeHtml(nome)}</div>
+                                    <div class="user-email">${escapeHtml(email)}</div>
+                                </div>
+                            </div>
+                        </span>
+                        <span data-label="CPF">
+                            <span style="color: var(--secondary-text-clr);">${formatarCPF(cpf)}</span>
+                        </span>
+                        <span data-label="Plano">
+                            <span class="badge badge-plano">${escapeHtml(plano)}</span>
+                        </span>
+                        <span data-label="Status">
+                            <span class="badge ${ativo ? 'badge-active' : 'badge-inactive'}">${ativo ? 'Ativo' : 'Inativo'}</span>
+                        </span>
+                        <span data-label="Ações">
+                            ${ativo ? `
+                                <button class="btn-action" onclick="confirmarRemover('${id}', '${escapeHtml(nome)}')" title="Remover">
+                                    <i class="fas fa-trash"></i> Remover
+                                </button>
+                            ` : `
+                                <span style="color: var(--secondary-text-clr); font-size: 0.85rem;">Removido</span>
+                            `}
+                        </span>
                     </div>
-                    <span style="color: var(--secondary-text-clr);">${formatarCPF(v.cpf)}</span>
-                    <span><span class="badge badge-plano">${v.plano}</span></span>
-                    <span><span class="badge ${v.ativo ? 'badge-active' : 'badge-inactive'}">${v.ativo ? 'Ativo' : 'Inativo'}</span></span>
-                    <span>
-                        ${v.ativo ? `
-                            <button class="btn-action" onclick="confirmarRemover('${v.id}', '${v.nome}')" title="Remover">
-                                <i class="fas fa-trash"></i> Remover
-                            </button>
-                        ` : `
-                            <span style="color: var(--secondary-text-clr); font-size: 0.85rem;">Removido</span>
-                        `}
-                    </span>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         // ============================================================
         // ATUALIZAR STATS
         // ============================================================
         function atualizarStats(vinculados) {
+            if (!vinculados) return;
+            
             document.getElementById('totalVinculados').textContent = vinculados.length;
             
-            const ativos = vinculados.filter(v => v.ativo).length;
+            const ativos = vinculados.filter(v => v.ativo === true).length;
             document.getElementById('totalAtivos').textContent = ativos;
             
-            if (vinculados.length > 0) {
+            const empresaPlano = localStorage.getItem('empresaPlano');
+            if (empresaPlano) {
+                document.getElementById('planoAtual').textContent = empresaPlano;
+            } else if (vinculados.length > 0 && vinculados[0].plano) {
                 document.getElementById('planoAtual').textContent = vinculados[0].plano;
+            } else {
+                document.getElementById('planoAtual').textContent = '-';
             }
         }
-
-        // Buscar o ID da empresa logada (Pessoa Jurídica)
-async function buscarIdEmpresa() {
-    const token = localStorage.getItem('token');
-    
-    try {
-        const response = await fetch('/api/me', {
-            headers: {
-                'Authorization': 'Bearer ' + token
-            }
-        });
-        
-        if (!response.ok) throw new Error('Erro ao buscar dados da empresa');
-        
-        const usuario = await response.json();
-        
-        // Verifica se é Pessoa Jurídica
-        if (usuario.tipo !== 'PJ') {
-            throw new Error('Apenas Pessoa Jurídica pode adicionar vinculados');
-        }
-        
-        return usuario.id; // Retorna o ID da empresa
-    } catch (error) {
-        console.error('Erro ao buscar ID da empresa:', error);
-        throw error;
-    }
-}
 
         // ============================================================
         // ADICIONAR VINCULADO
@@ -636,18 +812,27 @@ async function buscarIdEmpresa() {
             btnSalvar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
             modalError.classList.remove('show');
             
-            const dados = {
-                nome: document.getElementById('nome').value,
-                email: document.getElementById('email').value,
-                cpf: document.getElementById('cpf').value.replace(/[^\d]/g, ''),
-                password: document.getElementById('senha').value
-            };
-
-            console.log('Enviando dados:', dados);
-            console.log('URL:', '/api/vinculados');
-            console.log('Token:', token);
-
             try {
+                const empresaId = localStorage.getItem('empresaId');
+                const empresaPlano = localStorage.getItem('empresaPlano');
+                
+                if (!empresaId) {
+                    throw new Error('Dados da empresa não encontrados. Faça login novamente.');
+                }
+                
+                const dados = {
+                    nome: document.getElementById('nome').value,
+                    email: document.getElementById('email').value,
+                    cpf: document.getElementById('cpf').value.replace(/[^\d]/g, ''),
+                    password: document.getElementById('senha').value,
+                    tipoUsuario: 'PESSOA_FISICA',
+                    plano: empresaPlano || 'INDIVIDUAL',
+                    contaPaiId: empresaId,
+                    ativo: true
+                };
+                
+                console.log('Enviando dados:', dados);
+                
                 const response = await fetch('/api/vinculados', {
                     method: 'POST',
                     headers: {
@@ -656,27 +841,20 @@ async function buscarIdEmpresa() {
                     },
                     body: JSON.stringify(dados)
                 });
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('Resposta do servidor:', response.status, errorText);
-                    modalError.textContent = `Erro ${response.status}: ${errorText}`;
-                    modalError.classList.add('show');
-                    return;
-                }
-
+                
                 if (response.ok) {
                     fecharModalAdicionar();
                     mostrarSucesso('Vinculado adicionado com sucesso!');
                     carregarVinculados();
                 } else {
                     const error = await response.text();
-                    modalError.textContent = error;
+                    console.error('Erro resposta:', response.status, error);
+                    modalError.textContent = `Erro ${response.status}: ${error}`;
                     modalError.classList.add('show');
                 }
             } catch (error) {
                 console.error('Erro:', error);
-                modalError.textContent = 'Erro ao adicionar vinculado.';
+                modalError.textContent = error.message || 'Erro ao adicionar vinculado.';
                 modalError.classList.add('show');
             } finally {
                 btnSalvar.disabled = false;
@@ -731,8 +909,30 @@ async function buscarIdEmpresa() {
         }
 
         // ============================================================
-        // MENSAGENS
+        // UTILITÁRIOS
         // ============================================================
+        function formatarCPF(cpf) {
+            if (!cpf || cpf === '00000000000') return '-';
+            return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function mostrarLoading(show) {
+            const loading = document.getElementById('loading');
+            if (loading) {
+                loading.style.display = show ? 'flex' : 'none';
+            }
+        }
+
         function mostrarErro(mensagem) {
             const errorEl = document.getElementById('errorMessage');
             errorEl.textContent = mensagem;
@@ -747,41 +947,28 @@ async function buscarIdEmpresa() {
             setTimeout(() => successEl.classList.remove('show'), 3000);
         }
 
-        // ============================================================
-        // UTILITÁRIOS
-        // ============================================================
-        function formatarCPF(cpf) {
-            if (!cpf) return '-';
-            return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-        }
-
-        // Máscara de CPF
-        document.getElementById('cpf').addEventListener('input', function(e) {
-            let value = e.target.value.replace(/\D/g, '');
-            if (value.length > 11) value = value.slice(0, 11);
-            value = value.replace(/(\d{3})(\d)/, '$1.$2');
-            value = value.replace(/(\d{3})(\d)/, '$1.$2');
-            value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-            e.target.value = value;
-        });
-
         // Fechar modal ao clicar fora
         window.onclick = function(event) {
             const modal = document.getElementById('modalAdicionar');
             if (event.target == modal) {
                 fecharModalAdicionar();
             }
-            
-            const modalLogout = document.getElementById('modal-logout');
-            if (event.target == modalLogout) {
-                fecharModalLogout();
-            }
         }
 
-        // ============================================================
-        // INICIALIZAR
-        // ============================================================
+        // Máscara de CPF
         document.addEventListener('DOMContentLoaded', () => {
+            const cpfInput = document.getElementById('cpf');
+            if (cpfInput) {
+                cpfInput.addEventListener('input', function(e) {
+                    let value = e.target.value.replace(/\D/g, '');
+                    if (value.length > 11) value = value.slice(0, 11);
+                    value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                    value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                    value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+                    e.target.value = value;
+                });
+            }
+            
             carregarVinculados();
         });
     </script>

@@ -19,7 +19,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 inicializarSidebar();
             }
         })
-        .catch(err => console.error('Erro no sidebarLoader:', err));
 });
 
 function inicializarSidebar() {
@@ -56,7 +55,6 @@ function controlarAcessoPorPerfil() {
                 if (tipoUsuario) localStorage.setItem('tipoUsuario', tipoUsuario);
                 if (plano) localStorage.setItem('plano', plano);
             } catch (error) {
-                console.error('❌ Erro ao decodificar token:', error);
                 return;
             }
         } else {
@@ -64,17 +62,14 @@ function controlarAcessoPorPerfil() {
         }
     }
 
-    console.log('🔍 Perfil detectado:', { tipoUsuario, plano });
 
     // Menu Vinculados (apenas PESSOA_JURIDICA)
     const menuVinculados = document.getElementById('menu-vinculados');
     if (menuVinculados) {
         if (tipoUsuario === 'PESSOA_JURIDICA') {
             menuVinculados.style.display = 'block';
-            console.log('✅ Menu Vinculados: VISÍVEL');
         } else {
             menuVinculados.style.display = 'none';
-            console.log('❌ Menu Vinculados: OCULTO');
         }
     }
 
@@ -83,10 +78,8 @@ function controlarAcessoPorPerfil() {
     if (menuRelatorios) {
         if (tipoUsuario === 'PESSOA_FISICA' && plano === 'FREE') {
             menuRelatorios.style.display = 'none';
-            console.log('❌ Menu Relatórios: OCULTO (FREE)');
         } else {
             menuRelatorios.style.display = 'block';
-            console.log('✅ Menu Relatórios: VISÍVEL');
         }
     }
 
@@ -95,10 +88,8 @@ function controlarAcessoPorPerfil() {
     if (menuPlanos) {
         if (plano === 'INDIVIDUAL' || plano === 'EMPRESARIAL') {
             menuPlanos.style.display = 'none';
-            console.log('❌ Menu Planos: OCULTO (plano pago)');
         } else {
             menuPlanos.style.display = 'block';
-            console.log('✅ Menu Planos: VISÍVEL');
         }
     }
 }

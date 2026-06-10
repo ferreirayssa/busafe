@@ -48,13 +48,9 @@ public class VinculadosController {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Acesso permitido apenas para Pessoa Jurídica.");
             }
 
-            // Busca todos os vinculados ao CNPJ
-            List<User> vinculados = userRepository.listarPorCnpj(usuarioLogado.getCnpj());
-            
-            // Remove o próprio usuário PJ da lista (se estiver)
-            vinculados = vinculados.stream()
-                    .filter(u -> !u.getId().equals(usuarioLogado.getId()))
-                    .collect(Collectors.toList());
+            // 🔥 MUDANÇA 1: Buscar por contaPaiId em vez de CNPJ
+            // Busca todos os usuários que têm esta empresa como contaPai
+            List<User> vinculados = userRepository.findByContaPaiId(usuarioLogado.getId());
 
             List<Map<String, Object>> resposta = vinculados.stream().map(v -> {
                 Map<String, Object> map = new HashMap<>();
@@ -64,64 +60,74 @@ public class VinculadosController {
                 map.put("cpf", v.getCpf());
                 map.put("plano", v.getPlano().name());
                 map.put("ativo", v.isAtivo());
+                map.put("contaPaiId", v.getContaPaiId()); // Adicionar para debug
                 return map;
             }).collect(Collectors.toList());
 
             return ResponseEntity.ok(resposta);
 
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Erro ao carregar vinculados: " + e.getMessage());
         }
     }
+        @PostMapping
+        public ResponseEntity<?> adicionarVinculado(@RequestHeader("Authorization") String token, 
+                                                    @RequestBody Map<String, String> body) {
+            try {
+                String jwt = token.replace("Bearer ", "");
+                String emailUsuario = tokenService.getSubject(jwt);
 
-    // --- ADICIONAR VINCULADO ---
-    @PostMapping
-    public ResponseEntity<?> adicionarVinculado(@RequestHeader("Authorization") String token, 
-                                                 @RequestBody Map<String, String> body) {
-        try {
-            String jwt = token.replace("Bearer ", "");
-            String emailUsuario = tokenService.getSubject(jwt);
+                User usuarioLogado = userRepository.findByEmail(emailUsuario).orElse(null);
+                
+                if (usuarioLogado == null) {
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuário não encontrado.");
+                }
 
-            User usuarioLogado = userRepository.findByEmail(emailUsuario).orElse(null);
-            
-            if (usuarioLogado == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuário não encontrado.");
+                // Verifica se é PESSOA_JURIDICA
+                if (usuarioLogado.getTipoUsuario() != TipoUsuario.PESSOA_JURIDICA) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Apenas Pessoa Jurídica pode adicionar vinculados.");
+                }
+
+                // 🔥 OBTEM O contaPaiId do body (vindo do frontend)
+                String contaPaiId = body.get("contaPaiId");
+                
+                // Se não veio do frontend, usa o ID do usuarioLogado
+                if (contaPaiId == null || contaPaiId.isBlank()) {
+                    contaPaiId = usuarioLogado.getId();
+                }
+                
+
+                // Cria o novo usuário vinculado
+                User novoVinculado = new User();
+                novoVinculado.setNome(body.get("nome"));
+                novoVinculado.setEmail(body.get("email"));
+                novoVinculado.setCpf(body.get("cpf"));
+                novoVinculado.setPassword(body.get("password"));
+                novoVinculado.setTipoUsuario(TipoUsuario.PESSOA_FISICA);
+                novoVinculado.setPlano(usuarioLogado.getPlano()); // Herda o plano da PJ
+                novoVinculado.setCnpj(usuarioLogado.getCnpj()); // Vincula ao CNPJ
+                novoVinculado.setContaPaiId(contaPaiId); // 🔥 SETA O CONTA_PAI_ID
+                novoVinculado.setAtivo(true);
+
+                User salvo = userService.salvarUsuarioVinculado(novoVinculado);
+                
+                Map<String, Object> resposta = new HashMap<>();
+                resposta.put("id", salvo.getId());
+                resposta.put("nome", salvo.getNome());
+                resposta.put("email", salvo.getEmail());
+                resposta.put("cpf", salvo.getCpf());
+                resposta.put("mensagem", "Vinculado adicionado com sucesso!");
+
+                return ResponseEntity.status(HttpStatus.CREATED).body(resposta);
+
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+            } catch (Exception e) {
+                e.printStackTrace();
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao adicionar vinculado: " + e.getMessage());
             }
-
-            // Verifica se é PESSOA_JURIDICA
-            if (usuarioLogado.getTipoUsuario() != TipoUsuario.PESSOA_JURIDICA) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Apenas Pessoa Jurídica pode adicionar vinculados.");
-            }
-
-            // Cria o novo usuário vinculado
-            User novoVinculado = new User();
-            novoVinculado.setNome(body.get("nome"));
-            novoVinculado.setEmail(body.get("email"));
-            novoVinculado.setCpf(body.get("cpf"));
-            novoVinculado.setPassword(body.get("password"));
-            novoVinculado.setTipoUsuario(TipoUsuario.PESSOA_FISICA);
-            novoVinculado.setPlano(usuarioLogado.getPlano()); // Herda o plano da PJ
-            novoVinculado.setCnpj(usuarioLogado.getCnpj()); // Vincula ao CNPJ
-            novoVinculado.setEmpresaId(usuarioLogado.getId()); // ID da empresa
-            novoVinculado.setAtivo(true);
-
-            User salvo = userService.salvarUsuarioVinculado(novoVinculado);
-            
-            Map<String, Object> resposta = new HashMap<>();
-            resposta.put("id", salvo.getId());
-            resposta.put("nome", salvo.getNome());
-            resposta.put("email", salvo.getEmail());
-            resposta.put("cpf", salvo.getCpf());
-            resposta.put("mensagem", "Vinculado adicionado com sucesso!");
-
-            return ResponseEntity.status(HttpStatus.CREATED).body(resposta);
-
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao adicionar vinculado: " + e.getMessage());
         }
-    }
 
     // --- REMOVER VINCULADO ---
     @DeleteMapping("/{id}")
