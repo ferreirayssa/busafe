@@ -1,195 +1,977 @@
 <!DOCTYPE html>
-<html lang="PT-BR">
+<html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Relatório — BuSafe</title>
-  <link rel="icon" href="../Logos/busafe.ico">
-  <link rel="apple-touch-icon" href="../Logos/Logo_3.png">
-  <link rel="stylesheet" href="../css/Style.css">
-  <script src="../js/scripts.js" defer></script>
-  <script src="../js/sidebarLoader.js" defer></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Relatórios — BuSafe</title>
+    <link rel="icon" href="../Logos/busafe.ico">
+    <link rel="apple-touch-icon" href="../Logos/Logo_3.png">
+    <link rel="stylesheet" href="../css/Style.css">
+
+    <script src="../js/scripts.js" defer></script>
+    <script src="../js/sidebarLoader.js" defer></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Date Range Picker CSS -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+    
+    <style>
+        /* Variáveis CSS - Herda do Style.css */
+        :root {
+            --success: #4CAF50;
+            --danger: #ef5350;
+            --warning: #ff9800;
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.3);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.4);
+            --shadow-lg: 0 8px 32px rgba(0,0,0,0.5);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body.light-mode {
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.08);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.12);
+            --shadow-lg: 0 8px 32px rgba(0,0,0,0.16);
+        }
+
+        /* Container principal */
+        .relatorios-container {
+            padding: clamp(1rem, 3vw, 2.5rem);
+            max-width: 1200px;
+            margin: 0 auto;
+            animation: fadeInUp 0.3s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Header */
+        .relatorios-header {
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .relatorios-header h1 {
+            font-size: clamp(1.5rem, 3vw, 2rem);
+            color: var(--text-clr);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 0;
+        }
+
+        .relatorios-header h1 i {
+            color: var(--accent-clr);
+            background: linear-gradient(135deg, var(--accent-clr), #2989c4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-export {
+            background: var(--base-clr);
+            border: 1px solid var(--line-clr);
+            color: var(--text-clr);
+            padding: 0.625rem 1.25rem;
+            border-radius: var(--radius-sm);
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: var(--transition);
+            font-size: 0.875rem;
+            white-space: nowrap;
+        }
+
+        .btn-export:hover {
+            background: var(--hover-clr);
+            border-color: var(--accent-clr);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Filtros */
+        .filtros-container {
+            background: var(--base-clr);
+            border: 1px solid var(--line-clr);
+            border-radius: var(--radius-md);
+            padding: clamp(1rem, 2vw, 1.5rem);
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+        }
+
+        .filtros-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            align-items: end;
+        }
+
+        @media (min-width: 768px) {
+            .filtros-grid {
+                grid-template-columns: 2fr 1fr 1fr auto;
+            }
+        }
+
+        .filtro-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .filtro-group label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--secondary-text-clr);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+        }
+
+        .filtro-group input,
+        .filtro-group select {
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--line-clr);
+            background: var(--base-clr);
+            color: var(--text-clr);
+            font-family: inherit;
+            font-size: 0.9rem;
+            transition: var(--transition);
+            width: 100%;
+        }
+
+        .filtro-group input:focus,
+        .filtro-group select:focus {
+            outline: none;
+            border-color: var(--accent-clr);
+            box-shadow: 0 0 0 3px rgba(16, 101, 156, 0.15);
+        }
+
+        .filtro-group input::placeholder {
+            color: var(--secondary-text-clr);
+            opacity: 0.7;
+        }
+
+        .filtro-group select option {
+            background: var(--base-clr);
+            color: var(--text-clr);
+        }
+
+        .btn-filtrar {
+            background: linear-gradient(135deg, var(--accent-clr), #2989c4);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            justify-content: center;
+            transition: var(--transition);
+            width: 100%;
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+
+        .btn-filtrar:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 101, 156, 0.3);
+        }
+
+        .btn-filtrar:active {
+            transform: translateY(0);
+        }
+
+        .btn-filtrar:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Cards de métricas */
+        .metricas-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 480px) {
+            .metricas-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .metric-card {
+            background: var(--hover-clr);
+            border: 1px solid var(--line-clr);
+            border-radius: var(--radius-md);
+            padding: clamp(1rem, 2vw, 1.5rem);
+            text-align: center;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            cursor: default;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--accent-clr);
+        }
+
+        .metric-icon {
+            font-size: 2rem;
+            opacity: 0.1;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: var(--text-clr);
+            transition: var(--transition);
+        }
+
+        .metric-card:hover .metric-icon {
+            opacity: 0.2;
+            transform: scale(1.1);
+        }
+
+        .metric-value {
+            font-size: clamp(1.5rem, 3vw, 2.5rem);
+            font-weight: 700;
+            color: var(--accent-clr);
+            margin-bottom: 0.25rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .metric-label {
+            font-size: 0.85rem;
+            color: var(--secondary-text-clr);
+            font-weight: 500;
+            position: relative;
+            z-index: 1;
+        }
+
+        .metric-trend {
+            font-size: 0.8rem;
+            margin-top: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            padding: 0.375rem 0.75rem;
+            border-radius: 20px;
+            font-weight: 500;
+            position: relative;
+            z-index: 1;
+        }
+
+        .trend-up { 
+            color: var(--success);
+            background: rgba(76, 175, 80, 0.15);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+        }
+        
+        .trend-down { 
+            color: var(--danger);
+            background: rgba(239, 83, 80, 0.15);
+            border: 1px solid rgba(239, 83, 80, 0.3);
+        }
+        
+        .trend-neutral {
+            color: var(--warning);
+            background: rgba(255, 152, 0, 0.15);
+            border: 1px solid rgba(255, 152, 0, 0.3);
+        }
+
+        /* Em breve */
+        .em-breve {
+            text-align: center;
+            padding: clamp(2rem, 5vw, 4rem) 2rem;
+            color: var(--secondary-text-clr);
+            background: var(--hover-clr);
+            border: 1px solid var(--line-clr);
+            border-radius: var(--radius-md);
+        }
+
+        .em-breve i {
+            font-size: clamp(3rem, 5vw, 4rem);
+            margin-bottom: 1rem;
+            opacity: 0.15;
+            display: block;
+            color: var(--text-clr);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .em-breve h2 {
+            font-size: clamp(1.2rem, 2vw, 1.5rem);
+            margin-bottom: 0.5rem;
+            color: var(--text-clr);
+        }
+
+        .em-breve p {
+            font-size: 1rem;
+            max-width: 400px;
+            margin: 0 auto;
+            line-height: 1.5;
+            color: var(--secondary-text-clr);
+        }
+
+        /* Toast */
+        #toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 90vw;
+            pointer-events: none;
+        }
+
+        .toast {
+            animation: slideInRight 0.3s ease, slideOutRight 0.3s ease 2.7s forwards;
+            pointer-events: auto;
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes slideOutRight {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+
+        /* Loading */
+        .loading {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Responsivo */
+        @media (max-width: 768px) {
+            .relatorios-container {
+                padding: 1rem;
+            }
+
+            .relatorios-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .header-actions {
+                width: 100%;
+            }
+
+            .btn-export {
+                flex: 1;
+                justify-content: center;
+            }
+
+            .filtros-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .btn-filtrar {
+                height: 48px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .relatorios-container {
+                padding: 0.75rem;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        @media (hover: none) {
+            .metric-card:hover {
+                transform: none;
+            }
+            
+            .btn-filtrar:active {
+                transform: scale(0.98);
+            }
+        }
+
+        /* Datepicker - Respeita o tema automaticamente */
+        .daterangepicker {
+            z-index: 10000 !important;
+            background: var(--base-clr) !important;
+            border: 1px solid var(--line-clr) !important;
+            border-radius: var(--radius-md) !important;
+            box-shadow: var(--shadow-lg) !important;
+            font-family: inherit !important;
+            color: var(--text-clr) !important;
+        }
+
+        .daterangepicker .calendar-table {
+            background: var(--base-clr) !important;
+            border-color: var(--line-clr) !important;
+        }
+
+        .daterangepicker .calendar-table th,
+        .daterangepicker .calendar-table td {
+            color: var(--text-clr) !important;
+            border-radius: var(--radius-sm) !important;
+        }
+
+        .daterangepicker td.off {
+            color: var(--secondary-text-clr) !important;
+            opacity: 0.5;
+        }
+
+        .daterangepicker td.available:hover {
+            background: var(--hover-clr) !important;
+        }
+
+        .daterangepicker td.in-range {
+            background: rgba(16, 101, 156, 0.15) !important;
+        }
+
+        .daterangepicker td.active,
+        .daterangepicker td.active:hover {
+            background: var(--accent-clr) !important;
+            color: white !important;
+        }
+
+        .daterangepicker .drp-buttons {
+            border-top-color: var(--line-clr) !important;
+            background: var(--base-clr) !important;
+        }
+
+        .daterangepicker .btn {
+            background: var(--hover-clr) !important;
+            color: var(--text-clr) !important;
+            border: 1px solid var(--line-clr) !important;
+            border-radius: var(--radius-sm) !important;
+        }
+
+        .daterangepicker .btn-primary {
+            background: var(--accent-clr) !important;
+            color: white !important;
+            border: none !important;
+        }
+
+        .daterangepicker .btn:hover {
+            background: var(--accent-clr) !important;
+            color: white !important;
+        }
+
+        .daterangepicker select {
+            background: var(--base-clr) !important;
+            color: var(--text-clr) !important;
+            border-color: var(--line-clr) !important;
+        }
+    </style>
 </head>
 <body>
 
-  <div id="sidebar-container"></div>
+    <div id="sidebar-container"></div>
 
-  <main id="content">
-    <div class="container" style="display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:60vh;">
-      <!-- bi-file-earmark-bar-graph grande -->
-      <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" fill="#e9bf08" viewBox="0 0 16 16" style="margin-bottom:1.5rem;">
-        <path d="M10 13.5a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-6a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v6zm-2.5.5a.5.5 0 0 1-.5-.5v-4a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-.5.5h-1zm-3 0a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-1z"/>
-        <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
-      </svg>
-      <h1 style="font-size:2rem;margin-bottom:.75rem;">Em Breve</h1>
-      <p style="font-size:1.05rem;color:var(--secondary-text-clr);max-width:520px;line-height:1.7;text-align:center;">
-        A funcionalidade de <strong>Relatórios</strong> estará disponível nos planos
-        <strong style="color:#10659c;">Individual</strong> e <strong style="color:#10659c;">Empresarial</strong>.
-      </p>
-      <p style="font-size:.9rem;color:var(--secondary-text-clr);margin-top:1.25rem;">
-        Conheça os <a href="planos.html" style="color:#10659c;text-decoration:none;font-weight:600;">planos disponíveis</a>.
-      </p>
-    </div>
-  </main>
+    <main id="content">
+        <div class="relatorios-container">
+            
+            <!-- Header -->
+            <div class="relatorios-header">
+                <h1>
+                    <i class="fas fa-chart-line"></i>
+                    Relatórios
+                </h1>
+                <div class="header-actions">
+                    <button class="btn-export" id="btnExportPDF" title="Exportar como PDF">
+                        <i class="fas fa-file-pdf"></i>
+                        PDF
+                    </button>
+                    <button class="btn-export" id="btnExportExcel" title="Exportar como Excel">
+                        <i class="fas fa-file-excel"></i>
+                        Excel
+                    </button>
+                </div>
+            </div>
 
-  <div id="toast-container"></div>
+            <!-- Filtros -->
+            <div class="filtros-container">
+                <div class="filtros-grid">
+                    <div class="filtro-group">
+                        <label for="daterange">
+                            <i class="fas fa-calendar-alt"></i>
+                            Período
+                        </label>
+                        <input 
+                            type="text" 
+                            id="daterange" 
+                            placeholder="Selecione o período"
+                            autocomplete="off"
+                            readonly
+                        >
+                    </div>
+                    <div class="filtro-group">
+                        <label for="linhaBusca">
+                            <i class="fas fa-bus"></i>
+                            Linha
+                        </label>
+                        <input 
+                            type="text" 
+                            id="linhaBusca" 
+                            placeholder="Nº da linha"
+                            autocomplete="off"
+                        >
+                    </div>
+                    <div class="filtro-group">
+                        <label for="tipoRelatorio">
+                            <i class="fas fa-chart-bar"></i>
+                            Tipo
+                        </label>
+                        <select id="tipoRelatorio">
+                            <option value="geral">Geral</option>
+                            <option value="ocorrencias">Ocorrências</option>
+                            <option value="rotas">Rotas</option>
+                            <option value="passageiros">Passageiros</option>
+                        </select>
+                    </div>
+                    <div class="filtro-group">
+                        <button class="btn-filtrar" id="btnFiltrar">
+                            <i class="fas fa-search"></i>
+                            <span>Aplicar</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
 
-    <div id="modal-logout" class="modal-overlay" style="display: none;">
-      <div class="modal-content">
-          <div style="color: #10659c; margin-bottom: 15px; margin-top: 10px;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" class="bi bi-patch-question-fill" viewBox="0 0 16 16">
-              <path d="M5.933.87a2.89 2.89 0 0 1 4.134 0l.622.638.89-.011a2.89 2.89 0 0 1 2.924 2.924l-.01.89.636.622a2.89 2.89 0 0 1 0 4.134l-.637.622.011.89a2.89 2.89 0 0 1-2.924 2.924l-.89-.01-.622.636a2.89 2.89 0 0 1-4.134 0l-.622-.637-.89.011a2.89 2.89 0 0 1-2.924-2.924l.01-.89-.636-.622a2.89 2.89 0 0 1 0-4.134l.637-.622-.011-.89a2.89 2.89 0 0 1 2.924-2.924l.89.01zM7.002 11a1 1 0 1 0 2 0 1 1 0 0 0-2 0m1.602-2.027c.04-.534.198-.815.846-1.26.674-.475 1.05-1.09 1.05-1.986 0-1.325-.92-2.227-2.262-2.227-1.02 0-1.792.492-2.1 1.29A1.7 1.7 0 0 0 6 5.48c0 .393.203.64.545.64.272 0 .455-.147.564-.51.158-.592.525-.915 1.074-.915.61 0 1.03.446 1.03 1.084 0 .563-.208.885-.822 1.325-.619.433-.926.914-.926 1.64v.111c0 .428.208.745.585.745.336 0 .504-.24.554-.627"/>
-            </svg>
-          </div>
-          <h3>Sair da conta?</h3>
-          <p>Você precisará fazer login novamente para acessar seus favoritos e relatórios.</p>
-          <div class="modal-buttons">
-              <button class="btn-modal btn-modal-secondary" onclick="fecharModalLogout()">Cancelar</button>
-              <button class="btn-modal btn-modal-primary" onclick="confirmarSair()">Sair agora</button>
-          </div>
-      </div>
-  </div>
+            <!-- Métricas -->
+            <div class="metricas-grid">
+                <div class="metric-card">
+                    <i class="fas fa-exclamation-triangle metric-icon"></i>
+                    <div class="metric-value loading" id="totalOcorrencias">--</div>
+                    <div class="metric-label">Total de Ocorrências</div>
+                    <div class="metric-trend trend-neutral" id="trendOcorrencias">
+                        <i class="fas fa-minus"></i>
+                        <span>Carregando...</span>
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <i class="fas fa-clock metric-icon"></i>
+                    <div class="metric-value loading" id="tempoMedio">--</div>
+                    <div class="metric-label">Tempo Médio (min)</div>
+                    <div class="metric-trend" id="trendTempo">
+                        <i class="fas fa-arrow-down trend-down"></i>
+                        <span>Carregando...</span>
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <i class="fas fa-check-circle metric-icon"></i>
+                    <div class="metric-value loading" id="taxaSucesso">--</div>
+                    <div class="metric-label">Taxa de Sucesso</div>
+                    <div class="metric-trend" id="trendSucesso">
+                        <i class="fas fa-arrow-up trend-up"></i>
+                        <span>Carregando...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráficos -->
+            <div class="em-breve">
+                <i class="fas fa-chart-pie"></i>
+                <h2>Análises Detalhadas</h2>
+                <p>Gráficos interativos e relatórios personalizados estarão disponíveis em breve.</p>
+            </div>
+
+        </div>
+    </main>
+
+    <div id="toast-container"></div>
 
     <script>
-      // Função para abrir o modal
-function fazerLogout(event) {
-    event.preventDefault(); // Impede o link de recarregar a página
-    document.getElementById('modal-logout').style.display = 'flex';
-}
-
-// Função para fechar o modal
-function fecharModalLogout() {
-    document.getElementById('modal-logout').style.display = 'none';
-}
-
-// Função que limpa os dados e desloga de fato
-function confirmarSair() {
-    localStorage.clear(); // Apaga token, userId, etc.
-    window.location.href = "/"; // Manda para a Landing Page na raiz
-}
-
-// Fechar modal se o usuário clicar fora da caixa branca
-window.onclick = function(event) {
-    const modal = document.getElementById('modal-logout');
-    if (event.target == modal) {
-        fecharModalLogout();
-    }
-}
-
-
-  async function favoritarRotaNoBanco(codigoRota) {
-    const token = localStorage.getItem('token');
-
-    // 1. Verifica se existe um token (usuário está logado)
-    if (!token) {
-        showStatus("Erro: Você precisa estar logado para favoritar.");
-        return;
-    }
-
-    try {
-        showStatus("Salvando linha " + codigoRota + "...");
-
-        // 2. Faz o POST para o endpoint que identifica o usuário pelo Token
-        const response = await fetch('/api/users/rotas-fav', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + token
-            },
-            body: JSON.stringify({ codigo: codigoRota })
-        });
-
-        if (response.ok) {
-            showStatus("⭐ Rota " + codigoRota + " salva com sucesso!");
+        // Carrega scripts na ordem correta e inicializa a página
+        (function() {
+            'use strict';
             
-            // 3. ATUALIZA A SIDEBAR: Chama a função que reconstrói o menu "Linhas Frequentes"
-            if (typeof carregarMeusFavoritos === "function") {
-                carregarMeusFavoritos();
-            }
-        } else {
-            // Caso o Java retorne erro (ex: rota já favoritada)
-            const erroMsg = await response.text();
-            showStatus(erroMsg || "Erro ao favoritar rota.");
-        }
-    } catch (err) {
-        console.error("Erro na requisição:", err);
-        showStatus("Erro de conexão com o servidor.");
-    }
-}
-
-async function carregarMeusFavoritos() {
-    const token = localStorage.getItem('token');
-    const container = document.getElementById('lista-favoritos-sidebar');
-    
-    if (!token || !container) return;
-
-    try {
-        const response = await fetch('/api/users/rotas-fav', {
-            method: 'GET',
-            headers: { 'Authorization': 'Bearer ' + token }
-        });
-
-        if (response.ok) {
-            const favoritos = await response.json();
+            const RELATORIOS_SCRIPTS = [
+                'https://cdn.jsdelivr.net/npm/jquery/dist/jquery.min.js',
+                'https://cdn.jsdelivr.net/npm/moment/min/moment.min.js',
+                'https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js'
+            ];
             
-            // Limpa o conteúdo estático da div interna
-            container.innerHTML = '';
-
-            if (!favoritos || favoritos.length === 0) {
-                container.innerHTML = '<span class="nav-item" style="font-size: 0.8rem; opacity: 0.5; padding-left: 2.6rem;">Nenhuma linha salva</span>';
-                return;
-            }
-
-            // Injeta cada objeto Rota favorito
-            favoritos.forEach(rota => {
-                const link = document.createElement('a');
-                link.href = "#";
-                link.className = "nav-item";
-                link.style.paddingLeft = "2.6rem"; 
+            // Sistema principal da página
+            const RelatoriosPage = {
+                initialized: false,
                 
-                // Extraindo dados do objeto (Embedding)
-                // Usamos os nomes exatos dos campos do seu Rota.java
-                const numeroLinha = rota.linhaTranscol || rota.linhaMunicipal || "---";
-                const nomeLinha = rota.nome || "";
-
-                // Define o que aparece na tela (Texto, não o objeto)
-                link.innerHTML = `<span>Linha ${numeroLinha} - ${nomeLinha}</span>`;
-                
-                link.onclick = (e) => {
-                    e.preventDefault();
-                    
-                    // Verifica se estamos no mapa.html ou alert.html
-                    const campoBusca = document.getElementById('linha') || document.getElementById('incidente-linha-busca');
-                    
-                    if (campoBusca) {
-                        campoBusca.value = numeroLinha; // Atribui apenas o número (string)
-                        
-                        // Dispara o botão de busca se for o mapa
-                        const btnGo = document.getElementById('go');
-                        if (btnGo) btnGo.click();
-                        
-                        // Dispara evento de input para o autocomplete do alert.html notar a mudança
-                        campoBusca.dispatchEvent(new Event('input'));
+                init() {
+                    if (this.initialized) {
+                        return;
                     }
                     
-                    // Fecha o menu lateral no mobile após clicar
-                    if (window.innerWidth <= 768) {
-                        const sidebar = document.getElementById('sidebar');
-                        const overlay = document.getElementById('sidebar-overlay');
-                        if(sidebar) sidebar.classList.remove('mobile-open');
-                        if(overlay) overlay.classList.remove('show');
+                    console.log('📊 Iniciando relatórios...');
+                    
+                    if (!this.verificarAcesso()) {
+                        this.initialized = true;
+                        return;
                     }
-                };
+                    
+                    // Carrega scripts primeiro, depois inicializa
+                    carregarScripts(RELATORIOS_SCRIPTS)
+                        .then(() => {
+                            console.log('✅ Scripts carregados');
+                            this.configurarDatePicker();
+                            this.configurarEventos();
+                            this.carregarDadosIniciais();
+                            this.initialized = true;
+                            console.log('✅ Relatórios pronto');
+                        })
+                        .catch(err => {
+                            console.error('❌ Erro ao carregar scripts:', err);
+                            this.initialized = true;
+                        });
+                },
                 
-                container.appendChild(link);
-            });
-        }
-    } catch (err) {
-        console.error("Erro ao carregar favoritos:", err);
-    }
-}
-
-window.addEventListener('load', carregarMeusFavoritos);
-  </script>
+                configurarDatePicker() {
+                    // Verifica se jQuery e o plugin estão disponíveis
+                    if (typeof jQuery === 'undefined' || !jQuery.fn.daterangepicker) {
+                        console.warn('DateRangePicker não disponível');
+                        return;
+                    }
+                    
+                    const start = moment().subtract(29, 'days');
+                    const end = moment();
+                    
+                    jQuery('#daterange').daterangepicker({
+                        startDate: start,
+                        endDate: end,
+                        locale: {
+                            format: 'DD/MM/YYYY',
+                            applyLabel: 'Aplicar',
+                            cancelLabel: 'Cancelar',
+                            fromLabel: 'De',
+                            toLabel: 'Até',
+                            customRangeLabel: 'Personalizado',
+                            daysOfWeek: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'],
+                            monthNames: ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
+                                       'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+                        },
+                        ranges: {
+                            'Hoje': [moment(), moment()],
+                            'Ontem': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                            'Últimos 7 dias': [moment().subtract(6, 'days'), moment()],
+                            'Últimos 30 dias': [moment().subtract(29, 'days'), moment()],
+                            'Este mês': [moment().startOf('month'), moment().endOf('month')]
+                        }
+                    });
+                },
+                
+                configurarEventos() {
+                    const btnFiltrar = document.getElementById('btnFiltrar');
+                    const linhaBusca = document.getElementById('linhaBusca');
+                    
+                    if (btnFiltrar) {
+                        // Remove listeners antigos
+                        const newBtn = btnFiltrar.cloneNode(true);
+                        btnFiltrar.parentNode.replaceChild(newBtn, btnFiltrar);
+                        newBtn.addEventListener('click', () => this.aplicarFiltros());
+                    }
+                    
+                    if (linhaBusca) {
+                        const newInput = linhaBusca.cloneNode(true);
+                        linhaBusca.parentNode.replaceChild(newInput, linhaBusca);
+                        newInput.addEventListener('keypress', (e) => {
+                            if (e.key === 'Enter') this.aplicarFiltros();
+                        });
+                    }
+                    
+                    document.getElementById('btnExportPDF')?.addEventListener('click', () => this.exportarPDF());
+                    document.getElementById('btnExportExcel')?.addEventListener('click', () => this.exportarExcel());
+                },
+                
+                aplicarFiltros() {
+                    const periodo = document.getElementById('daterange')?.value || '';
+                    const linha = document.getElementById('linhaBusca')?.value || '';
+                    const tipo = document.getElementById('tipoRelatorio')?.value || 'geral';
+                    
+                    const btn = document.getElementById('btnFiltrar');
+                    if (!btn) return;
+                    
+                    const originalHTML = btn.innerHTML;
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Aplicando...';
+                    btn.disabled = true;
+                    
+                    setTimeout(() => {
+                        console.log('🔍 Filtros:', { periodo, linha, tipo });
+                        this.atualizarMetricas();
+                        this.mostrarToast('Filtros aplicados!', 'success');
+                        
+                        btn.innerHTML = originalHTML;
+                        btn.disabled = false;
+                    }, 600);
+                },
+                
+                atualizarMetricas() {
+                    const dados = {
+                        totalOcorrencias: Math.floor(Math.random() * 2000) + 500,
+                        tempoMedio: (Math.random() * 30 + 15).toFixed(1),
+                        taxaSucesso: (Math.random() * 20 + 80).toFixed(1)
+                    };
+                    
+                    this.animarValor('totalOcorrencias', 0, dados.totalOcorrencias, 800);
+                    this.animarValor('tempoMedio', 0, parseFloat(dados.tempoMedio), 800);
+                    this.animarValor('taxaSucesso', 0, parseFloat(dados.taxaSucesso), 800, '%');
+                    
+                    setTimeout(() => {
+                        const trendEl = document.getElementById('trendOcorrencias');
+                        if (trendEl) {
+                            const isPositive = Math.random() > 0.5;
+                            trendEl.innerHTML = `
+                                <i class="fas fa-arrow-${isPositive ? 'up' : 'down'} ${isPositive ? 'trend-down' : 'trend-up'}"></i>
+                                <span>${Math.floor(Math.random() * 15)}% vs período anterior</span>
+                            `;
+                            trendEl.className = `metric-trend ${isPositive ? 'trend-down' : 'trend-up'}`;
+                        }
+                    }, 800);
+                },
+                
+                animarValor(id, inicio, fim, duracao, sufixo = '') {
+                    const elemento = document.getElementById(id);
+                    if (!elemento) return;
+                    
+                    elemento.classList.remove('loading');
+                    
+                    const inicio_tempo = performance.now();
+                    
+                    const animar = (tempoAtual) => {
+                        const decorrido = tempoAtual - inicio_tempo;
+                        const progresso = Math.min(decorrido / duracao, 1);
+                        const valor = inicio + (fim - inicio) * progresso;
+                        
+                        elemento.textContent = (sufixo === '%' ? valor.toFixed(1) : Math.floor(valor)) + sufixo;
+                        
+                        if (progresso < 1) {
+                            requestAnimationFrame(animar);
+                        }
+                    };
+                    
+                    requestAnimationFrame(animar);
+                },
+                
+                carregarDadosIniciais() {
+                    setTimeout(() => {
+                        const totalOcorrencias = document.getElementById('totalOcorrencias');
+                        const tempoMedio = document.getElementById('tempoMedio');
+                        const taxaSucesso = document.getElementById('taxaSucesso');
+                        const trendOcorrencias = document.getElementById('trendOcorrencias');
+                        
+                        if (totalOcorrencias) {
+                            totalOcorrencias.textContent = '1.247';
+                            totalOcorrencias.classList.remove('loading');
+                        }
+                        if (tempoMedio) {
+                            tempoMedio.textContent = '28.5';
+                            tempoMedio.classList.remove('loading');
+                        }
+                        if (taxaSucesso) {
+                            taxaSucesso.textContent = '94.2%';
+                            taxaSucesso.classList.remove('loading');
+                        }
+                        if (trendOcorrencias) {
+                            trendOcorrencias.innerHTML = `
+                                <i class="fas fa-arrow-up trend-down"></i>
+                                <span>+3.2% vs mês anterior</span>
+                            `;
+                            trendOcorrencias.className = 'metric-trend trend-down';
+                        }
+                    }, 300);
+                },
+                
+                exportarPDF() {
+                    this.mostrarToast('Exportando PDF...', 'info');
+                },
+                
+                exportarExcel() {
+                    this.mostrarToast('Exportando Excel...', 'info');
+                },
+                
+                mostrarToast(mensagem, tipo = 'info') {
+                    const container = document.getElementById('toast-container');
+                    if (!container) return;
+                    
+                    const icones = {
+                        success: 'fa-check-circle',
+                        error: 'fa-times-circle',
+                        warning: 'fa-exclamation-triangle',
+                        info: 'fa-info-circle'
+                    };
+                    
+                    const cores = {
+                        success: '#4CAF50',
+                        error: '#ef5350',
+                        warning: '#ff9800',
+                        info: '#10659c'
+                    };
+                    
+                    const toast = document.createElement('div');
+                    toast.className = 'toast';
+                    toast.innerHTML = `
+                        <div style="
+                            background: ${cores[tipo] || cores.info}; 
+                            color: white; 
+                            padding: 12px 20px; 
+                            border-radius: 8px; 
+                            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                            display: flex;
+                            align-items: center;
+                            gap: 10px;
+                        ">
+                            <i class="fas ${icones[tipo] || icones.info}"></i>
+                            <span>${mensagem}</span>
+                        </div>
+                    `;
+                    
+                    container.appendChild(toast);
+                    
+                    setTimeout(() => {
+                        if (toast.parentNode) toast.remove();
+                    }, 3000);
+                },
+                
+                verificarAcesso() {
+                    const token = localStorage.getItem('token');
+                    
+                    if (!token) {
+                        window.location.href = 'login.html';
+                        return false;
+                    }
+                    
+                    const tipoUsuario = localStorage.getItem('tipoUsuario');
+                    const plano = localStorage.getItem('plano');
+                    const isPF = tipoUsuario === 'PESSOA_FISICA' || tipoUsuario === 'PF';
+                    
+                    if (isPF && plano === 'FREE') {
+                        const container = document.querySelector('.relatorios-container');
+                        if (container) {
+                            container.innerHTML = `
+                                <div class="em-breve" style="min-height: 60vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                                    <i class="fas fa-lock" style="font-size: 4rem; color: var(--danger);"></i>
+                                    <h2>Acesso Restrito</h2>
+                                    <p style="margin-bottom: 1.5rem;">Relatórios disponíveis apenas nos planos <strong>Individual</strong> e <strong>Empresarial</strong></p>
+                                    <a href="planos.html" class="btn-filtrar" style="width: auto; text-decoration: none; display: inline-flex;">
+                                        <i class="fas fa-crown"></i>
+                                        Ver Planos
+                                    </a>
+                                </div>
+                            `;
+                        }
+                        return false;
+                    }
+                    
+                    return true;
+                },
+                
+                destroy() {
+                    console.log('🧹 Limpando relatórios...');
+                    this.initialized = false;
+                }
+            };
+            
+            // Função auxiliar para carregar scripts em ordem
+            function carregarScripts(urls) {
+                return new Promise((resolve, reject) => {
+                    // Filtra scripts que já existem na página
+                    const scriptsParaCarregar = urls.filter(src => {
+                        return !document.querySelector(`script[src="${src}"]`);
+                    });
+                    
+                    if (scriptsParaCarregar.length === 0) {
+                        resolve();
+                        return;
+                    }
+                    
+                    let carregados = 0;
+                    const total = scriptsParaCarregar.length;
+                    
+                    function carregarProximo(index) {
+                        if (index >= total) {
+                            resolve();
+                            return;
+                        }
+                        
+                        const src = scriptsParaCarregar[index];
+                        const script = document.createElement('script');
+                        script.src = src;
+                        script.async = false;
+                        
+                        script.onload = () => {
+                            carregados++;
+                            console.log(`📦 Carregado (${carregados}/${total}): ${src}`);
+                            carregarProximo(index + 1);
+                        };
+                        
+                        script.onerror = () => {
+                            console.error(`❌ Falha ao carregar: ${src}`);
+                            carregarProximo(index + 1);
+                        };
+                        
+                        document.head.appendChild(script);
+                    }
+                    
+                    carregarProximo(0);
+                });
+            }
+            
+            // Inicialização
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', () => RelatoriosPage.init());
+            } else {
+                RelatoriosPage.init();
+            }
+            
+        })();
+    </script>
 </body>
 </html>
