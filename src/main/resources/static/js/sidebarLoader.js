@@ -48,25 +48,26 @@ function controlarAcessoPorPerfil() {
         if (token) {
             try {
                 const payload = JSON.parse(atob(token.split('.')[1]));
-                tipoUsuario = payload.tipoUsuario;
+                tipoUsuario = payload.tipoUsuario || payload.tipo;
                 plano = payload.plano;
                 
                 // Salva para próximas consultas
                 if (tipoUsuario) localStorage.setItem('tipoUsuario', tipoUsuario);
                 if (plano) localStorage.setItem('plano', plano);
             } catch (error) {
-                return;
+                console.error('Erro ao decodificar token:', error);
             }
-        } else {
-            return;
         }
     }
 
+    // 🔥 NORMALIZAR OS TIPOS DE USUÁRIO (aceitar diferentes formatos)
+    const isPJ = tipoUsuario === 'PESSOA_JURIDICA' || tipoUsuario === 'PJ';
+    const isPF = tipoUsuario === 'PESSOA_FISICA' || tipoUsuario === 'PF';
 
-    // Menu Vinculados (apenas PESSOA_JURIDICA)
+    // Menu Vinculados (APENAS PARA PESSOA JURÍDICA - PJ)
     const menuVinculados = document.getElementById('menu-vinculados');
     if (menuVinculados) {
-        if (tipoUsuario === 'PESSOA_JURIDICA') {
+        if (isPJ) {
             menuVinculados.style.display = 'block';
         } else {
             menuVinculados.style.display = 'none';
@@ -76,7 +77,7 @@ function controlarAcessoPorPerfil() {
     // Menu Relatórios (oculto para PESSOA_FISICA com FREE)
     const menuRelatorios = document.getElementById('menu-relatorios');
     if (menuRelatorios) {
-        if (tipoUsuario === 'PESSOA_FISICA' && plano === 'FREE') {
+        if (isPF && plano === 'FREE') {
             menuRelatorios.style.display = 'none';
         } else {
             menuRelatorios.style.display = 'block';

@@ -9,6 +9,7 @@ import com.transcol.busafe.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -29,6 +30,9 @@ public class VinculadosController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder; // Adicione esta injeção
 
     // --- LISTAR VINCULADOS ---
     @GetMapping
@@ -103,7 +107,11 @@ public class VinculadosController {
                 novoVinculado.setNome(body.get("nome"));
                 novoVinculado.setEmail(body.get("email"));
                 novoVinculado.setCpf(body.get("cpf"));
-                novoVinculado.setPassword(body.get("password"));
+
+                // 🔥 CRIPTOGRAFAR A SENHA
+                String senhaCriptografada = passwordEncoder.encode(body.get("password"));
+                novoVinculado.setPassword(senhaCriptografada);
+
                 novoVinculado.setTipoUsuario(TipoUsuario.PESSOA_FISICA);
                 novoVinculado.setPlano(usuarioLogado.getPlano()); // Herda o plano da PJ
                 novoVinculado.setCnpj(usuarioLogado.getCnpj()); // Vincula ao CNPJ

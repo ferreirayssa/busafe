@@ -2,6 +2,7 @@ package com.transcol.busafe.controller;
 
 import com.transcol.busafe.model.Rota;
 import com.transcol.busafe.model.User;
+import com.transcol.busafe.model.enums.TipoUsuario;
 import com.transcol.busafe.config.TokenService;
 import com.transcol.busafe.repository.RotaRepository;
 import com.transcol.busafe.repository.UserRepository;
@@ -54,35 +55,39 @@ public class UserController {
     }
 
     // --- LOGIN ---
-@PostMapping("/login")
-public ResponseEntity<?> login(@RequestBody Map<String, String> body) {
-    String loginEnviado = body.get("login"); // Pode ser CPF, CNPJ ou Email
-    String senhaEnviada = body.get("password");
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody Map<String, String> body) {
+        String loginEnviado = body.get("login");
+        String senhaEnviada = body.get("password");
 
-    // Busca o usuário por qualquer um dos identificadores
-    Optional<User> userOpt = userRepository.findByEmailOrCpfOrCnpj(loginEnviado, loginEnviado, loginEnviado);
+        Optional<User> userOpt = userRepository.findByEmailOrCpfOrCnpj(loginEnviado, loginEnviado, loginEnviado);
 
-    if (userOpt.isPresent()) {
-        User user = userOpt.get();
-        if (passwordEncoder.matches(senhaEnviada, user.getPassword())) {
-            
-            // ✅ CORRIGIDO: Passa o objeto User completo
-            String tokenReal = tokenService.gerarToken(user);
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("id", user.getId());
-            response.put("nome", user.getNome());
-            response.put("email", user.getEmail());
-            response.put("tipoUsuario", user.getTipoUsuario().name());
-            response.put("plano", user.getPlano().name());
-            response.put("token", tokenReal);
-            response.put("rotasFavoritas", user.getRotasFavoritas());
-            
-            return ResponseEntity.ok(response);
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            if (passwordEncoder.matches(senhaEnviada, user.getPassword())) {
+                
+                String tokenReal = tokenService.gerarToken(user);
+                
+                Map<String, Object> response = new HashMap<>();
+                response.put("id", user.getId());
+                response.put("nome", user.getNome());
+                response.put("email", user.getEmail());
+                response.put("tipoUsuario", user.getTipoUsuario().name());
+                response.put("plano", user.getPlano().name());
+                response.put("token", tokenReal);
+                response.put("rotasFavoritas", user.getRotasFavoritas());
+                
+                if (user.getTipoUsuario() == TipoUsuario.PESSOA_FISICA) {
+                    response.put("cpf", user.getCpf());
+                } else {
+                    response.put("cnpj", user.getCnpj());
+                }
+                
+                return ResponseEntity.ok(response);
+            }
         }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Login ou senha incorretos.");
     }
-    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Login ou senha incorretos.");
-}
 
     // --- FAVORITAR ROTA (Via Token) ---
     @PostMapping("/rotas-fav")
