@@ -416,7 +416,7 @@ body.light-mode #sun-icon  { display: inline; }
   padding: 10px 14px;
   border-radius: 12px;
   border: 1px solid var(--line-clr);
-  background: rgba(17,18,26,.88);
+  background: var(--base-clr);
   backdrop-filter: blur(8px);
   pointer-events: none;
 }
@@ -1129,7 +1129,7 @@ body.light-mode .toast { background: #fff; }
   height: 66px;
   
   /* Adaptação ao Tema */
-  background: var(--hover-clr); /* Usa a cor de fundo do tema atual */
+  background: var(--base-clr); /* Usa a cor de fundo do tema atual */
   color: #ffc107;              /* Mantém a estrela amarela para destaque */
   border: 1px solid var(--line-clr); /* Usa a borda do tema atual */
   

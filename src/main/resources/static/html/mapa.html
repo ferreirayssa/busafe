@@ -16,7 +16,50 @@
 
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@8.2.0/ol.css">
   <script src="https://cdn.jsdelivr.net/npm/ol@8.2.0/dist/ol.js"></script>
-  <script src="../js/routeDrawerOSRM.js"></script>
+
+    
+  <style>
+    /* Estilos para o modo de desenho de rota */
+    .route-drawing-active {
+      cursor: crosshair !important;
+    }
+    
+    .route-drawing-active .ol-viewport {
+      cursor: crosshair !important;
+    }
+    
+    /* Botão de desenho */
+    #btn-draw-route {
+      position: absolute;
+      bottom: 130px;
+      right: 16px;
+      z-index: 800;
+      background: var(--base-clr, #11121a);
+      border: 1px solid var(--line-clr, #42434a);
+      border-radius: 50px;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-clr, #e6e6ef);
+      transition: all 0.2s;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+
+    #btn-draw-route:hover {
+      background: var(--hover-clr, #222533);
+      transform: scale(1.05);
+    }
+
+    #btn-draw-route.active {
+      background: var(--accent-clr, #10659c);
+      color: white;
+      border-color: var(--accent-clr, #10659c);
+    }
+  </style>
+
 </head>
 <body>
 
@@ -29,6 +72,36 @@
         <path d="M2.866 14.85c-.078.444.36.791.746.593l4.39-2.256 4.389 2.256c.386.198.824-.149.746-.592l-.83-4.73 3.522-3.356c.33-.314.16-.888-.282-.95l-4.898-.696L8.465.792a.513.513 0 0 0-.927 0L5.354 5.12l-4.898.696c-.441.062-.612.636-.283.95l3.523 3.356-.83 4.73zm4.905-2.767-3.686 1.894.694-3.957a.565.565 0 0 0-.163-.505L1.71 6.745l4.052-.576a.525.525 0 0 0 .393-.288L8 2.223l1.845 3.658a.525.525 0 0 0 .393.288l4.052.575-2.906 2.77a.565.565 0 0 0-.163.506l.694 3.957-3.686-1.894a.503.503 0 0 0-.461 0z"/>
       </svg>
     </button>
+        
+    <!-- Botão para ativar modo de rota -->
+    <button id="btn-draw-route" type="button" aria-label="Desenhar rota no mapa" title="Clique no mapa para traçar uma rota">
+      <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" fill="currentColor" class="bi bi-stars" viewBox="0 0 16 16">
+        <path d="M7.657 6.247c.11-.33.576-.33.686 0l.645 1.937a2.89 2.89 0 0 0 1.829 1.828l1.936.645c.33.11.33.576 0 .686l-1.937.645a2.89 2.89 0 0 0-1.828 1.829l-.645 1.936a.361.361 0 0 1-.686 0l-.645-1.937a2.89 2.89 0 0 0-1.828-1.828l-1.937-.645a.361.361 0 0 1 0-.686l1.937-.645a2.89 2.89 0 0 0 1.828-1.828zM3.794 1.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387A1.73 1.73 0 0 0 4.593 5.69l-.387 1.162a.217.217 0 0 1-.412 0L3.407 5.69A1.73 1.73 0 0 0 2.31 4.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387A1.73 1.73 0 0 0 3.407 2.31zM10.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.16 1.16 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.16 1.16 0 0 0-.732-.732L9.1 2.137a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732z"/>
+      </svg>
+    </button>
+    
+    <!-- Banner de instrução -->
+    <div id="route-instruction" class="route-instruction-banner" style="display: none;">
+      <span>🗺️ Clique no mapa para definir o destino da rota</span>
+      <button class="btn-cancel-route" id="btn-cancel-route">Cancelar</button>
+    </div>
+    
+    <!-- Painel de informações da rota -->
+    <div id="route-info-panel" class="route-info-panel">
+      <div class="route-header">
+        <span class="route-title">📍 Rota Calculada</span>
+        <button class="route-close" id="btn-close-route-panel">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="route-stats">
+        <div class="route-stat">
+          <div class="route-stat-value" id="route-distance">--</div>
+          <div class="route-stat-label">Distância</div>
+        </div>
+    </div>
+  </div>
+    
 
     <div id="map-legend">
       <div class="legend-title">Legenda</div>
@@ -79,6 +152,16 @@
   <div id="toast-container"></div>
 
   <script>
+
+  // ===== CONFIGURAÇÃO OSRM =====
+  const OSRM_BASE_URL = 'https://router.project-osrm.org';
+  const ROUTE_PROFILE = 'driving';
+  
+  // ===== ESTADO DO DESENHO DE ROTA =====
+  let isDrawingRoute = false;
+  let routeStartCoord = null;
+  
+
   const GEOJSON_URL = "";
   const RELATOS_URL = "/relatos";
 
@@ -90,7 +173,19 @@
 
   function showStatus(msg, ms = 2500) {
     const el = document.getElementById('status'); // Buscando dinamicamente pois pode ter sido injetado
-    if(!el) return;
+    if(!el) {
+      // Cria elemento status se não existir
+      const statusEl = document.createElement('div');
+      statusEl.id = 'status';
+      statusEl.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--accent-clr,#10659c);color:white;padding:10px 20px;border-radius:8px;z-index:10000;transition:all 0.3s;opacity:0;pointer-events:none;';
+      document.body.appendChild(statusEl);
+      setTimeout(() => {
+        statusEl.textContent = msg;
+        statusEl.style.opacity = '1';
+        if (ms) setTimeout(() => statusEl.style.opacity = '0', ms);
+      }, 100);
+      return;
+    }
     el.textContent = msg;
     el.classList.add('show');
     if (ms) setTimeout(() => el.classList.remove('show'), ms);
@@ -107,6 +202,35 @@
   }
 
   const base = new ol.layer.Tile({ source: new ol.source.OSM() });
+
+    // Camada para a rota desenhada pelo usuário (OSRM)
+  const userRouteSource = new ol.source.Vector({ features: [] });
+  const userRouteLayer = new ol.layer.Vector({
+    source: userRouteSource,
+    style: new ol.style.Style({
+      stroke: new ol.style.Stroke({ 
+        color: '#0c0101', 
+        width: 4,
+        lineCap: 'round',
+        lineJoin: 'round'
+      })
+    }),
+    zIndex: 1
+  });
+  
+  // Camada para o marcador de destino
+  const destinationMarkerSource = new ol.source.Vector({ features: [] });
+  const destinationMarkerLayer = new ol.layer.Vector({
+    source: destinationMarkerSource,
+    style: new ol.style.Style({
+      image: new ol.style.Circle({
+        radius: 8,
+        fill: new ol.style.Fill({ color: '#0c0101' }),
+        stroke: new ol.style.Stroke({ color: '#ffffff', width: 3 })
+      })
+    }),
+    zIndex: 11
+  });
 
   const todasRotasSource = new ol.source.Vector({
     format: new ol.format.GeoJSON(),
@@ -157,24 +281,25 @@
     });
   };
 
-  const rotasLayer = new ol.layer.Vector({ source: todasRotasSource, style: styleBySentido });
+  const rotasLayer = new ol.layer.Vector({ source: todasRotasSource, style: styleBySentido, zIndex: 2 });
 
   const resultadoSource = new ol.source.Vector({ features: [] });
   const resultadoLayer = new ol.layer.Vector({
     source: resultadoSource,
     style: new ol.style.Style({
       stroke: new ol.style.Stroke({ color: '#812f9a', width: 4 })
-    })
+    }),
+     zIndex: 3
   });
 
   const relatoSource = new ol.source.Vector({ features: [] });
-  const relatoLayer = new ol.layer.Vector({ source: relatoSource });
+  const relatoLayer = new ol.layer.Vector({ source: relatoSource, zIndex: 11 });
 
   const busSource = new ol.source.Vector({ features: [] });
-  const busLayer = new ol.layer.Vector({ source: busSource });
+  const busLayer = new ol.layer.Vector({ source: busSource, zIndex: 12 });
 
   const userLocationSource = new ol.source.Vector({ features: [] });
-  const userLocationLayer = new ol.layer.Vector({ source: userLocationSource });
+  const userLocationLayer = new ol.layer.Vector({ source: userLocationSource, zIndex: 20  });
 
   const pontosSource = new ol.source.Vector({ features: [] });
   const busIconSvg = `
@@ -191,19 +316,240 @@
       visible: false, 
       style: new ol.style.Style({
         image: new ol.style.Icon({ src: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(busIconSvg), scale: 0.65, anchor: [0.5, 0.5] })
-      })
+      }),
+       zIndex: 10
     });
 
   const map = new ol.Map({
     target: 'map',
-    layers: [base, rotasLayer, resultadoLayer, relatoLayer, busLayer, pontosLayer, userLocationLayer],
+    layers: [base, userRouteLayer, rotasLayer, resultadoLayer, destinationMarkerLayer, pontosLayer, relatoLayer, busLayer, userLocationLayer,],
+
     view: new ol.View({ center: ol.proj.fromLonLat([-40.307, -20.318]), zoom: 13 })
+
   });
 
   map.on('moveend', () => {
       const zoom = map.getView().getZoom();
       pontosLayer.setVisible(zoom > 13);
   });
+
+    // ===== FUNÇÕES DE ROTA COM OSRM =====
+  
+  /**
+   * Ativa o modo de desenho de rota
+   */
+  function startRouteDrawing() {
+    
+    if (!currentUserCoord) {
+      showStatus('📍 Aguardando sua localização GPS...', 3000);
+      return;
+    }
+    
+    isDrawingRoute = true;
+    routeStartCoord = currentUserCoord;
+    
+    // Mostra banner de instrução
+    const banner = document.getElementById('route-instruction');
+    if (banner) banner.style.display = 'flex';
+    
+    // Altera cursor
+    const mapElement = document.getElementById('map');
+    if (mapElement) mapElement.classList.add('route-drawing-active');
+    
+    // Destaca botão
+    const btn = document.getElementById('btn-draw-route');
+    if (btn) btn.classList.add('active');
+    
+    // Limpa rota anterior
+    clearUserRoute();
+    
+    showStatus('Clique no mapa para definir o destino', 0);
+  }
+  
+  /**
+   * Cancela o modo de desenho
+   */
+  function cancelRouteDrawing() {
+    
+    isDrawingRoute = false;
+    
+    const banner = document.getElementById('route-instruction');
+    if (banner) banner.style.display = 'none';
+    
+    const mapElement = document.getElementById('map');
+    if (mapElement) mapElement.classList.remove('route-drawing-active');
+    
+    const btn = document.getElementById('btn-draw-route');
+    if (btn) btn.classList.remove('active');
+    
+    clearUserRoute();
+    
+    const statusEl = document.getElementById('status');
+    if(statusEl) statusEl.classList.remove('show');
+  }
+  
+  /**
+   * Limpa a rota do usuário e marcadores
+   */
+  function clearUserRoute() {
+    userRouteSource.clear();
+    destinationMarkerSource.clear();
+    const panel = document.getElementById('route-info-panel');
+    if (panel) panel.classList.remove('visible');
+  }
+  
+  /**
+   * Calcula a rota usando OSRM
+   */
+  async function calculateOSRMRoute(startLonLat, endLonLat) {
+    try {
+      showStatus('🧮 Calculando rota...', 0);
+      
+      const url = `${OSRM_BASE_URL}/route/v1/${ROUTE_PROFILE}/${startLonLat[0]},${startLonLat[1]};${endLonLat[0]},${endLonLat[1]}?overview=full&geometries=geojson&steps=true&alternatives=false`;
+      
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        throw new Error(`OSRM retornou erro HTTP ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (!data.routes || data.routes.length === 0) {
+        throw new Error('Nenhuma rota encontrada');
+      }
+      
+      const route = data.routes[0];
+      
+      // Converte a geometria GeoJSON para feature do OpenLayers
+      const routeFeature = new ol.format.GeoJSON().readFeature({
+        type: 'Feature',
+        geometry: route.geometry,
+        properties: {
+          distance: route.distance,
+          duration: route.duration
+        }
+      }, {
+        featureProjection: map.getView().getProjection()
+      });
+      
+      // Adiciona a rota ao mapa
+      userRouteSource.clear();
+      userRouteSource.addFeature(routeFeature);
+      
+      // Adiciona marcador de destino
+      const destPoint = new ol.Feature({
+        geometry: new ol.geom.Point(ol.proj.fromLonLat(endLonLat))
+      });
+      destinationMarkerSource.clear();
+      destinationMarkerSource.addFeature(destPoint);
+      
+      // Atualiza painel de informações
+      updateRouteInfo(route.distance, route.duration);
+      
+      // Ajusta o mapa para mostrar toda a rota
+      const extent = userRouteSource.getExtent();
+      map.getView().fit(extent, { 
+        padding: [60, 60, 60, 60], 
+        maxZoom: 16,
+        duration: 800 
+      });
+      
+      const statusEl = document.getElementById('status');
+      if(statusEl) statusEl.classList.remove('show');
+      
+      showStatus('✅ Rota calculada com sucesso!', 2500);
+      
+    } catch (error) {
+      console.error('❌ Erro ao calcular rota OSRM:', error);
+      showStatus('❌ Erro ao calcular rota. Tente novamente.', 4000);
+      userRouteSource.clear();
+      destinationMarkerSource.clear();
+    }
+  }
+  
+  /**
+   * Atualiza o painel com informações da rota
+   */
+  function updateRouteInfo(distanceMeters, durationSeconds) {
+    let distanceText;
+    if (distanceMeters >= 1000) {
+      distanceText = (distanceMeters / 1000).toFixed(1) + ' km';
+    } else {
+      distanceText = Math.round(distanceMeters) + ' m';
+    }
+    
+    const minutes = Math.round(durationSeconds / 60);
+    let durationText;
+    if (minutes >= 60) {
+      const hours = Math.floor(minutes / 60);
+      const mins = minutes % 60;
+      durationText = hours + 'h ' + mins + 'min';
+    } else {
+      durationText = minutes + ' min';
+    }
+    
+    document.getElementById('route-distance').textContent = distanceText;
+    document.getElementById('route-info-panel').classList.add('visible');
+  }
+
+  // ===== EVENTOS =====
+  
+  // Botão de desenhar rota
+  document.getElementById('btn-draw-route').addEventListener('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (isDrawingRoute) {
+      cancelRouteDrawing();
+    } else {
+      startRouteDrawing();
+    }
+  });
+  
+  // Botão cancelar no banner
+  document.getElementById('btn-cancel-route').addEventListener('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    cancelRouteDrawing();
+  });
+  
+  // Botão fechar painel
+  document.getElementById('btn-close-route-panel').addEventListener('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    document.getElementById('route-info-panel').classList.remove('visible');
+  });
+  
+  // Handler de clique no mapa (PRINCIPAL)
+  map.on('singleclick', function(evt) {
+    
+    if (isDrawingRoute) {
+      const lonLat = ol.proj.toLonLat(evt.coordinate);
+      
+      // Desativa modo de desenho
+      isDrawingRoute = false;
+      
+      const banner = document.getElementById('route-instruction');
+      if (banner) banner.style.display = 'none';
+      
+      const mapElement = document.getElementById('map');
+      if (mapElement) mapElement.classList.remove('route-drawing-active');
+      
+      const btn = document.getElementById('btn-draw-route');
+      if (btn) btn.classList.remove('active');
+      
+      // Calcula a rota
+      const startLonLat = ol.proj.toLonLat(routeStartCoord);
+      calculateOSRMRoute(startLonLat, lonLat);
+      
+      return; // Não processa outros cliques
+    }
+    
+    // Comportamento normal de clique (popups)
+    handleMapClick(evt);
+    });
+
 
   const popupEl = document.createElement('div');
   popupEl.id = 'incident-popup';
@@ -224,16 +570,60 @@
   let linhaSelecionada = null;
   let relatosCache = null;
 
-  const INCIDENT_ICON_DEFS = {
-    assalto: { color: '#ef4444', viewBox: '0 0 16 16', path: 'M11 15a4 4 0 1 0 0-8 4 4 0 0 0 0 8m5-4a5 5 0 1 1-10 0 5 5 0 0 1 10 0M9.438 11.944c.047.596.518 1.06 1.363 1.116v.44h.375v-.443c.875-.061 1.386-.529 1.386-1.207 0-.618-.39-.936-1.09-1.1l-.296-.07v-1.2c.376.043.614.248.671.532h.658c-.047-.575-.54-1.024-1.329-1.073V8.5h-.375v.45c-.747.073-1.255.522-1.255 1.158 0 .562.378.92 1.007 1.066l.248.061v1.272c-.384-.058-.639-.27-.696-.563h-.668zm1.36-1.354c-.369-.085-.569-.26-.569-.522 0-.294.216-.514.572-.578v1.1zm.432.746c.449.104.655.272.655.569 0 .339-.257.571-.709.614v-1.195zM1 0a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h4.083q.088-.517.258-1H3a2 2 0 0 0-2-2V3a2 2 0 0 0 2-2h10a2 2 0 0 0 2 2v3.528c.38.34.717.728 1 1.154V1a1 1 0 0 0-1-1zM9.998 5.083 10 5a2 2 0 1 0-3.132 1.65 6 6 0 0 1 3.13-1.567', label: 'Assalto' },
-    assedio: { color: '#f59e0b', viewBox: '0 0 16 16', path: 'M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.15.15 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.2.2 0 0 1-.054.06.1.1 0 0 1-.066.017H1.146a.1.1 0 0 1-.066-.017.2.2 0 0 1-.054-.06.18.18 0 0 1 .002-.183L7.884 2.073a.15.15 0 0 1 .054-.057m1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767zM7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z', label: 'Assédio' },
-    violencia: { color: '#9333ea', viewBox: '0 0 16 16', path: 'M11 5a3 3 0 0 1-3 3 2.96 2.96 0 0 1-1.35-.32L3.52 4.55A3 3 0 1 1 11 5M2 13c0-2.45 2.3-4 6-4 .72 0 1.37.06 1.96.18L12.72 12A1.6 1.6 0 0 1 13 13c0 1-1 1-1 1H3s-1 0-1-1M1.3 1.05 14.95 14.7l-.9.9L.4 1.95l.9-.9z', label: 'Violência' },
-    furto: { color: '#3b82f6', viewBox: '0 0 16 16', path: 'M6.5 1A1.5 1.5 0 0 0 5 2.5V3H1.5A1.5 1.5 0 0 0 0 4.5v1.384l7.614 2.03a1.5 1.5 0 0 0 .772 0L16 5.884V4.5A1.5 1.5 0 0 0 14.5 3H11v-.5A1.5 1.5 0 0 0 9.5 1zm0 1h3a.5.5 0 0 1 .5.5V3H6v-.5a.5.5 0 0 1 .5-.5M0 12.5A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5V6.85L8.129 8.947a.5.5 0 0 1-.258 0L0 6.85z', label: 'Furto' },
-    onibus_parado_quebrado: { color: '#64748b', viewBox: '0 0 16 16', path: 'M1 1a1 1 0 0 0-1 1v9a1.5 1.5 0 0 0 1 1.415V14.5a.5.5 0 0 0 1 0V13h10v1.5a.5.5 0 0 0 1 0v-2.085A1.5 1.5 0 0 0 14 11V2a1 1 0 0 0-1-1H1zm0 2h12v3H1V3zm1 5.5A1.5 1.5 0 1 1 2 11a1.5 1.5 0 0 1 0-2.5zM12 8.5A1.5 1.5 0 1 1 12 11a1.5 1.5 0 0 1 0-2.5z', label: 'Ônibus parado/quebrado' },
-    quebrado: { color: '#64748b', viewBox: '0 0 16 16', path: 'M1 1a1 1 0 0 0-1 1v9a1.5 1.5 0 0 0 1 1.415V14.5a.5.5 0 0 0 1 0V13h10v1.5a.5.5 0 0 0 1 0v-2.085A1.5 1.5 0 0 0 14 11V2a1 1 0 0 0-1-1H1zm0 2h12v3H1V3zm1 5.5A1.5 1.5 0 1 1 2 11a1.5 1.5 0 0 1 0-2.5zM12 8.5A1.5 1.5 0 1 1 12 11a1.5 1.5 0 0 1 0-2.5z', label: 'Ônibus parado/quebrado' },
-    outro: { color: '#45505d', viewBox: '0 0 16 16', path: 'M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm-.93-5.412h1.858v1.536H7.07v-1.536zm1.854-1.503H7.117l-.04-.23c-.075-.43.01-.842.29-1.197.21-.267.499-.473.884-.708.575-.35.746-.545.746-.875 0-.37-.287-.64-.782-.64-.562 0-.852.297-.907.82H5.64c.044-1.506 1.12-2.36 2.754-2.36 1.543 0 2.588.78 2.588 2.013 0 .757-.39 1.245-1.216 1.717-.472.27-.657.449-.75.695-.062.164-.074.333-.03.58z', label: 'Outro' },
-    bus_monitorado: { color: '#0f766e', viewBox: '0 0 16 16', path: 'M16 7a1 1 0 0 1-1 1v3.5c0 .818-.393 1.544-1 2v2a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5V14H5v1.5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-2a2.5 2.5 0 0 1-1-2V8a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1V2.64C1 1.452 1.845.408 3.064.268A44 44 0 0 1 8 0c2.1 0 3.792.136 4.936.268C14.155.408 15 1.452 15 2.64V4a1 1 0 0 1 1 1v2zM3 11a1 1 0 1 0 2 0 1 1 0 0 0-2 0zm8 0a1 1 0 1 0 2 0 1 1 0 0 0-2 0z', label: 'Ônibus monitorado' }
-  };
+// ============================================================
+// ÍCONES DE INCIDENTES - MESMOS SVGs DOS CARDS
+// ============================================================
+
+const INCIDENT_ICON_DEFS = {
+  assalto: { 
+    color: '#e53935', 
+    viewBox: '0 0 16 16', 
+    path: 'M11 15a4 4 0 1 0 0-8 4 4 0 0 0 0 8m5-4a5 5 0 1 1-10 0 5 5 0 0 1 10 0M9.438 11.944c.047.596.518 1.06 1.363 1.116v.44h.375v-.443c.875-.061 1.386-.529 1.386-1.207 0-.618-.39-.936-1.09-1.1l-.296-.07v-1.2c.376.043.614.248.671.532h.658c-.047-.575-.54-1.024-1.329-1.073V8.5h-.375v.45c-.747.073-1.255.522-1.255 1.158 0 .562.378.92 1.007 1.066l.248.061v1.272c-.384-.058-.639-.27-.696-.563h-.668zm1.36-1.354c-.369-.085-.569-.26-.569-.522 0-.294.216-.514.572-.578v1.1zm.432.746c.449.104.655.272.655.569 0 .339-.257.571-.709.614v-1.195zM1 0a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h4.083q.088-.517.258-1H3a2 2 0 0 0-2-2V3a2 2 0 0 0 2-2h10a2 2 0 0 0 2 2v3.528c.38.34.717.728 1 1.154V1a1 1 0 0 0-1-1zM9.998 5.083 10 5a2 2 0 1 0-3.132 1.65 6 6 0 0 1 3.13-1.567',
+    label: 'Assalto'
+  },
+  
+  assedio: { 
+    color: '#ff9800', 
+    viewBox: '0 0 16 16', 
+    path: 'M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5m.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2',
+    label: 'Assédio'
+  },
+  
+  violencia: { 
+    color: '#9c27b0', 
+    viewBox: '0 0 16 16', 
+    path: 'M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7M11 12h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1 0-1m0-7a3 3 0 1 1-6 0 3 3 0 0 1 6 0M2 13c0 1 1 1 1 1h5.256A4.5 4.5 0 0 1 8 12.5a4.5 4.5 0 0 1 1.544-3.393Q8.844 9.002 8 9c-5 0-6 3-6 4',
+    label: 'Violência'
+  },
+  
+  furto: { 
+    color: '#2196f3', 
+    viewBox: '0 0 16 16', 
+    path: 'M6.5 1A1.5 1.5 0 0 0 5 2.5V3H1.5A1.5 1.5 0 0 0 0 4.5v1.384l7.614 2.03a1.5 1.5 0 0 0 .772 0L16 5.884V4.5A1.5 1.5 0 0 0 14.5 3H11v-.5A1.5 1.5 0 0 0 9.5 1zm0 1h3a.5.5 0 0 1 .5.5V3H6v-.5a.5.5 0 0 1 .5-.5M0 12.5A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5V6.85L8.129 8.947a.5.5 0 0 1-.258 0L0 6.85z',
+    label: 'Furto'
+  },
+  
+  onibus_parado_quebrado: { 
+    color: '#ef6c00', 
+    viewBox: '0 0 16 16', 
+    path: 'M16 7a1 1 0 0 1-1 1v3.5c0 .818-.393 1.544-1 2v2a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5V14H5v1.5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-2a2.5 2.5 0 0 1-1-2V8a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1V2.64C1 1.452 1.845.408 3.064.268A44 44 0 0 1 8 0c2.1 0 3.792.136 4.936.268C14.155.408 15 1.452 15 2.64V4a1 1 0 0 1 1 1zM3.552 3.22A43 43 0 0 1 8 3c1.837 0 3.353.107 4.448.22a.5.5 0 0 0 .104-.994A44 44 0 0 0 8 2c-1.876 0-3.426.109-4.552.226a.5.5 0 1 0 .104.994M8 4c-1.876 0-3.426.109-4.552.226A.5.5 0 0 0 3 4.723v3.554a.5.5 0 0 0 .448.497C4.574 8.891 6.124 9 8 9s3.426-.109 4.552-.226A.5.5 0 0 0 13 8.277V4.723a.5.5 0 0 0-.448-.497A44 44 0 0 0 8 4m-3 7a1 1 0 1 0-2 0 1 1 0 0 0 2 0m8 0a1 1 0 1 0-2 0 1 1 0 0 0 2 0m-7 0a1 1 0 0 0 1 1h2a1 1 0 1 0 0-2H7a1 1 0 0 0-1 1',
+    label: 'Ônibus parado/quebrado'
+  },
+  
+  outro: { 
+    color: '#9e9e9e', 
+    viewBox: '0 0 16 16', 
+    path: 'M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286zm1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94zM8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z',
+    label: 'Outro'
+  },
+  
+  bus_monitorado: { 
+    color: '#0f766e', 
+    viewBox: '0 0 16 16', 
+    path: 'M16 7a1 1 0 0 1-1 1v3.5c0 .818-.393 1.544-1 2v2a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5V14H5v1.5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-2a2.5 2.5 0 0 1-1-2V8a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1V2.64C1 1.452 1.845.408 3.064.268A44 44 0 0 1 8 0c2.1 0 3.792.136 4.936.268C14.155.408 15 1.452 15 2.64V4a1 1 0 0 1 1 1v2zM3 11a1 1 0 1 0 2 0 1 1 0 0 0-2 0zm8 0a1 1 0 1 0 2 0 1 1 0 0 0-2 0z',
+    label: 'Ônibus monitorado'
+  }
+};
 
   const markerCache = new Map();
   const busMarkerCache = new Map();
@@ -540,7 +930,12 @@
       userFeature = new ol.Feature(new ol.geom.Point(currentUserCoord));
       userFeature.setStyle(createUserStyle());
       userLocationSource.addFeature(userFeature);
-    } else { userFeature.setGeometry(new ol.geom.Point(currentUserCoord)); }
+    } else { userFeature.setGeometry(new ol.geom.Point(currentUserCoord));
+      userFeature.setStyle(new ol.style.Style({ 
+      image: new ol.style.Circle({ radius: 8, fill: new ol.style.Fill({ color: '#1976d2' }), stroke: new ol.style.Stroke({ color: '#fff', width: 2 }) }) 
+      }));
+
+     }
     if (firstLocationFix) {
       map.getView().animate({ center: currentUserCoord, zoom: 15, duration: 900 });
       firstLocationFix = false;
