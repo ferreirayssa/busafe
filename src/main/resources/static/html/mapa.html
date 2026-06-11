@@ -153,9 +153,26 @@
 
   <script>
 
-  // ===== CONFIGURAÇÃO OSRM =====
   const OSRM_BASE_URL = 'https://router.project-osrm.org';
   const ROUTE_PROFILE = 'driving';
+
+    function verificarAcessoOSRM() {
+    const token = localStorage.getItem('token');
+    const tipoUsuario = localStorage.getItem('tipoUsuario');
+    const plano = localStorage.getItem('plano');
+    
+    if (!token) return false;
+    
+    const isPF = tipoUsuario === 'PESSOA_FISICA' || tipoUsuario === 'PF';
+    
+    // Bloqueia para Pessoa Física com plano FREE
+    if (isPF && plano === 'FREE') {
+      return false;
+    }
+    
+    // Permite para outros planos
+    return true;
+  }
   
   // ===== ESTADO DO DESENHO DE ROTA =====
   let isDrawingRoute = false;
@@ -339,9 +356,14 @@
    * Ativa o modo de desenho de rota
    */
   function startRouteDrawing() {
+
+    if (!verificarAcessoOSRM()) {
+      showStatus('Recurso disponível apenas nos planos Individual e Empresarial', 4000);
+      return;
+    }
     
     if (!currentUserCoord) {
-      showStatus('📍 Aguardando sua localização GPS...', 3000);
+      showStatus('Aguardando sua localização GPS...', 3000);
       return;
     }
     
@@ -362,7 +384,6 @@
     
     // Limpa rota anterior
     clearUserRoute();
-    
     showStatus('Clique no mapa para definir o destino', 0);
   }
   
@@ -499,6 +520,11 @@
   document.getElementById('btn-draw-route').addEventListener('click', function(e) {
     e.preventDefault();
     e.stopPropagation();
+
+    if (!verificarAcessoOSRM()) {
+      showStatus('Recurso exclusivo para planos Individual e Empresarial', 4000);
+      return;
+    }
     
     if (isDrawingRoute) {
       cancelRouteDrawing();
@@ -1002,6 +1028,56 @@ const INCIDENT_ICON_DEFS = {
           }
       } catch (e) { console.error("Erro ao carregar pontos do banco:", e); }
   }
+
+    // Função para esconder botão OSRM de usuários FREE
+  function esconderBotaoOSRMparaFREE() {
+    const token = localStorage.getItem('token');
+    const tipoUsuario = localStorage.getItem('tipoUsuario');
+    const plano = localStorage.getItem('plano');
+    
+    console.log('🔍 Verificando plano OSRM:', {
+      temToken: !!token,
+      tipoUsuario: tipoUsuario,
+      plano: plano
+    });
+    
+    const isPF = tipoUsuario === 'PESSOA_FISICA' || tipoUsuario === 'PF';
+    const isFree = plano === 'FREE';
+    
+    const btnDrawRoute = document.getElementById('btn-draw-route');
+    
+    if (!btnDrawRoute) {
+      console.warn('⚠️ Botão OSRM não encontrado no DOM. Tentando novamente...');
+      // Tenta novamente em 500ms
+      setTimeout(esconderBotaoOSRMparaFREE, 500);
+      return;
+    }
+    
+    if (isPF && isFree) {
+      btnDrawRoute.style.display = 'none';
+      btnDrawRoute.style.visibility = 'hidden';
+      btnDrawRoute.style.opacity = '0';
+      btnDrawRoute.style.pointerEvents = 'none';
+      console.log('🔒 Botão OSRM OCULTADO - Usuário FREE');
+    } else {
+      btnDrawRoute.style.display = 'flex';
+      console.log('✅ Botão OSRM visível - Plano:', plano || 'não definido');
+    }
+  }
+
+  // Executa com delay para garantir que o DOM e localStorage estejam prontos
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(esconderBotaoOSRMparaFREE, 300);
+    });
+  } else {
+    setTimeout(esconderBotaoOSRMparaFREE, 300);
+  }
+
+  // Também executa quando o sidebar carregar (pois pode sobrescrever)
+  window.addEventListener('load', function() {
+    setTimeout(esconderBotaoOSRMparaFREE, 500);
+  });
 
   carregarRelatos();
   carregarPontosDoBanco(); 

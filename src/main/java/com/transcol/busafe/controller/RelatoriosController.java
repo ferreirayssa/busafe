@@ -2,9 +2,11 @@ package com.transcol.busafe.controller;
 
 import com.transcol.busafe.model.User;
 import com.transcol.busafe.model.enums.*;
-import com.transcol.busafe.config.TokenService;
 import com.transcol.busafe.repository.UserRepository;
+import com.transcol.busafe.service.HashService;
 import com.transcol.busafe.service.RelatorioService;
+import com.transcol.busafe.service.TokenService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +29,9 @@ public class RelatoriosController {
 
     @Autowired
     private RelatorioService relatorioService;
+
+    @Autowired
+    private HashService hashService;
     
 
     // --- VERIFICAR ACESSO A RELATÓRIOS ---
@@ -89,26 +94,34 @@ public class RelatoriosController {
     }
 
     // --- ESTATÍSTICAS RÁPIDAS PARA DASHBOARD ---
-    @GetMapping("/estatisticas")
-    public ResponseEntity<?> getEstatisticas(@RequestHeader("Authorization") String token) {
-        try {
-            String jwt = token.replace("Bearer ", "");
-            String emailUsuario = tokenService.getSubject(jwt);
+@GetMapping("/estatisticas")
+public ResponseEntity<?> getEstatisticas(@RequestHeader("Authorization") String token) {
+    try {
+        String jwt = token.replace("Bearer ", "");
+        String emailUsuario = tokenService.getSubject(jwt);
+        System.out.println("📊 Buscando estatísticas para: " + emailUsuario);
 
-            User user = userRepository.findByEmail(emailUsuario).orElse(null);
-            
-            if (user == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuário não encontrado.");
-            }
-
-            Map<String, Object> stats = relatorioService.getEstatisticasDashboard(user);
-            return ResponseEntity.ok(stats);
-
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Erro ao carregar estatísticas: " + e.getMessage());
+        User user = userRepository.findByEmail(emailUsuario).orElse(null);
+        
+        if (user == null) {
+            System.out.println("❌ Usuário não encontrado");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("erro", "Usuário não encontrado."));
         }
+        
+        System.out.println("👤 Usuário: " + user.getNome() + " | Hash: " + hashService.gerarHash(user.getId()));
+
+        Map<String, Object> stats = relatorioService.getEstatisticasDashboard(user);
+        System.out.println("✅ Estatísticas: " + stats);
+        return ResponseEntity.ok(stats);
+
+    } catch (Exception e) {
+        System.err.println("❌ Erro: " + e.getMessage());
+        e.printStackTrace();
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("erro", e.getMessage()));
     }
+}
 
     // --- FILTRAR RELATOS POR PERÍODO ---
     @GetMapping("/filtrar")
@@ -144,7 +157,7 @@ public class RelatoriosController {
             filtros.put("linha", linha);
             filtros.put("tipo", tipo);
             
-            Map<String, Object> resultado = relatorioService.filtrarRelatos(user, filtros);
+            Map<String, Object> resultado = relatorioService.filtrarRelatos(user, filtros);  //erro aqui
             return ResponseEntity.ok(resultado);
 
         } catch (Exception e) {
@@ -169,7 +182,7 @@ public class RelatoriosController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuário não encontrado.");
             }
 
-            List<Map<String, Object>> relatos = relatorioService.getRelatosPorTipo(user, tipo);
+            List<Map<String, Object>> relatos = relatorioService.getRelatosPorTipo(user, tipo);  //erro aqui
             return ResponseEntity.ok(relatos);
 
         } catch (Exception e) {
@@ -191,7 +204,7 @@ public class RelatoriosController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuário não encontrado.");
             }
 
-            List<Map<String, Object>> topLocais = relatorioService.getTopLocais(user);
+            List<Map<String, Object>> topLocais = relatorioService.getTopLocais(user);  //erro aqui
             return ResponseEntity.ok(topLocais);
 
         } catch (Exception e) {
@@ -199,4 +212,6 @@ public class RelatoriosController {
                     .body("Erro ao buscar top locais: " + e.getMessage());
         }
     }
+
+    
 }

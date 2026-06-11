@@ -3,9 +3,9 @@ package com.transcol.busafe.controller;
 import com.transcol.busafe.model.Rota;
 import com.transcol.busafe.model.User;
 import com.transcol.busafe.model.enums.TipoUsuario;
-import com.transcol.busafe.config.TokenService;
 import com.transcol.busafe.repository.RotaRepository;
 import com.transcol.busafe.repository.UserRepository;
+import com.transcol.busafe.service.TokenService;
 import com.transcol.busafe.service.UserService;
 
 import org.springframework.beans.factory.annotation.Autowired;

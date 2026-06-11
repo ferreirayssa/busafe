@@ -58,6 +58,7 @@ public class SecurityConfig {
                     "/api/vinculados/**",
                     "/api/relatorios/**",
                     "/relatos/**",
+                    "/relatos/**",
                     "/mapa.html",
                     "/planos.html",
                     "/alert.html",

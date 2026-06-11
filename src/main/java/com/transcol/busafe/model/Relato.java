@@ -1,5 +1,6 @@
 package com.transcol.busafe.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -19,18 +20,14 @@ public class Relato {
     private String id;
 
     private String descricao;
-
     private String tipo;
-
     private Double latitude;
-
     private Double longitude;
 
     @Field("dataRelato")
     private LocalDateTime dataRelato = LocalDateTime.now();
 
     private String bairro;
-
     private String municipio;
 
     @Field("linhaMunicipal")
@@ -39,9 +36,10 @@ public class Relato {
     @Field("linhaTranscol")
     private Integer linhaTranscol;
     
-    // ADICIONE ESTE CAMPO:
-    @Field("usuarioId")
-    private String usuarioId; // ID do usuário que fez o relato
+    // ⬇️ Hash do usuário (pseudo-anônimo) ⬇️
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @Field("usuarioHash")
+    private String usuarioHash; // SHA-256(salt + usuarioId)
     
     @Override
     public boolean equals(Object o) {

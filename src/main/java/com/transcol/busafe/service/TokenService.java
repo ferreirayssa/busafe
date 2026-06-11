@@ -1,4 +1,4 @@
-package com.transcol.busafe.config;
+package com.transcol.busafe.service;
 
 import com.transcol.busafe.model.User;
 import io.jsonwebtoken.Claims;

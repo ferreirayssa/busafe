@@ -22,164 +22,32 @@ public class RelatorioService {
 
     @Autowired
     private UserRepository userRepository;
+    
+    @Autowired
+    private HashService hashService;
 
     // ============================================================
-    // MÉTODO EXISTENTE - GERAR RELATÓRIO COMPLETO
+    // MÉTODO AUXILIAR - Obter hash do usuário
     // ============================================================
     
-    public Map<String, Object> gerarRelatorioRelatos(User user) {
-        Map<String, Object> relatorio = new HashMap<>();
-        
-        relatorio.put("geradoEm", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-        relatorio.put("solicitante", user.getNome());
-        relatorio.put("tipoUsuario", user.getTipoUsuario().name());
-        relatorio.put("plano", user.getPlano().name());
+    private String getUsuarioHash(User user) {
+        return hashService.gerarHash(user.getId());
+    }
+    
+    private List<String> getHashesUsuarios(User user) {
+        List<String> hashes = new ArrayList<>();
+        hashes.add(getUsuarioHash(user));
         
         if (TipoUsuario.PESSOA_JURIDICA.equals(user.getTipoUsuario())) {
-            relatorio.put("cnpj", user.getCnpj());
             List<User> vinculados = userRepository.listarPorCnpjAtivos(user.getCnpj());
-            relatorio.put("totalVinculados", vinculados.size());
-            
-            Map<String, Object> relatorioEmpresarial = gerarRelatorioEmpresarial(user);
-            relatorio.put("relatorioEmpresarial", relatorioEmpresarial);
+            vinculados.forEach(v -> hashes.add(getUsuarioHash(v)));
         }
         
-        Map<String, Object> relatorioIndividual = gerarRelatorioIndividual(user);
-        relatorio.put("relatorioIndividual", relatorioIndividual);
-        
-        return relatorio;
-    }
-
-    private Map<String, Object> gerarRelatorioIndividual(User user) {
-        Map<String, Object> individual = new HashMap<>();
-        
-        List<Relato> meusRelatos = relatoRepository.findByUsuarioIdOrderByDataRelatoDesc(user.getId());
-        
-        individual.put("totalRelatos", meusRelatos.size());
-        
-        // Relatos por tipo
-        Map<String, Long> porTipo = meusRelatos.stream()
-                .collect(Collectors.groupingBy(Relato::getTipo, Collectors.counting()));
-        individual.put("relatosPorTipo", porTipo);
-        
-        // Últimos 5 relatos
-        List<Map<String, Object>> ultimosRelatos = meusRelatos.stream()
-                .limit(5)
-                .map(this::relatoToMap)
-                .collect(Collectors.toList());
-        individual.put("ultimosRelatos", ultimosRelatos);
-        
-        // Relatos por mês (últimos 6 meses)
-        Map<String, Long> porMes = getRelatosPorMes(meusRelatos);
-        individual.put("relatosPorMes", porMes);
-        
-        // Relatos por município
-        Map<String, Long> porMunicipio = meusRelatos.stream()
-                .filter(r -> r.getMunicipio() != null)
-                .collect(Collectors.groupingBy(Relato::getMunicipio, Collectors.counting()));
-        individual.put("relatosPorMunicipio", porMunicipio);
-        
-        // Top bairros
-        Map<String, Long> topBairros = meusRelatos.stream()
-                .filter(r -> r.getBairro() != null)
-                .collect(Collectors.groupingBy(Relato::getBairro, Collectors.counting()))
-                .entrySet().stream()
-                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
-                .limit(10)
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
-        individual.put("topBairros", topBairros);
-        
-        // Relatos por linha
-        Map<String, Long> porLinha = new HashMap<>();
-        meusRelatos.forEach(r -> {
-            if (r.getLinhaTranscol() != null) {
-                porLinha.merge("Transcol " + r.getLinhaTranscol(), 1L, Long::sum);
-            }
-            if (r.getLinhaMunicipal() != null) {
-                porLinha.merge("Municipal " + r.getLinhaMunicipal(), 1L, Long::sum);
-            }
-        });
-        individual.put("relatosPorLinha", porLinha);
-        
-        // Estatísticas
-        Map<String, Object> estatisticas = new HashMap<>();
-        estatisticas.put("mediaDiaria", calcularMediaDiaria(meusRelatos));
-        estatisticas.put("diaMaisAtivo", getDiaMaisAtivo(meusRelatos));
-        estatisticas.put("tipoMaisReportado", getTipoMaisFrequente(porTipo));
-        estatisticas.put("municipioMaisReportado", getMunicipioMaisFrequente(porMunicipio));
-        individual.put("estatisticas", estatisticas);
-        
-        return individual;
-    }
-
-    private Map<String, Object> gerarRelatorioEmpresarial(User empresa) {
-        Map<String, Object> empresarial = new HashMap<>();
-        
-        List<User> vinculados = userRepository.listarPorCnpjAtivos(empresa.getCnpj());
-        
-        List<String> todosIds = new ArrayList<>();
-        todosIds.add(empresa.getId());
-        vinculados.forEach(v -> todosIds.add(v.getId()));
-        
-        List<Relato> todosRelatos = relatoRepository.findByUsuarioIdInOrderByDataRelatoDesc(todosIds);
-        
-        empresarial.put("totalUsuarios", vinculados.size() + 1);
-        empresarial.put("totalRelatos", todosRelatos.size());
-        
-        // Relatos por usuário
-        Map<String, Long> relatosPorUsuario = new LinkedHashMap<>();
-        relatosPorUsuario.put(empresa.getNome(), relatoRepository.countByUsuarioId(empresa.getId()));
-        vinculados.forEach(v -> relatosPorUsuario.put(v.getNome(), relatoRepository.countByUsuarioId(v.getId())));
-        empresarial.put("relatosPorUsuario", relatosPorUsuario);
-        
-        // Relatos por tipo
-        Map<String, Long> porTipo = todosRelatos.stream()
-                .collect(Collectors.groupingBy(Relato::getTipo, Collectors.counting()));
-        empresarial.put("relatosPorTipo", porTipo);
-        
-        // Relatos por mês
-        Map<String, Long> porMes = getRelatosPorMes(todosRelatos);
-        empresarial.put("relatosPorMes", porMes);
-        
-        // Relatos por município
-        Map<String, Long> porMunicipio = todosRelatos.stream()
-                .filter(r -> r.getMunicipio() != null)
-                .collect(Collectors.groupingBy(Relato::getMunicipio, Collectors.counting()));
-        empresarial.put("relatosPorMunicipio", porMunicipio);
-        
-        // Top 5 usuários mais ativos
-        List<Map<String, Object>> topUsuarios = relatosPorUsuario.entrySet().stream()
-                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
-                .limit(5)
-                .map(entry -> {
-                    Map<String, Object> map = new HashMap<>();
-                    map.put("nome", entry.getKey());
-                    map.put("total", entry.getValue());
-                    return map;
-                })
-                .collect(Collectors.toList());
-        empresarial.put("topUsuariosAtivos", topUsuarios);
-        
-        // Distribuição geográfica
-        List<Map<String, Object>> distribuicaoGeografica = porMunicipio.entrySet().stream()
-                .map(entry -> {
-                    Map<String, Object> map = new HashMap<>();
-                    map.put("municipio", entry.getKey());
-                    map.put("total", entry.getValue());
-                    return map;
-                })
-                .collect(Collectors.toList());
-        empresarial.put("distribuicaoGeografica", distribuicaoGeografica);
-        
-        // Tendências
-        Map<String, Object> tendencias = calcularTendencias(todosRelatos);
-        empresarial.put("tendencias", tendencias);
-        
-        return empresarial;
+        return hashes;
     }
 
     // ============================================================
-    // MÉTODO CORRIGIDO - relatoToMap (estava faltando!)
+    // relatoToMap - Converter Relato para Map
     // ============================================================
     
     private Map<String, Object> relatoToMap(Relato relato) {
@@ -195,242 +63,11 @@ public class RelatorioService {
         map.put("bairro", relato.getBairro());
         map.put("linhaTranscol", relato.getLinhaTranscol());
         map.put("linhaMunicipal", relato.getLinhaMunicipal());
-        map.put("usuarioId", relato.getUsuarioId());
         return map;
     }
 
     // ============================================================
-    // NOVOS MÉTODOS PARA O FRONTEND
-    // ============================================================
-
-    /**
-     * Estatísticas rápidas para o dashboard
-     */
-    public Map<String, Object> getEstatisticasDashboard(User user) {
-        Map<String, Object> stats = new HashMap<>();
-        
-        List<String> idsUsuarios = new ArrayList<>();
-        idsUsuarios.add(user.getId());
-        
-        if (TipoUsuario.PESSOA_JURIDICA.equals(user.getTipoUsuario())) {
-            List<User> vinculados = userRepository.listarPorCnpjAtivos(user.getCnpj());
-            vinculados.forEach(v -> idsUsuarios.add(v.getId()));
-        }
-        
-        List<Relato> relatos = relatoRepository.findByUsuarioIdInOrderByDataRelatoDesc(idsUsuarios);
-        
-        // Total de ocorrências
-        stats.put("totalOcorrencias", relatos.size());
-        
-        // Média mensal (últimos 6 meses)
-        LocalDateTime seisMesesAtras = LocalDateTime.now().minusMonths(6);
-        long relatosUltimos6Meses = relatos.stream()
-                .filter(r -> r.getDataRelato() != null && r.getDataRelato().isAfter(seisMesesAtras))
-                .count();
-        stats.put("mediaMensal", relatosUltimos6Meses == 0 ? 0 : Math.round(relatosUltimos6Meses / 6.0));
-        
-        // Municípios afetados (distintos)
-        long municipiosAfetados = relatos.stream()
-                .filter(r -> r.getMunicipio() != null && !r.getMunicipio().isEmpty())
-                .map(Relato::getMunicipio)
-                .distinct()
-                .count();
-        stats.put("municipiosAfetados", municipiosAfetados);
-        
-        // Tipo mais comum
-        Map<String, Long> porTipo = relatos.stream()
-                .filter(r -> r.getTipo() != null)
-                .collect(Collectors.groupingBy(Relato::getTipo, Collectors.counting()));
-        
-        String tipoMaisComum = porTipo.entrySet().stream()
-                .max(Map.Entry.comparingByValue())
-                .map(Map.Entry::getKey)
-                .orElse("Nenhum");
-        stats.put("tipoMaisComum", tipoMaisComum);
-        
-        // Tendência
-        LocalDateTime agora = LocalDateTime.now();
-        LocalDateTime inicioMesAtual = agora.withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);
-        LocalDateTime inicioMesAnterior = inicioMesAtual.minusMonths(1);
-        
-        long mesAtual = relatos.stream()
-                .filter(r -> r.getDataRelato() != null && r.getDataRelato().isAfter(inicioMesAtual))
-                .count();
-        long mesAnterior = relatos.stream()
-                .filter(r -> r.getDataRelato() != null && 
-                         r.getDataRelato().isAfter(inicioMesAnterior) && 
-                         r.getDataRelato().isBefore(inicioMesAtual))
-                .count();
-        
-        Map<String, Object> tendencia = new HashMap<>();
-        tendencia.put("mesAtual", mesAtual);
-        tendencia.put("mesAnterior", mesAnterior);
-        if (mesAnterior > 0) {
-            double variacao = ((double) (mesAtual - mesAnterior) / mesAnterior) * 100;
-            tendencia.put("variacao", Math.round(variacao * 100.0) / 100.0);
-            tendencia.put("direcao", variacao >= 0 ? "up" : "down");
-        } else {
-            tendencia.put("variacao", mesAtual > 0 ? 100 : 0);
-            tendencia.put("direcao", mesAtual > 0 ? "up" : "neutral");
-        }
-        stats.put("tendencia", tendencia);
-        
-        return stats;
-    }
-
-    /**
-     * Filtrar relatos com base em critérios
-     */
-    public Map<String, Object> filtrarRelatos(User user, Map<String, Object> filtros) {
-        Map<String, Object> resultado = new HashMap<>();
-        
-        List<String> idsUsuarios = new ArrayList<>();
-        idsUsuarios.add(user.getId());
-        
-        if (TipoUsuario.PESSOA_JURIDICA.equals(user.getTipoUsuario())) {
-            List<User> vinculados = userRepository.listarPorCnpjAtivos(user.getCnpj());
-            vinculados.forEach(v -> idsUsuarios.add(v.getId()));
-        }
-        
-        List<Relato> relatos = new ArrayList<>(relatoRepository.findByUsuarioIdInOrderByDataRelatoDesc(idsUsuarios));
-        
-        // Aplicar filtros
-        LocalDateTime dataInicio = (LocalDateTime) filtros.get("dataInicio");
-        LocalDateTime dataFim = (LocalDateTime) filtros.get("dataFim");
-        String linha = (String) filtros.get("linha");
-        String tipo = (String) filtros.get("tipo");
-        
-        if (dataInicio != null) {
-            relatos = relatos.stream()
-                    .filter(r -> r.getDataRelato() != null && !r.getDataRelato().isBefore(dataInicio))
-                    .collect(Collectors.toList());
-        }
-        
-        if (dataFim != null) {
-            relatos = relatos.stream()
-                    .filter(r -> r.getDataRelato() != null && !r.getDataRelato().isAfter(dataFim))
-                    .collect(Collectors.toList());
-        }
-        
-        if (linha != null && !linha.isEmpty()) {
-            try {
-                int numLinha = Integer.parseInt(linha);
-                relatos = relatos.stream()
-                        .filter(r -> (r.getLinhaTranscol() != null && r.getLinhaTranscol().equals(numLinha)) ||
-                                    (r.getLinhaMunicipal() != null && r.getLinhaMunicipal().equals(numLinha)))
-                        .collect(Collectors.toList());
-            } catch (NumberFormatException e) {
-                // Linha inválida, ignorar filtro
-            }
-        }
-        
-        if (tipo != null && !tipo.isEmpty() && !"geral".equals(tipo)) {
-            relatos = relatos.stream()
-                    .filter(r -> r.getTipo() != null && r.getTipo().equalsIgnoreCase(tipo))
-                    .collect(Collectors.toList());
-        }
-        
-        // Estatísticas dos filtrados (CORRIGIDO - usando relatoToMap)
-        resultado.put("total", relatos.size());
-        resultado.put("relatos", relatos.stream()
-                .limit(50)
-                .map(this::relatoToMap)
-                .collect(Collectors.toList()));
-        
-        // Agrupamento por tipo
-        Map<String, Long> porTipo = relatos.stream()
-                .filter(r -> r.getTipo() != null)
-                .collect(Collectors.groupingBy(Relato::getTipo, Collectors.counting()));
-        resultado.put("porTipo", porTipo);
-        
-        // Agrupamento por município
-        Map<String, Long> porMunicipio = relatos.stream()
-                .filter(r -> r.getMunicipio() != null && !r.getMunicipio().isEmpty())
-                .collect(Collectors.groupingBy(Relato::getMunicipio, Collectors.counting()));
-        resultado.put("porMunicipio", porMunicipio);
-        
-        // Agrupamento por mês
-        Map<String, Long> porMes = relatos.stream()
-                .filter(r -> r.getDataRelato() != null)
-                .collect(Collectors.groupingBy(
-                    r -> r.getDataRelato().getYear() + "-" + String.format("%02d", r.getDataRelato().getMonthValue()),
-                    Collectors.counting()
-                ));
-        resultado.put("porMes", porMes);
-        
-        return resultado;
-    }
-
-    /**
-     * Buscar relatos por tipo específico (CORRIGIDO)
-     */
-    public List<Map<String, Object>> getRelatosPorTipo(User user, String tipo) {
-        List<String> idsUsuarios = new ArrayList<>();
-        idsUsuarios.add(user.getId());
-        
-        if (TipoUsuario.PESSOA_JURIDICA.equals(user.getTipoUsuario())) {
-            List<User> vinculados = userRepository.listarPorCnpjAtivos(user.getCnpj());
-            vinculados.forEach(v -> idsUsuarios.add(v.getId()));
-        }
-        
-        List<Relato> relatos = relatoRepository.findByUsuarioIdInOrderByDataRelatoDesc(idsUsuarios);
-        
-        return relatos.stream()
-                .filter(r -> r.getTipo() != null && r.getTipo().equalsIgnoreCase(tipo))
-                .limit(100)
-                .map(this::relatoToMap)
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * Top locais com mais ocorrências
-     */
-    public List<Map<String, Object>> getTopLocais(User user) {
-        List<String> idsUsuarios = new ArrayList<>();
-        idsUsuarios.add(user.getId());
-        
-        if (TipoUsuario.PESSOA_JURIDICA.equals(user.getTipoUsuario())) {
-            List<User> vinculados = userRepository.listarPorCnpjAtivos(user.getCnpj());
-            vinculados.forEach(v -> idsUsuarios.add(v.getId()));
-        }
-        
-        List<Relato> relatos = relatoRepository.findByUsuarioIdInOrderByDataRelatoDesc(idsUsuarios);
-        
-        // Top bairros
-        Map<String, Long> topBairros = relatos.stream()
-                .filter(r -> r.getBairro() != null && !r.getBairro().isEmpty())
-                .collect(Collectors.groupingBy(Relato::getBairro, Collectors.counting()))
-                .entrySet().stream()
-                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
-                .limit(10)
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
-        
-        // Top municípios
-        Map<String, Long> topMunicipios = relatos.stream()
-                .filter(r -> r.getMunicipio() != null && !r.getMunicipio().isEmpty())
-                .collect(Collectors.groupingBy(Relato::getMunicipio, Collectors.counting()))
-                .entrySet().stream()
-                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
-                .limit(5)
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
-        
-        List<Map<String, Object>> resultado = new ArrayList<>();
-        
-        Map<String, Object> bairros = new HashMap<>();
-        bairros.put("titulo", "Top Bairros");
-        bairros.put("dados", topBairros);
-        resultado.add(bairros);
-        
-        Map<String, Object> municipios = new HashMap<>();
-        municipios.put("titulo", "Top Municípios");
-        municipios.put("dados", topMunicipios);
-        resultado.add(municipios);
-        
-        return resultado;
-    }
-
-    // ============================================================
-    // MÉTODOS AUXILIARES PRIVADOS
+    // MÉTODOS AUXILIARES DE ESTATÍSTICAS
     // ============================================================
 
     private Map<String, Long> getRelatosPorMes(List<Relato> relatos) {
@@ -532,5 +169,276 @@ public class RelatorioService {
         }
         
         return tendencias;
+    }
+
+    // ============================================================
+    // MÉTODO EXISTENTE - GERAR RELATÓRIO COMPLETO
+    // ============================================================
+    
+    public Map<String, Object> gerarRelatorioRelatos(User user) {
+        Map<String, Object> relatorio = new HashMap<>();
+        
+        relatorio.put("geradoEm", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        relatorio.put("solicitante", user.getNome());
+        relatorio.put("tipoUsuario", user.getTipoUsuario().name());
+        relatorio.put("plano", user.getPlano().name());
+        
+        if (TipoUsuario.PESSOA_JURIDICA.equals(user.getTipoUsuario())) {
+            relatorio.put("cnpj", user.getCnpj());
+            List<User> vinculados = userRepository.listarPorCnpjAtivos(user.getCnpj());
+            relatorio.put("totalVinculados", vinculados.size());
+            
+            Map<String, Object> relatorioEmpresarial = gerarRelatorioEmpresarial(user);
+            relatorio.put("relatorioEmpresarial", relatorioEmpresarial);
+        }
+        
+        Map<String, Object> relatorioIndividual = gerarRelatorioIndividual(user);
+        relatorio.put("relatorioIndividual", relatorioIndividual);
+        
+        return relatorio;
+    }
+
+    private Map<String, Object> gerarRelatorioIndividual(User user) {
+        Map<String, Object> individual = new HashMap<>();
+        
+        String usuarioHash = getUsuarioHash(user);
+        List<Relato> meusRelatos = relatoRepository.findByUsuarioHashOrderByDataRelatoDesc(usuarioHash);
+        
+        individual.put("totalRelatos", meusRelatos.size());
+        
+        Map<String, Long> porTipo = meusRelatos.stream()
+                .collect(Collectors.groupingBy(Relato::getTipo, Collectors.counting()));
+        individual.put("relatosPorTipo", porTipo);
+        
+        List<Map<String, Object>> ultimosRelatos = meusRelatos.stream()
+                .limit(5)
+                .map(this::relatoToMap)
+                .collect(Collectors.toList());
+        individual.put("ultimosRelatos", ultimosRelatos);
+        
+        Map<String, Long> porMes = getRelatosPorMes(meusRelatos);
+        individual.put("relatosPorMes", porMes);
+        
+        Map<String, Long> porMunicipio = meusRelatos.stream()
+                .filter(r -> r.getMunicipio() != null)
+                .collect(Collectors.groupingBy(Relato::getMunicipio, Collectors.counting()));
+        individual.put("relatosPorMunicipio", porMunicipio);
+        
+        Map<String, Long> topBairros = meusRelatos.stream()
+                .filter(r -> r.getBairro() != null)
+                .collect(Collectors.groupingBy(Relato::getBairro, Collectors.counting()))
+                .entrySet().stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .limit(10)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+        individual.put("topBairros", topBairros);
+        
+        Map<String, Long> porLinha = new HashMap<>();
+        meusRelatos.forEach(r -> {
+            if (r.getLinhaTranscol() != null) {
+                porLinha.merge("Transcol " + r.getLinhaTranscol(), 1L, Long::sum);
+            }
+            if (r.getLinhaMunicipal() != null) {
+                porLinha.merge("Municipal " + r.getLinhaMunicipal(), 1L, Long::sum);
+            }
+        });
+        individual.put("relatosPorLinha", porLinha);
+        
+        Map<String, Object> estatisticas = new HashMap<>();
+        estatisticas.put("mediaDiaria", calcularMediaDiaria(meusRelatos));
+        estatisticas.put("diaMaisAtivo", getDiaMaisAtivo(meusRelatos));
+        estatisticas.put("tipoMaisReportado", getTipoMaisFrequente(porTipo));
+        estatisticas.put("municipioMaisReportado", getMunicipioMaisFrequente(porMunicipio));
+        individual.put("estatisticas", estatisticas);
+        
+        return individual;
+    }
+
+    private Map<String, Object> gerarRelatorioEmpresarial(User empresa) {
+        Map<String, Object> empresarial = new HashMap<>();
+        
+        List<User> vinculados = userRepository.listarPorCnpjAtivos(empresa.getCnpj());
+        List<String> todosHashes = getHashesUsuarios(empresa);
+        
+        List<Relato> todosRelatos = new ArrayList<>();
+        for (String hash : todosHashes) {
+            todosRelatos.addAll(relatoRepository.findByUsuarioHashOrderByDataRelatoDesc(hash));
+        }
+        todosRelatos.sort((r1, r2) -> r2.getDataRelato().compareTo(r1.getDataRelato()));
+        
+        empresarial.put("totalUsuarios", vinculados.size() + 1);
+        empresarial.put("totalRelatos", todosRelatos.size());
+        
+        Map<String, Long> relatosPorUsuario = new LinkedHashMap<>();
+        relatosPorUsuario.put(empresa.getNome(), relatoRepository.countByUsuarioHash(getUsuarioHash(empresa)));
+        vinculados.forEach(v -> relatosPorUsuario.put(v.getNome(), relatoRepository.countByUsuarioHash(getUsuarioHash(v))));
+        empresarial.put("relatosPorUsuario", relatosPorUsuario);
+        
+        Map<String, Long> porTipo = todosRelatos.stream()
+                .collect(Collectors.groupingBy(Relato::getTipo, Collectors.counting()));
+        empresarial.put("relatosPorTipo", porTipo);
+        
+        Map<String, Long> porMes = getRelatosPorMes(todosRelatos);
+        empresarial.put("relatosPorMes", porMes);
+        
+        Map<String, Long> porMunicipio = todosRelatos.stream()
+                .filter(r -> r.getMunicipio() != null)
+                .collect(Collectors.groupingBy(Relato::getMunicipio, Collectors.counting()));
+        empresarial.put("relatosPorMunicipio", porMunicipio);
+        
+        List<Map<String, Object>> topUsuarios = relatosPorUsuario.entrySet().stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .limit(5)
+                .map(entry -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("nome", entry.getKey());
+                    map.put("total", entry.getValue());
+                    return map;
+                })
+                .collect(Collectors.toList());
+        empresarial.put("topUsuariosAtivos", topUsuarios);
+        
+        List<Map<String, Object>> distribuicaoGeografica = porMunicipio.entrySet().stream()
+                .map(entry -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("municipio", entry.getKey());
+                    map.put("total", entry.getValue());
+                    return map;
+                })
+                .collect(Collectors.toList());
+        empresarial.put("distribuicaoGeografica", distribuicaoGeografica);
+        
+        Map<String, Object> tendencias = calcularTendencias(todosRelatos);
+        empresarial.put("tendencias", tendencias);
+        
+        return empresarial;
+    }
+
+public Map<String, Object> getEstatisticasDashboard(User user) {
+    Map<String, Object> stats = new HashMap<>();
+    
+    String usuarioHash = getUsuarioHash(user);
+    
+    // Busca por hash
+    List<Relato> relatosComHash = relatoRepository.findByUsuarioHashOrderByDataRelatoDesc(usuarioHash);
+    
+    // Se não encontrou, busca todos (fallback para relatos antigos sem hash)
+    if (relatosComHash == null || relatosComHash.isEmpty()) {
+        relatosComHash = relatoRepository.findAll();
+    }
+    
+    stats.put("totalOcorrencias", relatosComHash.size());
+    
+    // Tipo mais comum
+    Map<String, Long> porTipo = relatosComHash.stream()
+            .filter(r -> r.getTipo() != null)
+            .collect(Collectors.groupingBy(Relato::getTipo, Collectors.counting()));
+    
+    String tipoMaisComum = porTipo.entrySet().stream()
+            .max(Map.Entry.comparingByValue())
+            .map(Map.Entry::getKey)
+            .orElse("Nenhum");
+    stats.put("tipoMaisComum", tipoMaisComum);
+    stats.put("mediaMensal", relatosComHash.size());
+    
+    Map<String, Object> tendencia = new HashMap<>();
+    tendencia.put("mesAtual", relatosComHash.size());
+    tendencia.put("mesAnterior", 0);
+    stats.put("tendencia", tendencia);
+    
+    return stats;
+}
+
+    /**
+     * Filtrar relatos
+     */
+    public Map<String, Object> filtrarRelatos(User user, Map<String, Object> filtros) {
+        Map<String, Object> resultado = new HashMap<>();
+        
+        List<String> todosHashes = getHashesUsuarios(user);
+        
+        List<Relato> relatos = new ArrayList<>();
+        for (String hash : todosHashes) {
+            List<Relato> relatosDoHash = relatoRepository.findByUsuarioHashOrderByDataRelatoDesc(hash);
+            if (relatosDoHash != null) {
+                relatos.addAll(relatosDoHash);
+            }
+        }
+        
+        System.out.println("🔍 Filtrando " + relatos.size() + " relatos");
+        
+        resultado.put("total", relatos.size());
+        resultado.put("relatos", relatos.stream()
+                .limit(50)
+                .map(this::relatoToMap)
+                .collect(Collectors.toList()));
+        
+        return resultado;
+    }
+
+    /**
+     * Relatos por tipo
+     */
+    public List<Map<String, Object>> getRelatosPorTipo(User user, String tipo) {
+        List<String> todosHashes = getHashesUsuarios(user);
+        
+        List<Relato> relatos = new ArrayList<>();
+        for (String hash : todosHashes) {
+            List<Relato> relatosDoHash = relatoRepository.findByUsuarioHashOrderByDataRelatoDesc(hash);
+            if (relatosDoHash != null) {
+                relatos.addAll(relatosDoHash);
+            }
+        }
+        
+        return relatos.stream()
+                .filter(r -> r.getTipo() != null && r.getTipo().equalsIgnoreCase(tipo))
+                .limit(100)
+                .map(this::relatoToMap)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Top locais
+     */
+    public List<Map<String, Object>> getTopLocais(User user) {
+        List<String> todosHashes = getHashesUsuarios(user);
+        
+        List<Relato> relatos = new ArrayList<>();
+        for (String hash : todosHashes) {
+            List<Relato> relatosDoHash = relatoRepository.findByUsuarioHashOrderByDataRelatoDesc(hash);
+            if (relatosDoHash != null) {
+                relatos.addAll(relatosDoHash);
+            }
+        }
+        
+        Map<String, Long> topBairros = relatos.stream()
+                .filter(r -> r.getBairro() != null && !r.getBairro().isEmpty())
+                .collect(Collectors.groupingBy(Relato::getBairro, Collectors.counting()))
+                .entrySet().stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .limit(10)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+        
+        Map<String, Long> topMunicipios = relatos.stream()
+                .filter(r -> r.getMunicipio() != null && !r.getMunicipio().isEmpty())
+                .collect(Collectors.groupingBy(Relato::getMunicipio, Collectors.counting()))
+                .entrySet().stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .limit(5)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+        
+        List<Map<String, Object>> resultado = new ArrayList<>();
+        
+        Map<String, Object> bairros = new HashMap<>();
+        bairros.put("titulo", "Top Bairros");
+        bairros.put("dados", topBairros);
+        resultado.add(bairros);
+        
+        Map<String, Object> municipios = new HashMap<>();
+        municipios.put("titulo", "Top Municípios");
+        municipios.put("dados", topMunicipios);
+        resultado.add(municipios);
+        
+        return resultado;
     }
 }

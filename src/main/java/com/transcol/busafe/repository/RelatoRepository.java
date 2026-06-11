@@ -10,13 +10,12 @@ import java.util.List;
 @Repository
 public interface RelatoRepository extends MongoRepository<Relato, String> {
     
-    // Agora o campo usuarioId existe, esses métodos vão funcionar:
-    List<Relato> findByUsuarioIdOrderByDataRelatoDesc(String usuarioId);
-    
-    List<Relato> findByUsuarioIdInOrderByDataRelatoDesc(List<String> usuarioIds);
-    
-    long countByUsuarioId(String usuarioId);
-    
+    List<Relato> findByUsuarioHash(String usuarioHash);
+
+    List<Relato> findByUsuarioHashOrderByDataRelatoDesc(String usuarioHash);
+    List<Relato> findByUsuarioHashInOrderByDataRelatoDesc(List<String> usuarioHashes);
+    long countByUsuarioHash(String usuarioHash);
+      
     // Buscar por tipo
     @Query("{ 'tipo' : ?0 }")
     List<Relato> findByTipo(String tipo);

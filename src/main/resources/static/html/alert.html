@@ -350,57 +350,118 @@
         resultadosDiv.style.display = 'none';
     });
 
-    /* envio */
-    submitBtn.addEventListener('click', async e => {
-      e.preventDefault();
-      const descricao     = document.querySelector('textarea').value.trim();
-      const incidenteEl   = document.querySelector('input[name="incident"]:checked');
-      const tipoIncidente = incidenteEl ? incidenteEl.value : '';
-      const lat           = latInput.value;
-      const lon           = lonInput.value;
-      const bairro        = document.getElementById('bairro').value;
-      const municipio     = document.getElementById('municipio').value;
-      const numeroLinha   = numeroSelecionado.value;
-      const tipoLinha     = tipoSelecionado.value;
+  /* envio - CORRIGIDO COM TOKEN */
+  submitBtn.addEventListener('click', async e => {
+    e.preventDefault();
+    const descricao     = document.querySelector('textarea').value.trim();
+    const incidenteEl   = document.querySelector('input[name="incident"]:checked');
+    const tipoIncidente = incidenteEl ? incidenteEl.value : '';
+    const lat           = latInput.value;
+    const lon           = lonInput.value;
+    const bairro        = document.getElementById('bairro').value;
+    const municipio     = document.getElementById('municipio').value;
+    const numeroLinha   = numeroSelecionado.value;
+    const tipoLinha     = tipoSelecionado.value;
 
-      if (!lat || !lon || !descricao || !tipoIncidente) {
-        showToast('Preencha: tipo, localização e descrição.','warning');
-        return;
-      }
+    if (!lat || !lon || !descricao || !tipoIncidente) {
+      showToast('Preencha: tipo, localização e descrição.','warning');
+      return;
+    }
+    
+    // ⬇️ VERIFICA SE ESTÁ LOGADO ⬇️
+    const token = localStorage.getItem('token');
+    if (!token) {
+      showToast('Você precisa estar logado para reportar um incidente.','warning');
+      return;
+    }
 
-      let linhaTranscol = null, linhaMunicipal = null;
-      if (numeroLinha && tipoLinha) {
-        const n = parseInt(numeroLinha);
-        if (tipoLinha === 'TRANSCOL')  linhaTranscol  = n;
-        if (tipoLinha === 'MUNICIPAL') linhaMunicipal = n;
-      }
+      let usuarioId = localStorage.getItem('userId') || localStorage.getItem('id');
+  
+  // Se não tiver no localStorage, extrai do token JWT
+  if (!usuarioId) {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      usuarioId = payload.id || payload.userId || payload.sub;
+      if (usuarioId) localStorage.setItem('userId', usuarioId);
+    } catch(e) {
+      console.error('Erro ao extrair ID do token:', e);
+    }
+  }
 
-      const dados = { descricao, tipo: tipoIncidente, latitude: parseFloat(lat), longitude: parseFloat(lon), bairro, municipio, linhaTranscol, linhaMunicipal };
+    let linhaTranscol = null, linhaMunicipal = null;
+    if (numeroLinha && tipoLinha) {
+      const n = parseInt(numeroLinha);
+      if (tipoLinha === 'TRANSCOL')  linhaTranscol  = n;
+      if (tipoLinha === 'MUNICIPAL') linhaMunicipal = n;
+    }
 
-      try {
-        const resp = await fetch('/relatos', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(dados)
-        });
-        if (resp.ok) {
-          showToast('Incidente reportado com sucesso!','success');
+    const dados = { 
+      descricao, 
+      tipo: tipoIncidente, 
+      latitude: parseFloat(lat), 
+      longitude: parseFloat(lon), 
+      bairro, 
+      municipio, 
+      linhaTranscol, 
+      linhaMunicipal,
+      usuarioId: usuarioId  
+    };
 
-          document.querySelector('textarea').value = '';
-          buscaInput.value = '';
-          numeroSelecionado.value = tipoSelecionado.value = '';
-          document.getElementById('bairro').value = document.getElementById('municipio').value = '';
-          latInput.value = lonInput.value = '';
-          document.querySelectorAll('input[name="incident"]').forEach(r => r.checked = false);
-          updateProgress();
-        } else {
-          showToast('Erro ao reportar. Verifique os dados.','error');
+    // ⬇️ DESABILITA O BOTÃO PARA EVITAR DUPLO CLIQUE ⬇️
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Enviando...';
+
+    try {
+      const resp = await fetch('/relatos', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token  // ⬅️ TOKEN AQUI!
+        },
+        body: JSON.stringify(dados)
+      });
+      
+      if (resp.ok) {
+        showToast('✅ Incidente reportado com sucesso!','success');
+
+        // Limpa o formulário
+        document.querySelector('textarea').value = '';
+        buscaInput.value = '';
+        numeroSelecionado.value = tipoSelecionado.value = '';
+        document.getElementById('bairro').value = document.getElementById('municipio').value = '';
+        latInput.value = lonInput.value = '';
+        document.querySelectorAll('input[name="incident"]').forEach(r => r.checked = false);
+        updateProgress();
+        
+        // Recarrega relatos no mapa se estiver na mesma sessão
+        if (typeof carregarRelatos === 'function') {
+          setTimeout(() => carregarRelatos(), 500);
         }
-      } catch(err) {
-        showToast('Erro ao se comunicar com o servidor.','error');
-        console.error(err);
+      } else {
+        const erroTexto = await resp.text();
+        console.error('Erro do servidor:', resp.status, erroTexto);
+        
+        if (resp.status === 403) {
+          showToast('Sessão expirada. Faça login novamente.','error');
+        } else if (resp.status === 401) {
+          showToast('Autenticação necessária. Faça login.','error');
+        } else {
+          showToast('Erro ao reportar. ' + (erroTexto || 'Tente novamente.'),'error');
+        }
       }
-    });
+    } catch(err) {
+      showToast('Erro ao se comunicar com o servidor.','error');
+      console.error(err);
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-send-fill" viewBox="0 0 16 16">
+          <path d="M15.964.686a.5.5 0 0 0-.65-.65L.767 5.855H.766l-.452.18a.5.5 0 0 0-.082.887l.41.26.001.002 4.995 3.178 3.178 4.995.002.002.26.41a.5.5 0 0 0 .886-.083zm-1.833 1.89L6.637 10.07l-.215-.338a.5.5 0 0 0-.154-.154l-.338-.215 7.494-7.494 1.178-.471z"/>
+        </svg>
+        Enviar Denúncia
+      `;
+    }
+  });
   });
 
   async function favoritarRotaNoBanco(codigoRota) {
