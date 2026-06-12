@@ -19,7 +19,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/vinculados")
-@CrossOrigin(origins = "*")
 public class VinculadosController {
 
     @Autowired

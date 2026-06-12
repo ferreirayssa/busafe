@@ -9,7 +9,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/mapa")
-@CrossOrigin(origins = "*")
 public class MapaController {
 
     @Autowired
