@@ -1,0 +1,1318 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Relatórios — BuSafe</title>
+    <link rel="icon" href="../Logos/busafe.ico">
+    <link rel="apple-touch-icon" href="../Logos/Logo_3.png">
+
+      <link rel="preload" href="../css/Style.css" as="style">
+    <link rel="stylesheet" href="../css/Style.css">
+
+    <script src="../js/config.js"></script>
+  <script src="../js/scripts.js" defer></script>
+    <script src="../js/sidebarLoader.js" defer></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js para gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <!-- Date Range Picker -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+    
+    <!-- html2pdf para exportação -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+<style>
+    /* ============================================================
+       RELATÓRIOS - SEGUINDO PADRÃO Style.css
+       ============================================================ */
+    
+    /* Variáveis já herdadas do :root global */
+    
+    /* Override do grid do body para esta página (sidebar + conteúdo) */
+    body {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        overflow: hidden; /* Evita scroll duplo */
+    }
+    
+    /* Container principal com scroll - Igual ao #content do Style.css */
+    #content {
+        height: 100vh;
+        overflow-y: auto;
+        overflow-x: hidden;
+        position: relative;
+    }
+    
+    /* Container interno com padding */
+    .relatorios-container {
+        padding: clamp(1rem, 3vw, 2.5rem);
+        max-width: 1400px;
+        margin: 0 auto;
+        animation: fadeInUp 0.3s ease;
+        min-height: 100vh;
+    }
+    
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* ============================================================
+       HEADER
+       ============================================================ */
+    .relatorios-header {
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    .relatorios-header h1 {
+        font-size: clamp(1.5rem, 3vw, 2rem);
+        color: var(--text-clr);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 0;
+    }
+    
+    .relatorios-header h1 i {
+        color: var(--accent-clr);
+    }
+    
+    .header-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+    
+    /* Botões seguindo padrão do container */
+    .btn-export {
+        background: linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,.01));
+        border: 1px solid var(--line-clr);
+        color: var(--text-clr);
+        padding: 0.625rem 1.25rem;
+        border-radius: 8px;
+        font-weight: 500;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.25s;
+        font-size: 0.875rem;
+        white-space: nowrap;
+        font-family: inherit;
+        backdrop-filter: blur(6px);
+    }
+    
+    .btn-export:hover {
+        background: var(--hover-clr);
+        border-color: var(--accent-clr);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(16,101,156,.15);
+    }
+    
+    /* ============================================================
+       FILTROS - Seguindo padrão .container
+       ============================================================ */
+    .filtros-container {
+        background: linear-gradient(180deg, rgba(251, 241, 241, 0.025), rgba(255,255,255,.01));
+        border: 1px solid var(--line-clr);
+        border-radius: 14px;
+        padding: clamp(1rem, 2vw, 1.5rem);
+        margin-bottom: 1.5rem;
+        backdrop-filter: blur(6px);
+    }
+    
+    .filtros-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1rem;
+        align-items: end;
+    }
+    
+    @media (min-width: 768px) {
+        .filtros-grid {
+            grid-template-columns: 2fr 1fr 1fr auto;
+        }
+    }
+    
+    .filtro-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .filtro-group label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+        color: var(--secondary-text-clr);
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+    }
+    
+    .filtro-group input,
+    .filtro-group select {
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        border: 1px solid var(--line-clr);
+        background: rgba(0,0,0,.25);
+        color: var(--text-clr);
+        font-family: inherit;
+        font-size: 0.85rem;
+        width: 100%;
+        transition: border-color 0.2s;
+    }
+    
+    .filtro-group input:focus,
+    .filtro-group select:focus {
+        outline: none;
+        border-color: var(--accent-clr);
+    }
+    
+    .btn-filtrar {
+        background: linear-gradient(135deg, var(--accent-clr), #2989c4);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        justify-content: center;
+        transition: all 0.25s;
+        width: 100%;
+        font-size: 0.9rem;
+        font-family: inherit;
+        box-shadow: 0 4px 12px rgba(16,101,156,.3);
+    }
+    
+    .btn-filtrar:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(16,101,156,.4);
+    }
+    
+    .btn-filtrar:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none !important;
+    }
+    
+    /* ============================================================
+       MÉTRICAS - Cards seguindo padrão
+       ============================================================ */
+    .metricas-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .metric-card {
+        background: linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,.01));
+        border: 1px solid var(--line-clr);
+        border-radius: 14px;
+        padding: clamp(1rem, 2vw, 1.5rem);
+        text-align: center;
+        transition: all 0.3s;
+        position: relative;
+        overflow: hidden;
+        backdrop-filter: blur(6px);
+    }
+    
+    .metric-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 40px rgba(16,101,156,.15);
+        border-color: var(--accent-clr);
+    }
+    
+    .metric-icon {
+        font-size: 2rem;
+        opacity: 0.08;
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        color: var(--text-clr);
+    }
+    
+    .metric-value {
+        font-size: clamp(1.5rem, 3vw, 2.5rem);
+        font-weight: 700;
+        color: var(--accent-clr);
+        margin-bottom: 0.25rem;
+    }
+    
+    .metric-label {
+        font-size: 0.85rem;
+        color: var(--secondary-text-clr);
+        font-weight: 500;
+    }
+    
+    .metric-trend {
+        font-size: 0.75rem;
+        margin-top: 0.75rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-weight: 600;
+    }
+    
+    .trend-up { 
+        color: #4CAF50; 
+        background: rgba(76, 175, 80, 0.12); 
+    }
+    
+    .trend-down { 
+        color: #ef5350; 
+        background: rgba(239, 83, 80, 0.12); 
+    }
+    
+    .trend-neutral { 
+        color: #ff9800; 
+        background: rgba(255, 152, 0, 0.12); 
+    }
+    
+    /* ============================================================
+       GRÁFICOS - Cards seguindo padrão
+       ============================================================ */
+    .graficos-section {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .grafico-card {
+        background: linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,.01));
+        border: 1px solid var(--line-clr);
+        border-radius: 14px;
+        padding: 1.25rem;
+        backdrop-filter: blur(6px);
+    }
+    
+    .grafico-card h3 {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--secondary-text-clr);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .grafico-card canvas {
+        max-height: 280px;
+        width: 100%;
+    }
+    
+    /* ============================================================
+       TOP LOCAIS - Cards seguindo padrão
+       ============================================================ */
+    .top-locais-section {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .top-locais-card {
+        background: linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,.01));
+        border: 1px solid var(--line-clr);
+        border-radius: 14px;
+        padding: 1.25rem;
+        backdrop-filter: blur(6px);
+    }
+    
+    .top-locais-card h3 {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--secondary-text-clr);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .top-local-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem;
+        border-bottom: 1px solid rgba(255,255,255,.03);
+        transition: background 0.15s;
+    }
+    
+    .top-local-item:hover {
+        background: var(--hover-clr);
+    }
+    
+    .top-local-posicao {
+        font-weight: 700;
+        color: var(--accent-clr);
+        width: 40px;
+        font-size: 0.9rem;
+    }
+    
+    .top-local-nome {
+        flex: 1;
+        color: var(--text-clr);
+        font-size: 0.9rem;
+    }
+    
+    .top-local-valor {
+        color: var(--secondary-text-clr);
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    /* ============================================================
+       TABELA - Seguindo padrão
+       ============================================================ */
+    .ultimos-relatos {
+        background: linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,.01));
+        border: 1px solid var(--line-clr);
+        border-radius: 14px;
+        padding: 1.25rem;
+        margin-top: 1rem;
+        backdrop-filter: blur(6px);
+    }
+    
+    .ultimos-relatos h3 {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--secondary-text-clr);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        max-width: 100%;
+    }
+    
+    .relatos-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 600px;
+    }
+    
+    .relatos-table th,
+    .relatos-table td {
+        padding: 0.75rem;
+        text-align: left;
+        border-bottom: 1px solid rgba(255,255,255,.03);
+        font-size: 0.85rem;
+    }
+    
+    .relatos-table th {
+        color: var(--secondary-text-clr);
+        font-weight: 600;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .relatos-table td {
+        color: var(--text-clr);
+    }
+    
+    .relatos-table tbody tr:hover {
+        background: var(--hover-clr);
+    }
+    
+    /* Badges de tipo */
+    .tipo-badge {
+        display: inline-block;
+        padding: 0.25rem 0.6rem;
+        border-radius: 12px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+    }
+    
+    .tipo-ASSALTO, .tipo-assalto { background: #e74c3c; color: white; }
+    .tipo-FURTO, .tipo-furto { background: #f39c12; color: white; }
+    .tipo-ACIDENTE, .tipo-acidente { background: #2ecc71; color: white; }
+    .tipo-IMPORTUNACAO, .tipo-importunacao { background: #9b59b6; color: white; }
+    .tipo-OUTRO, .tipo-outro { background: #7f8c8d; color: white; }
+    
+    /* ============================================================
+       LOADING - Seguindo padrão modal
+       ============================================================ */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.75);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        backdrop-filter: blur(5px);
+    }
+    
+    .loading-spinner {
+        background: var(--base-clr);
+        padding: 2rem;
+        border-radius: 16px;
+        text-align: center;
+        border: 1px solid var(--line-clr);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    }
+    
+    .loading-spinner i {
+        font-size: 2rem;
+        color: var(--accent-clr);
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    /* ============================================================
+       EMPTY STATE
+       ============================================================ */
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: var(--secondary-text-clr);
+    }
+    
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.3;
+    }
+    
+    /* ============================================================
+       TOAST - Seguindo padrão do Style.css
+       ============================================================ */
+    #toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        width: 300px;
+    }
+    
+    .toast {
+        padding: 14px 16px;
+        border-radius: 10px;
+        background: #1e2030;
+        color: var(--text-clr);
+        border: 1px solid var(--line-clr);
+        box-shadow: 0 6px 20px rgba(0,0,0,.35);
+        font-weight: 500;
+        font-size: .875rem;
+        animation: toastIn .4s forwards;
+    }
+    
+    body.light-mode .toast { 
+        background: #fff; 
+    }
+    
+    .toast.success { border-left: 4px solid #4CAF50; }
+    .toast.error   { border-left: 4px solid #ef5350; }
+    .toast.warning { border-left: 4px solid #ff9800; }
+    .toast.info    { border-left: 4px solid var(--accent-clr); }
+    
+    @keyframes toastIn { 
+        from { opacity: 0; transform: translateX(100%); } 
+        to { opacity: 1; transform: translateX(0); } 
+    }
+    
+    /* ============================================================
+       RESPONSIVIDADE - Seguindo padrão do Style.css
+       ============================================================ */
+    @media (max-width: 768px) {
+        /* Força sidebar mobile */
+        body {
+            grid-template-columns: 1fr;
+        }
+        
+        #hamburger-btn {
+            display: flex;
+        }
+        
+        #sidebar {
+            position: fixed;
+            top: 0;
+            left: -260px;
+            height: 100vh;
+            z-index: 1000;
+            transition: left 0.3s ease-in-out;
+            width: var(--sidebar-width) !important;
+        }
+        
+        #sidebar.mobile-open {
+            left: 0;
+        }
+        
+        #sidebar-overlay.show {
+            display: block;
+            opacity: 1;
+        }
+        
+        .relatorios-container {
+            padding: 1rem;
+            padding-top: 80px; /* Espaço para o hambúrguer */
+        }
+        
+        .filtros-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .metricas-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .graficos-section {
+            grid-template-columns: 1fr;
+        }
+        
+        .top-locais-section {
+            grid-template-columns: 1fr;
+        }
+        
+        .relatorios-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .header-actions {
+            width: 100%;
+            justify-content: flex-end;
+        }
+        
+        .grafico-card canvas {
+            max-height: 250px;
+        }
+        
+        .table-responsive {
+            margin: 0 -1rem;
+            padding: 0 1rem;
+            width: calc(100% + 2rem);
+        }
+        
+        #toast-container {
+            width: calc(100% - 32px);
+            left: 16px;
+            right: 16px;
+        }
+    }
+</style>
+</head>
+<body>
+
+    <div id="sidebar-container"></div>
+
+    <main id="content">
+        <div class="relatorios-container" id="relatoriosContainer">
+            
+            <!-- Header -->
+            <div class="relatorios-header">
+                <h1>
+                    <i class="fas fa-chart-line"></i>
+                    Relatórios
+                </h1>
+                <div class="header-actions">
+                    <button class="btn-export" id="btnExportPDF">
+                        <i class="fas fa-file-pdf"></i> PDF
+                    </button>
+                    <button class="btn-export" id="btnRefresh">
+                        <i class="fas fa-sync-alt"></i> Atualizar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filtros -->
+            <div class="filtros-container">
+                <div class="filtros-grid">
+                    <div class="filtro-group">
+                        <label for="daterange"><i class="fas fa-calendar-alt"></i> Período</label>
+                        <input type="text" id="daterange" placeholder="Selecione o período" autocomplete="off" readonly>
+                    </div>
+                    <div class="filtro-group">
+                        <label for="linhaBusca"><i class="fas fa-bus"></i> Linha</label>
+                        <input type="text" id="linhaBusca" placeholder="Nº da linha (ex: 506)" autocomplete="off">
+                    </div>
+                    <div class="filtro-group">
+                        <label for="tipoRelatorio"><i class="fas fa-filter"></i> Tipo</label>
+                        <select id="tipoRelatorio">
+                            <option value="geral">Geral</option>
+                            <option value="ASSALTO">Assalto</option>
+                            <option value="FURTO">Furto</option>
+                            <option value="ACIDENTE">Acidente</option>
+                            <option value="IMPORTUNACAO">Importunação</option>
+                            <option value="OUTRO">Outro</option>
+                        </select>
+                    </div>
+                    <div class="filtro-group">
+                        <button class="btn-filtrar" id="btnFiltrar">
+                            <i class="fas fa-search"></i> Aplicar Filtros
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Métricas -->
+            <div class="metricas-grid" id="metricasGrid">
+                <div class="metric-card">
+                    <i class="fas fa-exclamation-triangle metric-icon"></i>
+                    <div class="metric-value" id="totalOcorrencias">--</div>
+                    <div class="metric-label">Total de Ocorrências</div>
+                    <div class="metric-trend" id="trendOcorrencias"></div>
+                </div>
+                
+                <div class="metric-card">
+                    <i class="fas fa-chart-line metric-icon"></i>
+                    <div class="metric-value" id="mediaMensal">--</div>
+                    <div class="metric-label">Média Mensal</div>
+                    <div class="metric-trend" id="trendMedia"></div>
+                </div>
+                
+                <div class="metric-card">
+                    <i class="fas fa-location-dot metric-icon"></i>
+                    <div class="metric-value" id="municipiosAfetados">--</div>
+                    <div class="metric-label">Municípios Afetados</div>
+                    <div class="metric-trend" id="trendMunicipios"></div>
+                </div>
+            </div>
+
+            <!-- Gráficos -->
+            <div class="graficos-section" id="graficosSection">
+                <div class="grafico-card">
+                    <h3><i class="fas fa-chart-pie"></i> Ocorrências por Tipo</h3>
+                    <canvas id="graficoTipos"></canvas>
+                </div>
+                <div class="grafico-card">
+                    <h3><i class="fas fa-chart-line"></i> Ocorrências por Mês</h3>
+                    <canvas id="graficoMeses"></canvas>
+                </div>
+            </div>
+
+            <!-- Top Locais -->
+            <div class="top-locais-section" id="topLocaisSection">
+                <div class="top-locais-card">
+                    <h3><i class="fas fa-building"></i> Top Bairros</h3>
+                    <div id="topBairrosList" class="top-locais-lista">Carregando...</div>
+                </div>
+                <div class="top-locais-card">
+                    <h3><i class="fas fa-city"></i> Top Municípios</h3>
+                    <div id="topMunicipiosList" class="top-locais-lista">Carregando...</div>
+                </div>
+            </div>
+
+            <!-- Últimos Relatos -->
+            <div class="ultimos-relatos">
+                <h3><i class="fas fa-history"></i> Últimos Relatos</h3>
+                <div class="table-responsive">
+                    <table class="relatos-table">
+                        <thead>
+                            <tr><th>Data/Hora</th><th>Tipo</th><th>Município</th><th>Bairro</th><th>Descrição</th></tr>
+                        </thead>
+                        <tbody id="relatosTbody">
+                            <tr><td colspan="5" class="empty-state">Carregando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <div id="toast-container"></div>
+
+    <script>
+        // ============================================================
+        // RELATÓRIOS - INTEGRAÇÃO COMPLETA COM BACKEND
+        // ============================================================
+        
+        (function() {
+            'use strict';
+            
+            const API_BASE = BACKEND_URL + '/api/relatorios';
+            
+            // Estado global
+            let currentUser = null;
+            let currentStats = null;
+            let currentRelatorio = null;
+            let charts = { tipos: null, meses: null };
+            
+            // ============================================================
+            // INICIALIZAÇÃO
+            // ============================================================
+            
+            async function init() {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+                
+                // Carregar scripts necessários
+                await carregarScripts();
+                
+                // Verificar acesso
+                const acesso = await verificarAcesso();
+                if (!acesso) return;
+                
+                // Carregar todos os dados
+                await carregarTodosDados();
+                
+                // Configurar eventos
+                configurarEventos();
+                configurarDatePicker();
+            }
+            
+            async function carregarScripts() {
+                const scripts = [
+                    'https://cdn.jsdelivr.net/npm/jquery/dist/jquery.min.js',
+                    'https://cdn.jsdelivr.net/npm/moment/min/moment.min.js',
+                    'https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js'
+                ];
+                
+                for (const src of scripts) {
+                    if (!document.querySelector(`script[src="${src}"]`)) {
+                        await new Promise((resolve, reject) => {
+                            const script = document.createElement('script');
+                            script.src = src;
+                            script.onload = resolve;
+                            script.onerror = reject;
+                            document.head.appendChild(script);
+                        });
+                    }
+                }
+            }
+            
+            // ============================================================
+            // REQUISIÇÕES À API
+            // ============================================================
+            
+            async function verificarAcesso() {
+                try {
+                    mostrarLoading(true);
+                    
+                    const response = await fetch(`${API_BASE}/verificar-acesso`, {
+                        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                    });
+                    
+                    if (!response.ok) throw new Error('Acesso negado');
+                    
+                    const data = await response.json();
+                    currentUser = data;
+                    
+                    if (!data.acessoPermitido) {
+                        mostrarAcessoNegado();
+                        return false;
+                    }
+                    
+                    return true;
+                    
+                } catch (error) {
+                    console.error('Erro:', error);
+                    window.location.href = 'login.html';
+                    return false;
+                } finally {
+                    mostrarLoading(false);
+                }
+            }
+            
+            async function carregarTodosDados() {
+                mostrarLoading(true);
+                
+                try {
+                    // Carregar estatísticas
+                    await carregarEstatisticas();
+                    
+                    // Carregar relatório completo
+                    await carregarRelatorio();
+                    
+                    // Carregar top locais
+                    await carregarTopLocais();
+                    
+                } catch (error) {
+                    console.error('Erro ao carregar dados:', error);
+                    mostrarToast('Erro ao carregar dados', 'error');
+                } finally {
+                    mostrarLoading(false);
+                }
+            }
+            
+            async function carregarEstatisticas() {
+                try {
+                    const response = await fetch(`${API_BASE}/estatisticas`, {
+                        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                    });
+                    
+                    if (!response.ok) throw new Error('Erro ao carregar estatísticas');
+                    
+                    currentStats = await response.json();
+                    renderizarMetricas(currentStats);
+                    
+                } catch (error) {
+                    console.error('Erro:', error);
+                }
+            }
+            
+            async function carregarRelatorio() {
+                try {
+                    const response = await fetch(`${API_BASE}`, {
+                        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                    });
+                    
+                    if (!response.ok) throw new Error('Erro ao carregar relatório');
+                    
+                    currentRelatorio = await response.json();
+                    
+                    if (currentRelatorio.relatorioIndividual) {
+                        renderizarGraficos(currentRelatorio.relatorioIndividual);
+                        renderizarUltimosRelatos(currentRelatorio.relatorioIndividual.ultimosRelatos);
+                    }
+                    
+                } catch (error) {
+                    console.error('Erro:', error);
+                }
+            }
+            
+            async function carregarTopLocais() {
+                try {
+                    const response = await fetch(`${API_BASE}/top-locais`, {
+                        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                    });
+                    
+                    if (!response.ok) throw new Error('Erro ao carregar top locais');
+                    
+                    const locais = await response.json();
+                    renderizarTopLocais(locais);
+                    
+                } catch (error) {
+                    console.error('Erro:', error);
+                }
+            }
+            
+            async function aplicarFiltros() {
+                const dataRange = document.getElementById('daterange')?.value || '';
+                const linha = document.getElementById('linhaBusca')?.value || '';
+                const tipo = document.getElementById('tipoRelatorio')?.value || 'geral';
+                
+                let dataInicio = '', dataFim = '';
+                
+                if (dataRange && dataRange.includes(' - ')) {
+                    const [inicio, fim] = dataRange.split(' - ');
+                    dataInicio = converterDataParaISO(inicio);
+                    dataFim = converterDataParaISO(fim);
+                }
+                
+                mostrarLoading(true);
+                
+                try {
+                    const params = new URLSearchParams();
+                    if (dataInicio) params.append('dataInicio', dataInicio);
+                    if (dataFim) params.append('dataFim', dataFim);
+                    if (linha) params.append('linha', linha);
+                    if (tipo && tipo !== 'geral') params.append('tipo', tipo);
+                    
+                    const response = await fetch(`${API_BASE}/filtrar?${params}`, {
+                        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                    });
+                    
+                    if (!response.ok) throw new Error('Erro ao filtrar');
+                    
+                    const filtrados = await response.json();
+                    renderizarFiltrados(filtrados);
+                    
+                    mostrarToast(`Encontrados ${filtrados.total} relatos`, 'success');
+                    
+                } catch (error) {
+                    console.error('Erro:', error);
+                    mostrarToast('Erro ao aplicar filtros', 'error');
+                } finally {
+                    mostrarLoading(false);
+                }
+            }
+            
+            // ============================================================
+            // RENDERIZAÇÃO
+            // ============================================================
+            
+            function renderizarMetricas(stats) {
+                if (!stats) return;
+                
+                // Total de ocorrências
+                const totalEl = document.getElementById('totalOcorrencias');
+                if (totalEl) {
+                    animarValor(totalEl, 0, stats.totalOcorrencias, 800);
+                }
+                
+                // Média mensal
+                const mediaEl = document.getElementById('mediaMensal');
+                if (mediaEl) {
+                    animarValor(mediaEl, 0, stats.mediaMensal || 0, 800);
+                }
+                
+                // Municípios afetados
+                const municipiosEl = document.getElementById('municipiosAfetados');
+                if (municipiosEl) {
+                    animarValor(municipiosEl, 0, stats.municipiosAfetados || 0, 800);
+                }
+                
+                // Tipo mais comum
+                const trendEl = document.getElementById('trendOcorrencias');
+                if (trendEl && stats.tipoMaisComum) {
+                    trendEl.innerHTML = `<i class="fas fa-fire"></i> ${stats.tipoMaisComum}`;
+                    trendEl.className = 'metric-trend trend-up';
+                }
+                
+                // Tendência
+                const tendenciaEl = document.getElementById('trendMedia');
+                if (tendenciaEl && stats.tendencia) {
+                    const { variacao, direcao } = stats.tendencia;
+                    const sinal = variacao > 0 ? '+' : '';
+                    const classe = direcao === 'up' ? 'trend-up' : (direcao === 'down' ? 'trend-down' : 'trend-neutral');
+                    const icone = direcao === 'up' ? 'arrow-up' : (direcao === 'down' ? 'arrow-down' : 'minus');
+                    
+                    tendenciaEl.innerHTML = `<i class="fas fa-${icone}"></i> ${sinal}${variacao}%`;
+                    tendenciaEl.className = `metric-trend ${classe}`;
+                }
+            }
+            
+            function renderizarGraficos(individual) {
+                if (!individual) return;
+                
+                // Gráfico de tipos
+                if (individual.relatosPorTipo && Object.keys(individual.relatosPorTipo).length > 0) {
+                    const ctx = document.getElementById('graficoTipos')?.getContext('2d');
+                    if (ctx) {
+                        if (charts.tipos) charts.tipos.destroy();
+                        
+                        const cores = ['#e74c3c', '#f39c12', '#2ecc71', '#3498db', '#9b59b6', '#1abc9c'];
+                        const labels = Object.keys(individual.relatosPorTipo);
+                        const dados = Object.values(individual.relatosPorTipo);
+                        
+                        charts.tipos = new Chart(ctx, {
+                            type: 'doughnut',
+                            data: {
+                                labels: labels,
+                                datasets: [{
+                                    data: dados,
+                                    backgroundColor: cores.slice(0, labels.length),
+                                    borderWidth: 0,
+                                    hoverOffset: 10
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: true,
+                                plugins: {
+                                    legend: { position: 'right', labels: { color: getComputedStyle(document.body).getPropertyValue('--text-clr') } },
+                                    tooltip: {
+                                        callbacks: {
+                                            label: function(context) {
+                                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                                const percentual = ((context.raw / total) * 100).toFixed(1);
+                                                return `${context.label}: ${context.raw} (${percentual}%)`;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    }
+                }
+                
+                // Gráfico de meses
+                if (individual.relatosPorMes && Object.keys(individual.relatosPorMes).length > 0) {
+                    const ctx = document.getElementById('graficoMeses')?.getContext('2d');
+                    if (ctx) {
+                        if (charts.meses) charts.meses.destroy();
+                        
+                        const mesesOrdenados = Object.keys(individual.relatosPorMes).sort();
+                        const valores = mesesOrdenados.map(m => individual.relatosPorMes[m]);
+                        
+                        charts.meses = new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: mesesOrdenados,
+                                datasets: [{
+                                    label: 'Ocorrências',
+                                    data: valores,
+                                    borderColor: '#10659c',
+                                    backgroundColor: 'rgba(16, 101, 156, 0.1)',
+                                    borderWidth: 2,
+                                    tension: 0.3,
+                                    fill: true,
+                                    pointBackgroundColor: '#10659c',
+                                    pointBorderColor: '#fff',
+                                    pointRadius: 4,
+                                    pointHoverRadius: 6
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: true,
+                                plugins: {
+                                    legend: { labels: { color: getComputedStyle(document.body).getPropertyValue('--text-clr') } }
+                                },
+                                scales: {
+                                    y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' } },
+                                    x: { grid: { display: false } }
+                                }
+                            }
+                        });
+                    }
+                }
+            }
+            
+            function renderizarUltimosRelatos(ultimosRelatos) {
+                const tbody = document.getElementById('relatosTbody');
+                if (!tbody) return;
+                
+                if (!ultimosRelatos || ultimosRelatos.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Nenhum relato encontrado</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = ultimosRelatos.map(relato => `
+                    <tr>
+                        <td>${formatarDataCompleta(relato.dataRelato)}</td>
+                        <td><span class="tipo-badge tipo-${(relato.tipo || 'OUTRO').toLowerCase()}">${relato.tipo || 'Outro'}</span></td>
+                        <td>${relato.municipio || 'N/A'}</td>
+                        <td>${relato.bairro || 'N/A'}</td>
+                        <td title="${relato.descricao || ''}">${(relato.descricao || 'Sem descrição').substring(0, 50)}${(relato.descricao?.length || 0) > 50 ? '...' : ''}</td>
+                    </tr>
+                `).join('');
+            }
+            
+            function renderizarTopLocais(locais) {
+                if (!locais || locais.length === 0) return;
+                
+                // Top Bairros
+                const bairrosContainer = document.getElementById('topBairrosList');
+                if (bairrosContainer && locais[0] && locais[0].dados) {
+                    const bairros = Object.entries(locais[0].dados);
+                    if (bairros.length > 0) {
+                        bairrosContainer.innerHTML = bairros.map(([nome, total], idx) => `
+                            <div class="top-local-item">
+                                <span class="top-local-posicao">${idx + 1}º</span>
+                                <span class="top-local-nome">${nome}</span>
+                                <span class="top-local-valor">${total} ocorrência${total !== 1 ? 's' : ''}</span>
+                            </div>
+                        `).join('');
+                    } else {
+                        bairrosContainer.innerHTML = '<div class="empty-state">Nenhum dado disponível</div>';
+                    }
+                }
+                
+                // Top Municípios
+                const municipiosContainer = document.getElementById('topMunicipiosList');
+                if (municipiosContainer && locais[1] && locais[1].dados) {
+                    const municipios = Object.entries(locais[1].dados);
+                    if (municipios.length > 0) {
+                        municipiosContainer.innerHTML = municipios.map(([nome, total], idx) => `
+                            <div class="top-local-item">
+                                <span class="top-local-posicao">${idx + 1}º</span>
+                                <span class="top-local-nome">${nome}</span>
+                                <span class="top-local-valor">${total} ocorrência${total !== 1 ? 's' : ''}</span>
+                            </div>
+                        `).join('');
+                    } else {
+                        municipiosContainer.innerHTML = '<div class="empty-state">Nenhum dado disponível</div>';
+                    }
+                }
+            }
+            
+            function renderizarFiltrados(filtrados) {
+                if (!filtrados) return;
+                
+                // Atualizar total com animação
+                const totalEl = document.getElementById('totalOcorrencias');
+                if (totalEl) {
+                    const valorAtual = parseInt(totalEl.textContent) || 0;
+                    animarValor(totalEl, valorAtual, filtrados.total, 500);
+                }
+                
+                // Mostrar toast com resumo
+                const porTipo = Object.entries(filtrados.porTipo || {})
+                    .map(([tipo, qtd]) => `${tipo}: ${qtd}`)
+                    .join(', ');
+                
+                if (porTipo) {
+                    mostrarToast(`Filtrado: ${filtrados.total} relatos (${porTipo})`, 'info');
+                }
+                
+                // Atualizar tabela com resultados filtrados
+                if (filtrados.relatos && filtrados.relatos.length > 0) {
+                    renderizarUltimosRelatos(filtrados.relatos);
+                }
+            }
+            
+            // ============================================================
+            // UTILITÁRIOS
+            // ============================================================
+            
+            function animarValor(elemento, inicio, fim, duracao, sufixo = '') {
+                if (!elemento) return;
+                
+                const startTime = performance.now();
+                
+                function atualizar(currentTime) {
+                    const elapsed = currentTime - startTime;
+                    const progress = Math.min(elapsed / duracao, 1);
+                    const valor = Math.floor(inicio + (fim - inicio) * progress);
+                    elemento.textContent = valor + sufixo;
+                    
+                    if (progress < 1) {
+                        requestAnimationFrame(atualizar);
+                    }
+                }
+                
+                requestAnimationFrame(atualizar);
+            }
+            
+            function formatarDataCompleta(dataISO) {
+                if (!dataISO) return 'N/A';
+                const data = new Date(dataISO);
+                return data.toLocaleDateString('pt-BR') + ' ' + data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            }
+            
+            function converterDataParaISO(dataBR) {
+                if (!dataBR) return '';
+                const partes = dataBR.split('/');
+                if (partes.length !== 3) return '';
+                return `${partes[2]}-${partes[1]}-${partes[0]}`;
+            }
+            
+            function configurarDatePicker() {
+                if (typeof jQuery === 'undefined' || !jQuery.fn.daterangepicker) return;
+                
+                const start = moment().subtract(29, 'days');
+                const end = moment();
+                
+                jQuery('#daterange').daterangepicker({
+                    startDate: start,
+                    endDate: end,
+                    locale: { format: 'DD/MM/YYYY', applyLabel: 'Aplicar', cancelLabel: 'Cancelar' },
+                    ranges: {
+                        'Hoje': [moment(), moment()],
+                        'Ontem': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                        'Últimos 7 dias': [moment().subtract(6, 'days'), moment()],
+                        'Últimos 30 dias': [moment().subtract(29, 'days'), moment()],
+                        'Este mês': [moment().startOf('month'), moment().endOf('month')],
+                        'Mês passado': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+                    }
+                });
+            }
+            
+            function configurarEventos() {
+                document.getElementById('btnFiltrar')?.addEventListener('click', aplicarFiltros);
+                document.getElementById('btnExportPDF')?.addEventListener('click', exportarPDF);
+                document.getElementById('btnRefresh')?.addEventListener('click', () => carregarTodosDados());
+                
+                document.getElementById('linhaBusca')?.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') aplicarFiltros();
+                });
+            }
+            
+            function exportarPDF() {
+                const element = document.getElementById('relatoriosContainer');
+                if (!element) return;
+                
+                mostrarToast('Gerando PDF...', 'info');
+                const opt = {
+                    margin: [0.5, 0.5, 0.5, 0.5],
+                    filename: `relatorio_busafe_${new Date().toISOString().split('T')[0]}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2 },
+                    jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+                };
+                html2pdf().set(opt).from(element).save();
+            }
+            
+            function mostrarAcessoNegado() {
+                const container = document.getElementById('relatoriosContainer');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="empty-state" style="min-height: 60vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                            <i class="fas fa-lock" style="font-size: 4rem; color: var(--danger);"></i>
+                            <h2>Acesso Restrito</h2>
+                            <p>Relatórios disponíveis apenas nos planos <strong>Individual</strong> e <strong>Empresarial</strong></p>
+                            <a href="planos.html" class="btn-filtrar" style="width: auto; text-decoration: none; display: inline-flex; margin-top: 1rem;">
+                                <i class="fas fa-crown"></i> Ver Planos
+                            </a>
+                        </div>
+                    `;
+                }
+            }
+            
+            function mostrarToast(mensagem, tipo = 'info') {
+                const container = document.getElementById('toast-container');
+                if (!container) return;
+                
+                const cores = { success: '#4CAF50', error: '#ef5350', warning: '#ff9800', info: '#10659c' };
+                const icones = { success: 'fa-check-circle', error: 'fa-times-circle', warning: 'fa-exclamation-triangle', info: 'fa-info-circle' };
+                
+                const toast = document.createElement('div');
+                toast.className = 'toast';
+                toast.innerHTML = `
+                    <div style="background: ${cores[tipo]}; color: white; padding: 12px 20px; border-radius: 8px; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                        <i class="fas ${icones[tipo]}"></i>
+                        <span>${mensagem}</span>
+                    </div>
+                `;
+                
+                container.appendChild(toast);
+                setTimeout(() => toast.remove(), 3000);
+            }
+            
+            function mostrarLoading(show) {
+                let overlay = document.getElementById('loadingOverlay');
+                if (show && !overlay) {
+                    overlay = document.createElement('div');
+                    overlay.id = 'loadingOverlay';
+                    overlay.className = 'loading-overlay';
+                    overlay.innerHTML = `
+                        <div class="loading-spinner">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <p style="margin-top: 1rem;">Carregando relatório...</p>
+                        </div>
+                    `;
+                    document.body.appendChild(overlay);
+                } else if (!show && overlay) {
+                    overlay.remove();
+                }
+            }
+            
+            // Iniciar
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+        })();
+    </script>
+</body>
+</html>

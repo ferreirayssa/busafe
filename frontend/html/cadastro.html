@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="PT-BR">
+<head>
+  <script src="../js/config.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BuSafe - Cadastro</title>
+  <link rel="icon" type="image/x-icon" href="../Logos/busafe.ico">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@8.2.0/ol.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/ol@8.2.0/dist/ol.js"></script>
+  <style>
+    :root {
+      --text-clr: #333333;
+      --secondary-text-clr: #666666;
+      --accent-clr: #10659c;
+      --hover-clr: rgba(0, 0, 0, 0.05);
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      background: url('../prototipo/osm.png') no-repeat center center fixed;
+      background-size: cover;
+      font-family: Poppins, 'Segoe UI', sans-serif;
+      overflow-y: auto;
+    }
+
+    #map {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+    }
+
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 1;
+    }
+
+    .cadastro-wrapper {
+      position: relative; 
+      z-index: 2;
+      width: 100%;
+      max-width: 750px;
+      padding: 2rem 1rem; 
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      max-height: 100vh;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--accent-clr) transparent;
+    }
+
+    .cadastro-wrapper::-webkit-scrollbar { width: 6px; }
+    .cadastro-wrapper::-webkit-scrollbar-thumb {
+      background-color: var(--accent-clr);
+      border-radius: 10px;
+    }
+
+    .cadastro-container {
+      width: 100%;
+      padding: 1.5rem 2rem; 
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.98));
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      border-radius: 12px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+      backdrop-filter: blur(20px);
+      box-sizing: border-box;
+    }
+
+    /* --- ESTILO DO SELETOR PF/PJ --- */
+    .user-type-toggle {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 1.5rem;
+      background: rgba(0, 0, 0, 0.05);
+      padding: 5px;
+      border-radius: 8px;
+    }
+
+    .toggle-btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      background: transparent;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--secondary-text-clr);
+      transition: all 0.3s ease;
+      font-size: 0.9rem;
+    }
+
+    .toggle-btn.active {
+      background: white;
+      color: var(--accent-clr);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    #cadastroForm {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0 1.2rem;
+    }
+
+    .cadastro-container h1 {
+      text-align: center;
+      font-size: 1.8rem; 
+      margin: 0 0 0.5rem 0;
+      color: var(--text-clr);
+    }
+
+    .cadastro-container p {
+      text-align: center;
+      color: var(--secondary-text-clr);
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+    }
+
+    .form-group { margin-bottom: 0.7rem; }
+    
+    .hidden { display: none !important; }
+
+    .cadastro-btn, .success-message, .login-link { grid-column: span 2; }
+
+    @media (max-width: 600px) {
+      #cadastroForm { grid-template-columns: 1fr; }
+      .cadastro-btn, .success-message { grid-column: span 1; }
+      .cadastro-container { padding: 1.5rem 1rem; }
+      .cadastro-wrapper {
+          padding: 1rem;
+          max-height: none; 
+          overflow-y: visible;
+      }
+      body { align-items: flex-start; }
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 0.2rem;
+      color: var(--text-clr);
+      font-weight: 500;
+      font-size: 0.85rem;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 0.6rem;
+      border-radius: 0.5rem;
+      border: 1px solid rgba(0, 0, 0, 0.15);
+      background: rgba(255, 255, 255, 0.8);
+      color: var(--text-clr);
+      font-size: 0.9rem;
+      box-sizing: border-box;
+      transition: all 0.3s ease;
+    }
+
+    #phone { padding-left: 50px; }
+
+    .phone-input-container { position: relative; width: 100%; }
+
+    .phone-prefix {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.9rem;
+      color: var(--secondary-text-clr);
+      font-weight: 500;
+      pointer-events: none;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--accent-clr);
+      box-shadow: 0 0 0 3px rgba(16, 101, 156, 0.1);
+    }
+
+    .error-message {
+      color: #ef5350;
+      font-size: 0.75rem;
+      margin-top: 0.1rem;
+      display: none;
+    }
+
+    .error-message.show { display: block; }
+
+    .cadastro-btn {
+      width: 100%;
+      padding: 0.75rem;
+      border-radius: 0.6rem;
+      border: none;
+      background: linear-gradient(90deg, #10659c, #1375b7);
+      color: white;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin-top: 0.5rem;
+    }
+
+    .cadastro-btn:hover {
+      transform: translateY(-2px);
+      background: linear-gradient(90deg, #1375b7, #1585cf);
+      box-shadow: 0 6px 18px rgba(16, 101, 156, 0.4);
+    }
+
+    .login-link {
+      text-align: center;
+      margin-top: 1rem;
+      color: var(--secondary-text-clr);
+      font-size: 0.85rem;
+    }
+
+    .login-link a {
+      color: var(--accent-clr);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .success-message {
+      background: rgba(76, 175, 80, 0.1);
+      border: 1px solid #4caf50;
+      color: #4caf50;
+      padding: 0.8rem;
+      border-radius: 0.6rem;
+      margin-bottom: 1rem;
+      display: none;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+
+    .success-message.show { display: block; }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #ffffff;
+      text-decoration: none;
+      margin-bottom: 0.8rem;
+      padding: 0.4rem 0.8rem;
+      border-radius: 0.6rem;
+      background: rgba(255, 255, 255, 0.1);
+      font-size: 0.85rem;
+      align-self: flex-start; 
+    }
+
+    .logo-container { text-align: center; margin-bottom: 0.8rem; }
+    .logo-container img { max-width: 80px; }
+    svg { width: 20px; fill: currentColor; }
+  </style>
+</head>
+
+<body>
+  <div id="map"></div>
+  <div class="overlay"></div>
+  
+  <div class="cadastro-wrapper">
+    <a href="/" class="back-btn">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960">
+        <path d="m313-440 196 196q12 12 11.5 28T508-188q-12 11-28 11.5T452-188L188-452q-6-6-8.5-13t-2.5-15q0-8 2.5-15t8.5-13l264-264q11-11 27.5-11t28.5 11q12 12 12 28.5T508-715L313-520h447q17 0 28.5 11.5T800-480q0 17-11.5 28.5T760-440H313Z"/>
+      </svg>
+      Voltar
+    </a>
+
+    <div class="cadastro-container">
+      <div class="logo-container">
+        <img src="../Logos/Logo_3.png" alt="BuSafe Logo">
+      </div>
+      <h1>Criar Conta</h1>
+      <p>Preencha os dados abaixo para se cadastrar</p>
+
+      <div class="user-type-toggle">
+        <button type="button" class="toggle-btn active" id="btnPf">Pessoa Física</button>
+        <button type="button" class="toggle-btn" id="btnPj">Empresa</button>
+      </div>
+
+      <div class="success-message" id="successMessage">
+        Cadastro realizado com sucesso!
+      </div>
+
+      <form id="cadastroForm">
+        <div class="form-group">
+          <label for="nome" id="labelNome">Nome</label>
+          <input type="text" id="nome" name="nome" minlength="3" required>
+          <div class="error-message" id="nomeError">Nome deve ter no mínimo 3 letras.</div>
+        </div>
+
+        <div class="form-group">
+          <label for="email">E-mail</label>
+          <input type="email" id="email" name="email" required>
+          <div class="error-message" id="emailError">E-mail inválido.</div>
+        </div>
+
+        <div class="form-group" id="groupCpf">
+          <label for="cpf">CPF</label>
+          <input type="text" id="cpf" name="cpf" placeholder="000.000.000-00" maxlength="14" required>
+          <div class="error-message" id="cpfError">CPF inválido.</div>
+        </div>
+
+        <div class="form-group hidden" id="groupCnpj">
+          <label for="cnpj">CNPJ</label>
+          <input type="text" id="cnpj" name="cnpj" placeholder="00.000.000/0000-00" maxlength="18">
+          <div class="error-message" id="cnpjError">CNPJ inválido.</div>
+        </div>
+
+        <div class="form-group">
+          <label for="phone">Telefone</label>
+          <div class="phone-input-container">
+            <span class="phone-prefix">+55</span>
+            <input type="tel" id="phone" name="phone" placeholder="(00) 00000-0000" maxlength="15" required>
+          </div>
+          <div class="error-message" id="phoneError">Número de telefone inválido.</div>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Senha</label>
+          <input type="password" id="password" name="password" minlength="6" required>
+          <div class="error-message" id="passwordError">Mínimo 6 caracteres.</div>
+        </div>
+
+        <div class="form-group">
+          <label for="confirmPassword">Confirmar Senha</label>
+          <input type="password" id="confirmPassword" name="confirmPassword" required>
+          <div class="error-message" id="confirmPasswordError">As senhas não coincidem.</div>
+        </div>
+
+        <button type="submit" class="cadastro-btn">Cadastrar</button>
+      </form>
+
+      <div class="login-link">
+        Já tem uma conta? <a href="login.html">Faça login aqui</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- MAPA ---
+    const map = new ol.Map({
+      target: 'map',
+      layers: [new ol.layer.Tile({ source: new ol.source.OSM() })],
+      view: new ol.View({ center: ol.proj.fromLonLat([-40.307, -20.318]), zoom: 12 }),
+      controls: []
+    });
+
+    // --- LÓGICA DO TOGGLE (PF / PJ) ---
+    const btnPf = document.getElementById('btnPf');
+    const btnPj = document.getElementById('btnPj');
+    const groupCpf = document.getElementById('groupCpf');
+    const groupCnpj = document.getElementById('groupCnpj');
+    const labelNome = document.getElementById('labelNome');
+    const inputCpf = document.getElementById('cpf');
+    const inputCnpj = document.getElementById('cnpj');
+    
+    let isEmpresa = false;
+
+    btnPj.addEventListener('click', () => {
+      isEmpresa = true;
+      btnPj.classList.add('active');
+      btnPf.classList.remove('active');
+      
+      groupCpf.classList.add('hidden');
+      groupCnpj.classList.remove('hidden');
+      
+      labelNome.innerText = 'Nome da Empresa';
+      inputCpf.removeAttribute('required');
+      inputCnpj.setAttribute('required', 'true');
+    });
+
+    btnPf.addEventListener('click', () => {
+      isEmpresa = false;
+      btnPf.classList.add('active');
+      btnPj.classList.remove('active');
+      
+      groupCnpj.classList.add('hidden');
+      groupCpf.classList.remove('hidden');
+      
+      labelNome.innerText = 'Nome';
+      inputCnpj.removeAttribute('required');
+      inputCpf.setAttribute('required', 'true');
+    });
+
+
+    // --- MÁSCARAS E VALIDAÇÕES ---
+
+    // Telefone
+    const phoneInput = document.getElementById('phone');
+    phoneInput.addEventListener('input', (e) => {
+      let value = e.target.value.replace(/\D/g, '');
+      if (value.length > 11) value = value.slice(0, 11);
+      if (value.length > 10) e.target.value = value.replace(/^(\d{2})(\d{5})(\d{4}).*/, '($1) $2-$3');
+      else if (value.length > 5) e.target.value = value.replace(/^(\d{2})(\d{4})(\d{0,4}).*/, '($1) $2-$3');
+      else if (value.length > 2) e.target.value = value.replace(/^(\d{2})(\d{0,5}).*/, '($1) $2');
+      else e.target.value = value.replace(/^(\d*)/, '($1');
+    });
+
+    function validarTelefone(phone) {
+      const soNumeros = phone.replace(/\D/g, '');
+      return soNumeros.length >= 10 && soNumeros.length <= 11;
+    }
+
+    // CPF
+    function validarCPF(cpf) {
+      cpf = cpf.replace(/[^\d]/g, '');
+      if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false;
+      let soma = 0, resto;
+      for (let i = 1; i <= 9; i++) soma += parseInt(cpf.substring(i-1, i)) * (11 - i);
+      resto = (soma * 10) % 11;
+      if (resto === 10 || resto === 11) resto = 0;
+      if (resto !== parseInt(cpf.substring(9, 10))) return false;
+      soma = 0;
+      for (let i = 1; i <= 10; i++) soma += parseInt(cpf.substring(i-1, i)) * (12 - i);
+      resto = (soma * 10) % 11;
+      if (resto === 10 || resto === 11) resto = 0;
+      if (resto !== parseInt(cpf.substring(10, 11))) return false;
+      return true;
+    }
+
+    inputCpf.addEventListener('input', (e) => {
+      let value = e.target.value.replace(/\D/g, '');
+      value = value.replace(/(\d{3})(\d)/, '$1.$2');
+      value = value.replace(/(\d{3})(\d)/, '$1.$2');
+      value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+      e.target.value = value;
+      if (validarCPF(value)) document.getElementById('cpfError').classList.remove('show');
+    });
+
+    function validarCNPJ(cnpj) {
+      cnpj = cnpj.replace(/[^\d]+/g, '');
+      if (cnpj.length !== 14 || /^(\d)\1{13}$/.test(cnpj)) return false;
+      let tamanho = cnpj.length - 2;
+      let numeros = cnpj.substring(0, tamanho);
+      let digitos = cnpj.substring(tamanho);
+      let soma = 0;
+      let pos = tamanho - 7;
+      for (let i = tamanho; i >= 1; i--) {
+        soma += numeros.charAt(tamanho - i) * pos--;
+        if (pos < 2) pos = 9;
+      }
+      let resultado = soma % 11 < 2 ? 0 : 11 - soma % 11;
+      if (resultado != digitos.charAt(0)) return false;
+      tamanho = tamanho + 1;
+      numeros = cnpj.substring(0, tamanho);
+      soma = 0;
+      pos = tamanho - 7;
+      for (let i = tamanho; i >= 1; i--) {
+        soma += numeros.charAt(tamanho - i) * pos--;
+        if (pos < 2) pos = 9;
+      }
+      resultado = soma % 11 < 2 ? 0 : 11 - soma % 11;
+      if (resultado != digitos.charAt(1)) return false;
+      return true;
+    }
+
+    inputCnpj.addEventListener('input', (e) => {
+      let value = e.target.value.replace(/\D/g, '');
+      value = value.replace(/^(\d{2})(\d)/, '$1.$2');
+      value = value.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
+      value = value.replace(/\.(\d{3})(\d)/, '.$1/$2');
+      value = value.replace(/(\d{4})(\d)/, '$1-$2');
+      e.target.value = value;
+      if (validarCNPJ(value)) document.getElementById('cnpjError').classList.remove('show');
+    });
+
+
+    // --- SUBMISSÃO DO FORMULÁRIO ---
+    document.getElementById('cadastroForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const nomeValue = document.getElementById('nome').value;
+      const cpfValue = document.getElementById('cpf').value;
+      const cnpjValue = document.getElementById('cnpj').value;
+      const phoneValue = document.getElementById('phone').value;
+      const pass = document.getElementById('password').value;
+      const confirm = document.getElementById('confirmPassword').value;
+      const email = document.getElementById('email').value;
+      
+      let hasError = false;
+
+      if (nomeValue.trim().length < 3) {
+        document.getElementById('nomeError').classList.add('show');
+        hasError = true;
+      } else {
+        document.getElementById('nomeError').classList.remove('show');
+      }
+
+      if (!isEmpresa && !validarCPF(cpfValue)) {
+        document.getElementById('cpfError').classList.add('show');
+        hasError = true;
+      }
+      
+      if (isEmpresa && !validarCNPJ(cnpjValue)) {
+        document.getElementById('cnpjError').classList.add('show');
+        hasError = true;
+      }
+
+      if (!validarTelefone(phoneValue)) {
+        document.getElementById('phoneError').classList.add('show');
+        hasError = true;
+      }
+      if (pass !== confirm) {
+        document.getElementById('confirmPasswordError').classList.add('show');
+        hasError = true;
+      }
+
+      if (hasError) return;
+
+      // Monta o payload de acordo com o Tipo de Usuário para o Backend do Spring Boot
+      const dadosParaEnvio = {
+        nome: nomeValue,
+        email: email,
+        phone: '+55' + phoneValue.replace(/\D/g, ''), 
+        password: pass,
+        tipoUsuario: isEmpresa ? 'PESSOA_JURIDICA' : 'PESSOA_FISICA'
+      };
+
+      if (isEmpresa) {
+        dadosParaEnvio.cnpj = cnpjValue.replace(/\D/g, '');
+      } else {
+        dadosParaEnvio.cpf = cpfValue.replace(/\D/g, '');
+      }
+
+      const btn = document.querySelector('.cadastro-btn');
+      btn.innerText = 'Processando...';
+      btn.disabled = true;
+
+      try {
+        const response = await fetch(BACKEND_URL + '/api/users/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(dadosParaEnvio)
+        });
+
+        if (response.ok) {
+          document.getElementById('successMessage').classList.add('show');
+          setTimeout(() => { window.location.href = 'login.html'; }, 2000);
+        } else {
+          const msg = await response.text();
+          alert("Erro no cadastro: " + msg);
+        }
+      } catch (error) {
+        alert("Erro de conexão com o servidor Java.");
+      } finally {
+        btn.innerText = 'Cadastrar';
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

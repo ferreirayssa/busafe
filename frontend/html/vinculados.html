@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>BuSafe - Vinculados</title>
+    <link rel="icon" href="../Logos/busafe.ico">
+    <link rel="apple-touch-icon" href="../Logos/Logo_3.png">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- CSS Principal -->
+
+    <link rel="preload" href="../css/Style.css" as="style">
+    <link rel="stylesheet" href="../css/Style.css">
+    <!-- Scripts -->
+    <script src="../js/config.js"></script>
+  <script src="../js/scripts.js"></script>
+    
+    <style>
+        /* Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--base-clr);
+            color: var(--text-clr);
+            overflow-x: hidden;
+        }
+
+        /* Container principal */
+        .vinculados-container {
+            padding: 2rem;
+            max-width: 1000px;
+            margin: 2rem auto;
+        }
+
+        /* Header */
+        .vinculados-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .vinculados-header h1 {
+            font-size: 1.8rem;
+            color: var(--text-clr);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .vinculados-header h1 i {
+            color: var(--accent-clr);
+            font-size: 1.5rem;
+        }
+
+        /* Botão Adicionar */
+        .btn-adicionar {
+            background: linear-gradient(135deg, var(--accent-clr), #2989c4);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            font-size: 0.95rem;
+            box-shadow: 0 4px 12px rgba(16, 101, 156, 0.2);
+        }
+
+        .btn-adicionar:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 101, 156, 0.3);
+        }
+
+        /* Stats Cards */
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--hover-clr);
+            border: 1px solid var(--line-clr);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .stat-card .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-clr);
+        }
+
+        .stat-card .stat-label {
+            font-size: 0.85rem;
+            color: var(--secondary-text-clr);
+            margin-top: 0.5rem;
+        }
+
+        /* Tabela - Desktop */
+        .vinculados-table {
+            width: 100%;
+            background: var(--base-clr);
+            border: 1px solid var(--line-clr);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .table-header {
+            display: grid;
+            grid-template-columns: 2fr 2fr 1.5fr 1fr 1fr;
+            padding: 1rem 1.5rem;
+            background: var(--hover-clr);
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--secondary-text-clr);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--line-clr);
+        }
+
+        .table-row {
+            display: grid;
+            grid-template-columns: 2fr 2fr 1.5fr 1fr 1fr;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--line-clr);
+            align-items: center;
+            transition: background 0.2s;
+        }
+
+        .table-row:hover {
+            background: var(--hover-clr);
+        }
+
+        .table-row:last-child {
+            border-bottom: none;
+        }
+
+        /* User Info */
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-clr), #2989c4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: var(--text-clr);
+        }
+
+        .user-email {
+            font-size: 0.75rem;
+            color: var(--secondary-text-clr);
+            word-break: break-all;
+        }
+
+        /* Badges */
+        .badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .badge-active {
+            background: rgba(76, 175, 80, 0.15);
+            color: #4CAF50;
+        }
+
+        .badge-inactive {
+            background: rgba(239, 83, 80, 0.15);
+            color: #ef5350;
+        }
+
+        .badge-plano {
+            background: rgba(16, 101, 156, 0.15);
+            color: var(--accent-clr);
+        }
+
+        /* Botão Ação */
+        .btn-action {
+            background: none;
+            border: 1px solid rgba(239, 83, 80, 0.3);
+            color: #ef5350;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.8rem;
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-action:hover {
+            background: rgba(239, 83, 80, 0.1);
+            border-color: #ef5350;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--secondary-text-clr);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+
+        .empty-state p {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state span {
+            font-size: 0.9rem;
+        }
+
+        /* Mensagens */
+        .error-message, .success-message {
+            padding: 0.8rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: none;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        .error-message.show {
+            display: block;
+            background: rgba(239, 83, 80, 0.1);
+            border: 1px solid #ef5350;
+            color: #ef5350;
+        }
+
+        .success-message.show {
+            display: block;
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid #4CAF50;
+            color: #4CAF50;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .loading i {
+            font-size: 2rem;
+            color: var(--accent-clr);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* ============================================
+           RESPONSIVIDADE MOBILE MELHORADA
+        ============================================ */
+        
+        /* Tablet e Mobile */
+        @media (max-width: 768px) {
+            .vinculados-container {
+                padding: 1rem;
+                margin: 1rem;
+                margin-top: 72px;
+                width: calc(100% - 2rem);
+            }
+
+            .vinculados-header h1 {
+                font-size: 1.4rem;
+            }
+
+            .btn-adicionar span {
+                display: none;
+            }
+
+            .btn-adicionar i {
+                margin: 0;
+                font-size: 1.2rem;
+            }
+
+            .stats-cards {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+            }
+
+            .stat-card {
+                padding: 1rem;
+            }
+
+            .stat-card .stat-value {
+                font-size: 1.5rem;
+            }
+
+            /* Esconder cabeçalho da tabela no mobile */
+            .table-header {
+                display: none;
+            }
+
+            /* Cards no mobile */
+            .table-row {
+                display: block;
+                padding: 1rem;
+                margin-bottom: 1rem;
+                border: 1px solid var(--line-clr);
+                border-radius: 12px;
+                background: var(--hover-clr);
+            }
+
+            .table-row > span {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 0.75rem;
+                padding: 0.5rem;
+                border-bottom: 1px dashed var(--line-clr);
+            }
+
+            .table-row > span:last-child {
+                border-bottom: none;
+                margin-bottom: 0;
+            }
+
+            .table-row > span::before {
+                content: attr(data-label);
+                font-weight: 600;
+                color: var(--accent-clr);
+                font-size: 0.75rem;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            /* User info no mobile */
+            .user-info {
+                flex: 1;
+            }
+
+            .user-avatar {
+                width: 36px;
+                height: 36px;
+                font-size: 0.8rem;
+            }
+
+            .user-name {
+                font-size: 0.9rem;
+            }
+
+            .user-email {
+                font-size: 0.7rem;
+            }
+
+            /* Badges no mobile */
+            .badge {
+                padding: 3px 10px;
+                font-size: 0.7rem;
+            }
+
+            /* Botão ação no mobile */
+            .btn-action {
+                padding: 8px 16px;
+                font-size: 0.8rem;
+                width: auto;
+                justify-content: center;
+            }
+        }
+
+        /* Mobile pequeno */
+        @media (max-width: 480px) {
+            .vinculados-container {
+                padding: 0.75rem;
+                margin: 0.75rem;
+                margin-top: 65px;
+                width: calc(100% - 1.5rem);
+            }
+
+            .vinculados-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn-adicionar {
+                justify-content: center;
+            }
+
+            .table-row {
+                padding: 0.875rem;
+            }
+
+            .table-row > span {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .table-row > span::before {
+                margin-bottom: 0.25rem;
+            }
+
+            .user-info {
+                width: 100%;
+            }
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.75);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: var(--base-clr);
+            border: 1px solid var(--line-clr);
+            border-radius: 16px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content h2 {
+            margin-bottom: 1.5rem;
+            color: var(--text-clr);
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-clr);
+            font-weight: 500;
+            font-size: 0.9rem;
+            text-align: left;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid var(--line-clr);
+            background: var(--hover-clr);
+            color: var(--text-clr);
+            font-family: inherit;
+            font-size: 0.95rem;
+            box-sizing: border-box;
+            transition: all 0.2s;
+            text-align: left;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--accent-clr);
+            box-shadow: 0 0 0 3px rgba(16, 101, 156, 0.1);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 1.5rem;
+        }
+
+        .btn-cancelar {
+            background: var(--hover-clr);
+            color: var(--text-clr);
+            border: 1px solid var(--line-clr);
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .btn-cancelar:hover {
+            border-color: var(--secondary-text-clr);
+        }
+
+        .btn-salvar {
+            background: linear-gradient(135deg, var(--accent-clr), #2989c4);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .btn-salvar:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16, 101, 156, 0.3);
+        }
+
+        .btn-salvar:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        @media (max-width: 480px) {
+            .modal-content {
+                padding: 1.2rem;
+            }
+            
+            .modal-buttons {
+                flex-direction: column;
+            }
+            
+            .modal-buttons button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="sidebar-container"></div>
+
+    <main id="content">
+        <div class="vinculados-container">
+            <div class="vinculados-header">
+                <h1>
+                    <i class="fas fa-users"></i>
+                    Vinculados
+                </h1>
+                <button class="btn-adicionar" onclick="abrirModalAdicionar()">
+                    <i class="fas fa-plus"></i>
+                    <span>Adicionar Vinculado</span>
+                </button>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-cards">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalVinculados">0</div>
+                    <div class="stat-label">Total Vinculados</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalAtivos">0</div>
+                    <div class="stat-label">Ativos</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="planoAtual">-</div>
+                    <div class="stat-label">Plano Atual</div>
+                </div>
+            </div>
+
+            <!-- Mensagens -->
+            <div class="error-message" id="errorMessage"></div>
+            <div class="success-message" id="successMessage"></div>
+
+            <!-- Loading -->
+            <div id="loading" class="loading" style="display: none;">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Carregando...</p>
+            </div>
+
+            <!-- Tabela -->
+            <div class="vinculados-table">
+                <div class="table-header">
+                    <span>Usuário</span>
+                    <span>CPF</span>
+                    <span>Plano</span>
+                    <span>Status</span>
+                    <span>Ações</span>
+                </div>
+                <div id="listaVinculados">
+                    <div class="empty-state">
+                        <i class="fas fa-users"></i>
+                        <p>Nenhum vinculado encontrado</p>
+                        <span>Adicione usuários para sua empresa</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Adicionar Vinculado -->
+    <div class="modal-overlay" id="modalAdicionar" style="display: none;">
+        <div class="modal-content">
+            <h2>
+                <i class="fas fa-user-plus"></i>
+                Adicionar Vinculado
+            </h2>
+            
+            <div class="error-message" id="modalError" style="margin-bottom: 1rem;"></div>
+            
+            <form id="formAdicionar" onsubmit="adicionarVinculado(event)">
+                <div class="form-group">
+                    <label for="nome">Nome completo *</label>
+                    <input type="text" id="nome" name="nome" placeholder="Nome do usuário" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">E-mail *</label>
+                    <input type="email" id="email" name="email" placeholder="email@exemplo.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="cpf">CPF *</label>
+                    <input type="text" id="cpf" name="cpf" placeholder="000.000.000-00" maxlength="14" required>
+                </div>
+                <div class="form-group">
+                    <label for="senha">Senha *</label>
+                    <input type="password" id="senha" name="senha" placeholder="Mínimo 6 caracteres" minlength="6" required>
+                </div>
+                
+                <div class="modal-buttons">
+                    <button type="button" class="btn-cancelar" onclick="fecharModalAdicionar()">Cancelar</button>
+                    <button type="submit" class="btn-salvar" id="btnSalvar">
+                        <i class="fas fa-save"></i> Salvar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="../js/sidebarLoader.js"></script>
+    <script>
+
+
+        // ============================================================
+        // CARREGAR VINCULADOS
+        // ============================================================
+        async function carregarVinculados() {
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            mostrarLoading(true);
+
+            try {
+                const response = await fetch(BACKEND_URL + '/api/vinculados', {
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+
+                if (response.status === 403) {
+                    mostrarErro('Acesso permitido apenas para Pessoa Jurídica.');
+                    return;
+                }
+
+                if (!response.ok) throw new Error('Erro ao carregar vinculados');
+
+                const vinculados = await response.json();
+                console.log('Vinculados carregados:', vinculados);
+                
+                renderizarVinculados(vinculados);
+                atualizarStats(vinculados);
+
+            } catch (error) {
+                console.error('Erro:', error);
+                mostrarErro('Erro ao carregar lista de vinculados.');
+            } finally {
+                mostrarLoading(false);
+            }
+        }
+
+        // ============================================================
+        // RENDERIZAR LISTA (COM DATA-LABEL PARA MOBILE)
+        // ============================================================
+        function renderizarVinculados(vinculados) {
+            const container = document.getElementById('listaVinculados');
+            
+            if (!vinculados || vinculados.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-users"></i>
+                        <p>Nenhum vinculado encontrado</p>
+                        <span>Adicione usuários para sua empresa</span>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = vinculados.map(v => {
+                const nome = v.nome || 'Usuário sem nome';
+                const email = v.email || 'sem@email.com';
+                const cpf = v.cpf || '00000000000';
+                const plano = v.plano || 'N/A';
+                const ativo = v.ativo !== undefined ? v.ativo : true;
+                const id = v.id || '';
+                const primeiraLetra = nome.charAt(0).toUpperCase();
+                
+                return `
+                    <div class="table-row">
+                        <span data-label="Usuário">
+                            <div class="user-info">
+                                <div class="user-avatar">${primeiraLetra}</div>
+                                <div>
+                                    <div class="user-name">${escapeHtml(nome)}</div>
+                                    <div class="user-email">${escapeHtml(email)}</div>
+                                </div>
+                            </div>
+                        </span>
+                        <span data-label="CPF">
+                            <span style="color: var(--secondary-text-clr);">${formatarCPF(cpf)}</span>
+                        </span>
+                        <span data-label="Plano">
+                            <span class="badge badge-plano">${escapeHtml(plano)}</span>
+                        </span>
+                        <span data-label="Status">
+                            <span class="badge ${ativo ? 'badge-active' : 'badge-inactive'}">${ativo ? 'Ativo' : 'Inativo'}</span>
+                        </span>
+                        <span data-label="Ações">
+                            ${ativo ? `
+                                <button class="btn-action" onclick="confirmarRemover('${id}', '${escapeHtml(nome)}')" title="Remover">
+                                    <i class="fas fa-trash"></i> Remover
+                                </button>
+                            ` : `
+                                <span style="color: var(--secondary-text-clr); font-size: 0.85rem;">Removido</span>
+                            `}
+                        </span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ============================================================
+        // ATUALIZAR STATS
+        // ============================================================
+        function atualizarStats(vinculados) {
+            if (!vinculados) return;
+            
+            document.getElementById('totalVinculados').textContent = vinculados.length;
+            
+            const ativos = vinculados.filter(v => v.ativo === true).length;
+            document.getElementById('totalAtivos').textContent = ativos;
+            
+            const empresaPlano = localStorage.getItem('empresaPlano');
+            if (empresaPlano) {
+                document.getElementById('planoAtual').textContent = empresaPlano;
+            } else if (vinculados.length > 0 && vinculados[0].plano) {
+                document.getElementById('planoAtual').textContent = vinculados[0].plano;
+            } else {
+                document.getElementById('planoAtual').textContent = '-';
+            }
+        }
+
+        // ============================================================
+        // ADICIONAR VINCULADO
+        // ============================================================
+        async function adicionarVinculado(event) {
+            event.preventDefault();
+            
+            const token = localStorage.getItem('token');
+            const btnSalvar = document.getElementById('btnSalvar');
+            const modalError = document.getElementById('modalError');
+            
+            btnSalvar.disabled = true;
+            btnSalvar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+            modalError.classList.remove('show');
+            
+            try {
+                const empresaId = localStorage.getItem('empresaId');
+                const empresaPlano = localStorage.getItem('empresaPlano');
+                
+                if (!empresaId) {
+                    throw new Error('Dados da empresa não encontrados. Faça login novamente.');
+                }
+                
+                const dados = {
+                    nome: document.getElementById('nome').value,
+                    email: document.getElementById('email').value,
+                    cpf: document.getElementById('cpf').value.replace(/[^\d]/g, ''),
+                    password: document.getElementById('senha').value,
+                    tipoUsuario: 'PESSOA_FISICA',
+                    plano: empresaPlano || 'INDIVIDUAL',
+                    contaPaiId: empresaId,
+                    ativo: true
+                };
+                
+                console.log('Enviando dados:', dados);
+                
+                const response = await fetch(BACKEND_URL + '/api/vinculados', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify(dados)
+                });
+                
+                if (response.ok) {
+                    fecharModalAdicionar();
+                    mostrarSucesso('Vinculado adicionado com sucesso!');
+                    carregarVinculados();
+                } else {
+                    const error = await response.text();
+                    console.error('Erro resposta:', response.status, error);
+                    modalError.textContent = `Erro ${response.status}: ${error}`;
+                    modalError.classList.add('show');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                modalError.textContent = error.message || 'Erro ao adicionar vinculado.';
+                modalError.classList.add('show');
+            } finally {
+                btnSalvar.disabled = false;
+                btnSalvar.innerHTML = '<i class="fas fa-save"></i> Salvar';
+            }
+        }
+
+        // ============================================================
+        // REMOVER VINCULADO
+        // ============================================================
+        function confirmarRemover(id, nome) {
+            if (confirm(`Tem certeza que deseja remover "${nome}"?`)) {
+                removerVinculado(id);
+            }
+        }
+
+        async function removerVinculado(id) {
+            const token = localStorage.getItem('token');
+            
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/vinculados/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+
+                if (response.ok) {
+                    mostrarSucesso('Vinculado removido com sucesso!');
+                    carregarVinculados();
+                } else {
+                    const error = await response.text();
+                    mostrarErro(error);
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                mostrarErro('Erro ao remover vinculado.');
+            }
+        }
+
+        // ============================================================
+        // MODAL
+        // ============================================================
+        function abrirModalAdicionar() {
+            document.getElementById('modalAdicionar').style.display = 'flex';
+            document.getElementById('modalError').classList.remove('show');
+            document.getElementById('formAdicionar').reset();
+        }
+
+        function fecharModalAdicionar() {
+            document.getElementById('modalAdicionar').style.display = 'none';
+        }
+
+        // ============================================================
+        // UTILITÁRIOS
+        // ============================================================
+        function formatarCPF(cpf) {
+            if (!cpf || cpf === '00000000000') return '-';
+            return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function mostrarLoading(show) {
+            const loading = document.getElementById('loading');
+            if (loading) {
+                loading.style.display = show ? 'flex' : 'none';
+            }
+        }
+
+        function mostrarErro(mensagem) {
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.textContent = mensagem;
+            errorEl.classList.add('show');
+            setTimeout(() => errorEl.classList.remove('show'), 5000);
+        }
+
+        function mostrarSucesso(mensagem) {
+            const successEl = document.getElementById('successMessage');
+            successEl.textContent = mensagem;
+            successEl.classList.add('show');
+            setTimeout(() => successEl.classList.remove('show'), 3000);
+        }
+
+        // Fechar modal ao clicar fora
+        window.onclick = function(event) {
+            const modal = document.getElementById('modalAdicionar');
+            if (event.target == modal) {
+                fecharModalAdicionar();
+            }
+        }
+
+        // Máscara de CPF
+        document.addEventListener('DOMContentLoaded', () => {
+            const cpfInput = document.getElementById('cpf');
+            if (cpfInput) {
+                cpfInput.addEventListener('input', function(e) {
+                    let value = e.target.value.replace(/\D/g, '');
+                    if (value.length > 11) value = value.slice(0, 11);
+                    value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                    value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                    value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+                    e.target.value = value;
+                });
+            }
+            
+            carregarVinculados();
+        });
+    </script>
+</body>
+</html>

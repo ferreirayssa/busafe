@@ -38,6 +38,12 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+    // --- CONTAGEM DE USUÁRIOS ATIVOS (público, usado na landing page) ---
+    @GetMapping("/count")
+    public ResponseEntity<Long> contarUsuariosAtivos() {
+        return ResponseEntity.ok(userService.allUsers());
+    }
+
     // --- CADASTRO ---
     @PostMapping("/register")
     public ResponseEntity<?> registrar(@RequestBody User user) {

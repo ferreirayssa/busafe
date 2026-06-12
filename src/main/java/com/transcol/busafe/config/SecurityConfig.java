@@ -38,6 +38,7 @@ public class SecurityConfig {
                     "/api/users/register",
                     "/api/users/verify",
                     "/api/users/reset-password",
+                    "/api/users/count",
                     "/",
                     "/index.html",
                     "/login.html",

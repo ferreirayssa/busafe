@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="PT-BR">
+<head>
+  <script src="../js/config.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BuSafe - Recuperar Senha</title>
+  <link rel="icon" type="image/x-icon" href="../Logos/busafe.ico">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@8.2.0/ol.css">
+  <script src="https://cdn.jsdelivr.net/npm/ol@8.2.0/dist/ol.js"></script>
+  <style>
+    :root {
+      --text-clr: #333333;
+      --secondary-text-clr: #666666;
+      --accent-clr: #10659c;
+      --hover-clr: rgba(0, 0, 0, 0.05);
+      --bg-dark: #0f1016;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      background-color: var(--bg-dark);
+      background: url('../prototipo/osm.png') no-repeat center center fixed;
+      background-size: cover;
+      font-family: Poppins, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      overflow-y: auto;
+    }
+
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .login-wrapper {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      max-width: 500px;
+      padding: 1rem;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      max-height: 100vh;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--accent-clr) transparent;
+    }
+
+    .login-wrapper::-webkit-scrollbar { width: 6px; }
+    
+    .login-wrapper::-webkit-scrollbar-thumb {
+      background-color: var(--accent-clr);
+      border-radius: 10px;
+    }
+
+    .login-container {
+      width: 100%;
+      padding: 2rem 2.5rem;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.98));
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      border-radius: 12px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+      backdrop-filter: blur(20px);
+      box-sizing: border-box;
+    }
+
+    .logo-container { text-align: center; margin-bottom: 1rem; }
+    .logo-container img {
+      max-width: 100px;
+      height: auto;
+      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.1));
+    }
+
+    .login-container h1 {
+      text-align: center;
+      font-size: 1.8rem;
+      margin: 0.5rem 0;
+      color: var(--text-clr);
+    }
+
+    .login-container p {
+      text-align: center;
+      color: var(--secondary-text-clr);
+      margin-bottom: 1.5rem;
+      font-size: 0.95rem;
+    }
+
+    /* --- ESTILO DO SELETOR PF/PJ --- */
+    .user-type-toggle {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 1.5rem;
+      background: rgba(0, 0, 0, 0.05);
+      padding: 5px;
+      border-radius: 8px;
+    }
+
+    .toggle-btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      background: transparent;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--secondary-text-clr);
+      transition: all 0.3s ease;
+      font-size: 0.9rem;
+    }
+
+    .toggle-btn.active {
+      background: white;
+      color: var(--accent-clr);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-group { margin-bottom: 1.2rem; }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: var(--text-clr);
+      font-weight: 500;
+      font-size: 0.9rem;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 0.75rem;
+      border-radius: 0.6rem;
+      border: 1px solid rgba(0, 0, 0, 0.15);
+      background: rgba(255, 255, 255, 0.8);
+      color: var(--text-clr);
+      font-family: inherit;
+      font-size: 1rem;
+      box-sizing: border-box;
+      transition: all 0.3s ease;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--accent-clr);
+      box-shadow: 0 0 0 3px rgba(16, 101, 156, 0.1);
+    }
+
+    .login-btn {
+      width: 100%;
+      padding: 0.8rem;
+      border-radius: 0.6rem;
+      border: none;
+      background: linear-gradient(90deg, #10659c, #1375b7);
+      color: white;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 1rem;
+      box-shadow: 0 4px 12px rgba(16, 101, 156, 0.3);
+      transition: all 0.3s ease;
+      margin-top: 0.5rem;
+    }
+
+    .login-btn:hover {
+      background: linear-gradient(90deg, #1375b7, #1585cf);
+      box-shadow: 0 6px 18px rgba(16, 101, 156, 0.4);
+      transform: translateY(-2px);
+    }
+
+    .login-btn:active { transform: translateY(0); }
+
+    .error-message, .success-message {
+      padding: 0.8rem;
+      border-radius: 0.6rem;
+      margin-bottom: 1.2rem;
+      display: none;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+
+    .error-message {
+      background: rgba(239, 83, 80, 0.1);
+      border: 1px solid #ef5350;
+      color: #ef5350;
+    }
+
+    .success-message {
+      background: rgba(76, 175, 80, 0.1);
+      border: 1px solid #4CAF50;
+      color: #4CAF50;
+    }
+
+    .error-message.show, .success-message.show { display: block; }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #ffffff; 
+      text-decoration: none;
+      margin-bottom: 1rem;
+      padding: 0.5rem 1rem;
+      border-radius: 0.6rem;
+      transition: background 0.3s ease;
+      background: rgba(255, 255, 255, 0.1);
+      align-self: flex-start;
+    }
+
+    .back-btn:hover { background: rgba(255, 255, 255, 0.2); }
+    .back-btn svg { width: 20px; height: 20px; fill: #ffffff; }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+
+<body>
+  <div id="map"></div>
+  <div class="overlay"></div>
+  
+  <div class="login-wrapper">
+    <a href="login.html" class="back-btn">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960">
+        <path d="m313-440 196 196q12 12 11.5 28T508-188q-12 11-28 11.5T452-188L188-452q-6-6-8.5-13t-2.5-15q0-8 2.5-15t8.5-13l264-264q11-11 27.5-11t28.5 11q12 12 12 28.5T508-715L313-520h447q17 0 28.5 11.5T800-480q0 17-11.5 28.5T760-440H313Z"/>
+      </svg>
+      Voltar
+    </a>
+
+    <div class="login-container">
+      <div class="logo-container">
+        <img src="../Logos/Logo_3.png" alt="BuSafe Logo">
+      </div>
+
+      <h1>Recuperar Senha</h1>
+      <p id="instructionText">Confirme seus dados para criar uma nova senha</p>
+
+      <div class="user-type-toggle" id="toggleContainer">
+        <button type="button" class="toggle-btn active" id="btnPf">Pessoa Física</button>
+        <button type="button" class="toggle-btn" id="btnPj">Empresa</button>
+      </div>
+
+      <div class="error-message" id="errorMessage"></div>
+      <div class="success-message" id="successMessage"></div>
+
+      <form id="verifyForm">
+        
+        <div class="form-group" id="groupCpf">
+          <label for="cpf">CPF</label>
+          <input type="text" id="cpf" name="cpf" placeholder="000.000.000-00" maxlength="14" required>
+        </div>
+
+        <div class="form-group hidden" id="groupCnpj">
+          <label for="cnpj">CNPJ</label>
+          <input type="text" id="cnpj" name="cnpj" placeholder="00.000.000/0000-00" maxlength="18">
+        </div>
+
+        <div class="form-group">
+          <label for="email">E-mail</label>
+          <input type="email" id="email" name="email" placeholder="seuemail@exemplo.com" required>
+        </div>
+
+        <button type="submit" class="login-btn" id="btnVerify">Verificar Dados</button>
+      </form>
+
+      <form id="newPasswordForm" class="hidden">
+        <div class="form-group">
+          <label for="newPassword">Nova Senha</label>
+          <input type="password" id="newPassword" name="newPassword" placeholder="Digite sua nova senha" required minlength="6">
+        </div>
+
+        <div class="form-group">
+          <label for="confirmPassword">Confirmar Nova Senha</label>
+          <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Repita a nova senha" required minlength="6">
+        </div>
+
+        <button type="submit" class="login-btn" id="btnUpdatePassword">Atualizar Senha</button>
+      </form>
+
+    </div>
+  </div>
+
+  <script>
+    // --- MAPA ---
+    const base = new ol.layer.Tile({ source: new ol.source.OSM() });
+    const map = new ol.Map({
+      target: 'map',
+      layers: [base],
+      view: new ol.View({ 
+        center: ol.proj.fromLonLat([-40.307, -20.318]), // Coordenadas Vitória/ES
+        zoom: 12 
+      }),
+      controls: [],
+      interactions: []
+    });
+
+    // --- LÓGICA DO TOGGLE (PF / PJ) ---
+    const btnPf = document.getElementById('btnPf');
+    const btnPj = document.getElementById('btnPj');
+    const groupCpf = document.getElementById('groupCpf');
+    const groupCnpj = document.getElementById('groupCnpj');
+    const inputCpf = document.getElementById('cpf');
+    const inputCnpj = document.getElementById('cnpj');
+    const toggleContainer = document.getElementById('toggleContainer');
+    
+    let isEmpresa = false;
+
+    btnPj.addEventListener('click', () => {
+      isEmpresa = true;
+      btnPj.classList.add('active');
+      btnPf.classList.remove('active');
+      
+      groupCpf.classList.add('hidden');
+      groupCnpj.classList.remove('hidden');
+      
+      inputCpf.removeAttribute('required');
+      inputCnpj.setAttribute('required', 'true');
+      inputCpf.value = '';
+    });
+
+    btnPf.addEventListener('click', () => {
+      isEmpresa = false;
+      btnPf.classList.add('active');
+      btnPj.classList.remove('active');
+      
+      groupCnpj.classList.add('hidden');
+      groupCpf.classList.remove('hidden');
+      
+      inputCnpj.removeAttribute('required');
+      inputCpf.setAttribute('required', 'true');
+      inputCnpj.value = '';
+    });
+
+    // --- MÁSCARAS DE DOCUMENTO ---
+    function formatarCPF(value) {
+      return value.replace(/\D/g, '')
+                  .replace(/(\d{3})(\d)/, '$1.$2')
+                  .replace(/(\d{3})(\d)/, '$1.$2')
+                  .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+    }
+
+    function formatarCNPJ(value) {
+      return value.replace(/\D/g, '')
+                  .replace(/^(\d{2})(\d)/, '$1.$2')
+                  .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+                  .replace(/\.(\d{3})(\d)/, '.$1/$2')
+                  .replace(/(\d{4})(\d)/, '$1-$2');
+    }
+
+    inputCpf.addEventListener('input', (e) => e.target.value = formatarCPF(e.target.value));
+    inputCnpj.addEventListener('input', (e) => e.target.value = formatarCNPJ(e.target.value));
+
+    // Elementos do DOM
+    const verifyForm = document.getElementById('verifyForm');
+    const newPasswordForm = document.getElementById('newPasswordForm');
+    const errorMessage = document.getElementById('errorMessage');
+    const successMessage = document.getElementById('successMessage');
+    const instructionText = document.getElementById('instructionText');
+    const btnVerify = document.getElementById('btnVerify');
+    const btnUpdatePassword = document.getElementById('btnUpdatePassword');
+
+    // Variáveis para armazenar dados validados para a etapa 2
+    let documentoValidado = '';
+    let emailValidado = '';
+
+    // --- ETAPA 1: Validar Documento e Email ---
+    verifyForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const emailField = document.getElementById('email').value.trim();
+      const docValue = isEmpresa ? inputCnpj.value.replace(/[^\d]/g, '') : inputCpf.value.replace(/[^\d]/g, '');
+
+      const originalBtnText = btnVerify.innerText;
+      btnVerify.innerText = 'Verificando...';
+      btnVerify.disabled = true;
+      errorMessage.classList.remove('show');
+      successMessage.classList.remove('show');
+
+      try {
+        const response = await fetch(BACKEND_URL + '/api/users/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ documento: docValue, email: emailField }) // Enviando 'documento'
+        });
+        
+        if (response.ok) {
+          // Sucesso: salvar dados para usar no reset
+          documentoValidado = docValue;
+          emailValidado = emailField;
+          
+          // Ocultar Etapa 1 e mostrar Etapa 2
+          verifyForm.classList.add('hidden');
+          toggleContainer.classList.add('hidden');
+          newPasswordForm.classList.remove('hidden');
+          instructionText.innerText = 'Dados confirmados. Crie sua nova senha abaixo.';
+        } else {
+          errorMessage.textContent = 'Dados incorretos. Verifique e tente novamente.';
+          errorMessage.classList.add('show');
+        }
+      } catch (error) {
+        console.error('Erro de conexão:', error);
+        errorMessage.textContent = 'Erro de conexão com o servidor.';
+        errorMessage.classList.add('show');
+      } finally {
+        btnVerify.innerText = originalBtnText;
+        btnVerify.disabled = false;
+      }
+    });
+
+    // --- ETAPA 2: Atualizar Senha ---
+    newPasswordForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const newPassword = document.getElementById('newPassword').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+
+      errorMessage.classList.remove('show');
+      successMessage.classList.remove('show');
+
+      if (newPassword !== confirmPassword) {
+        errorMessage.textContent = 'As senhas não coincidem.';
+        errorMessage.classList.add('show');
+        return;
+      }
+
+      const originalBtnText = btnUpdatePassword.innerText;
+      btnUpdatePassword.innerText = 'Atualizando...';
+      btnUpdatePassword.disabled = true;
+
+      try {
+        const response = await fetch(BACKEND_URL + '/api/users/reset-password', {
+          method: 'PUT', 
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            documento: documentoValidado, // Repassando o documento verificado
+            email: emailValidado,         // Repassando o e-mail verificado
+            newPassword: newPassword 
+          })
+        });
+
+        if (response.ok) {
+          successMessage.textContent = 'Senha alterada com sucesso! Redirecionando...';
+          successMessage.classList.add('show');
+          
+          setTimeout(() => {
+            window.location.href = 'login.html';
+          }, 2000);
+        } else {
+          errorMessage.textContent = 'Ocorreu um erro ao atualizar a senha. Tente novamente.';
+          errorMessage.classList.add('show');
+        }
+      } catch (error) {
+        console.error('Erro de conexão:', error);
+        errorMessage.textContent = 'Erro de conexão com o servidor.';
+        errorMessage.classList.add('show');
+      } finally {
+        btnUpdatePassword.innerText = originalBtnText;
+        btnUpdatePassword.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
