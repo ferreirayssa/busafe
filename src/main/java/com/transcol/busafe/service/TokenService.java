@@ -1,5 +1,8 @@
 package com.transcol.busafe.service;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
@@ -35,14 +38,32 @@ public class TokenService {
      */
     @PostConstruct
     public void init() {
-        if (jwtSecret != null && !jwtSecret.isEmpty()) {
-            // PRODUÇÃO: Usa a chave do .env
-            byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
-            this.key = Keys.hmacShaKeyFor(keyBytes);
-        } else {
+        if (jwtSecret == null || jwtSecret.isBlank()) {
             // DESENVOLVIMENTO: Gera chave automática
             this.key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+            return;
         }
+
+        // PRODUÇÃO: Usa a chave do ambiente.
+        // Tenta interpretar como Base64; se não for Base64 válido, usa os bytes UTF-8.
+        byte[] keyBytes;
+        try {
+            keyBytes = Decoders.BASE64.decode(jwtSecret);
+        } catch (Exception e) {
+            keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
+        }
+
+        // HS256 exige chave de no mínimo 256 bits (32 bytes).
+        // Se o segredo for curto demais, deriva uma chave de 256 bits via SHA-256.
+        if (keyBytes.length < 32) {
+            try {
+                keyBytes = MessageDigest.getInstance("SHA-256").digest(keyBytes);
+            } catch (NoSuchAlgorithmException e) {
+                throw new IllegalStateException("SHA-256 indisponível para derivar a chave JWT", e);
+            }
+        }
+
+        this.key = Keys.hmacShaKeyFor(keyBytes);
     }
 
     /**
