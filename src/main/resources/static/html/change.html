@@ -384,7 +384,7 @@
       successMessage.classList.remove('show');
 
       try {
-        const response = await fetch('http://localhost:8080/api/users/verify', {
+        const response = await fetch('api/users/verify', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ documento: docValue, email: emailField }) // Enviando 'documento'
@@ -435,7 +435,7 @@
       btnUpdatePassword.disabled = true;
 
       try {
-        const response = await fetch('http://localhost:8080/api/users/reset-password', {
+        const response = await fetch('/api/users/reset-password', {
           method: 'PUT', 
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
